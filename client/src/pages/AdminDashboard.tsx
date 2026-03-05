@@ -995,7 +995,7 @@ function AutoDravaSection() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editField, setEditField] = useState<"soldCount" | "viewCount">("soldCount");
   const [editValue, setEditValue] = useState("");
-  const [activeTab, setActiveTab] = useState<"stats" | "referrals" | "settings">("stats");
+  const [activeTab, setActiveTab] = useState<"stats" | "referrals" | "settings" | "contact">("stats");
 
   const { data: referralLogs, isLoading: logsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/referral-logs"],
@@ -1123,6 +1123,14 @@ function AutoDravaSection() {
           data-testid="tab-settings"
         >
           კრედიტის მართვა
+        </Button>
+        <Button
+          variant={activeTab === "contact" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveTab("contact")}
+          data-testid="tab-contact"
+        >
+          საკონტაქტო ინფო
         </Button>
       </div>
 
@@ -1330,7 +1338,91 @@ function AutoDravaSection() {
           </div>
         </div>
       )}
+
+      {activeTab === "contact" && (
+        <ContactInfoEditor />
+      )}
     </GlassPanel>
+  );
+}
+
+function ContactInfoEditor() {
+  const { toast } = useToast();
+  const { data: contact } = useQuery<{ phone: string; email: string; whatsapp: string; address: string; workHours: string; dayOff: string }>({
+    queryKey: ["/api/contact-info"],
+  });
+
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [address, setAddress] = useState("");
+  const [workHours, setWorkHours] = useState("");
+  const [dayOff, setDayOff] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (contact) {
+      setPhone(contact.phone);
+      setEmail(contact.email);
+      setWhatsapp(contact.whatsapp);
+      setAddress(contact.address);
+      setWorkHours(contact.workHours);
+      setDayOff(contact.dayOff);
+    }
+  }, [contact]);
+
+  async function saveContact() {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/contact-info", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ phone, email, whatsapp, address, workHours, dayOff }),
+      });
+      if (!res.ok) throw new Error();
+      queryClient.invalidateQueries({ queryKey: ["/api/contact-info"] });
+      toast({ title: "შენახულია", description: "საკონტაქტო ინფორმაცია განახლდა" });
+    } catch {
+      toast({ title: "შეცდომა", description: "ვერ შეინახა", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold">საკონტაქტო ინფორმაცია</h3>
+      <div className="rounded-lg border border-muted bg-muted/20 p-4 space-y-3">
+        <div>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">ტელეფონი</label>
+          <Input value={phone} onChange={(e) => setPhone(e.target.value)} className="min-h-[44px]" data-testid="input-contact-phone" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">ელ-ფოსტა</label>
+          <Input value={email} onChange={(e) => setEmail(e.target.value)} className="min-h-[44px]" data-testid="input-contact-email" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">WhatsApp ნომერი</label>
+          <Input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} className="min-h-[44px]" data-testid="input-contact-whatsapp" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">მისამართი</label>
+          <Input value={address} onChange={(e) => setAddress(e.target.value)} className="min-h-[44px]" data-testid="input-contact-address" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">სამუშაო საათები</label>
+          <Input value={workHours} onChange={(e) => setWorkHours(e.target.value)} className="min-h-[44px]" data-testid="input-contact-workhours" />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">დასვენების დღე</label>
+          <Input value={dayOff} onChange={(e) => setDayOff(e.target.value)} className="min-h-[44px]" data-testid="input-contact-dayoff" />
+        </div>
+      </div>
+      <Button onClick={saveContact} disabled={saving} className="w-full min-h-[44px]" data-testid="button-save-contact">
+        {saving ? "ინახება..." : "შენახვა"}
+      </Button>
+    </div>
   );
 }
 

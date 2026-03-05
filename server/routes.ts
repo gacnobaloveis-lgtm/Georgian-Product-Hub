@@ -814,6 +814,36 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/contact-info", async (_req, res) => {
+    try {
+      const phone = await storage.getSetting("contact_phone") || "+995 599 52 33 51";
+      const email = await storage.getSetting("contact_email") || "spiningebi@gmail.com";
+      const whatsapp = await storage.getSetting("contact_whatsapp") || "+995 599 52 33 51";
+      const address = await storage.getSetting("contact_address") || "საქართველო, ბათუმი";
+      const workHours = await storage.getSetting("contact_work_hours") || "ორშაბათი - შაბათი: 10:00 - 19:00";
+      const dayOff = await storage.getSetting("contact_day_off") || "კვირა: დასვენება";
+      res.json({ phone, email, whatsapp, address, workHours, dayOff });
+    } catch (err) {
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.put("/api/admin/contact-info", requireAdminOnly, async (req, res) => {
+    try {
+      const { phone, email, whatsapp, address, workHours, dayOff } = req.body;
+      if (phone !== undefined) await storage.setSetting("contact_phone", phone);
+      if (email !== undefined) await storage.setSetting("contact_email", email);
+      if (whatsapp !== undefined) await storage.setSetting("contact_whatsapp", whatsapp);
+      if (address !== undefined) await storage.setSetting("contact_address", address);
+      if (workHours !== undefined) await storage.setSetting("contact_work_hours", workHours);
+      if (dayOff !== undefined) await storage.setSetting("contact_day_off", dayOff);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Contact info update error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   const SITE_NAME = "თევზაობის მაღაზია";
 
   app.get("/api/og-image/:id", async (req, res) => {

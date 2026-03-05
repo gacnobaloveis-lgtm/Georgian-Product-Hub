@@ -32,6 +32,54 @@ import vestIcon from "@assets/image_1772362338173.png";
 import fishermanLogo from "@assets/fisherman_transparent.png";
 import eyeIconPath from "@assets/image_1771961384457.png";
 
+function SiteFooter() {
+  const { data: contact } = useQuery<{ phone: string; email: string; whatsapp: string; address: string; workHours: string; dayOff: string }>({
+    queryKey: ["/api/contact-info"],
+  });
+  const c = contact || { phone: "+995 599 52 33 51", email: "spiningebi@gmail.com", whatsapp: "+995 599 52 33 51", address: "საქართველო, ბათუმი", workHours: "ორშაბათი - შაბათი: 10:00 - 19:00", dayOff: "კვირა: დასვენება" };
+  const waNumber = c.whatsapp.replace(/[\s+()-]/g, "");
+  return (
+    <footer className="mt-8 bg-gradient-to-r from-purple-100 via-purple-50 to-pink-50 border-t border-purple-200/50" data-testid="footer">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <h3 className="mb-3 text-sm font-bold text-gray-800">საკონტაქტო ინფორმაცია</h3>
+            <ul className="space-y-2.5">
+              <li className="flex items-center gap-2 text-sm text-gray-600">
+                <Phone className="h-4 w-4 text-purple-500" />
+                <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="hover:text-purple-700">{c.phone}</a>
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-600">
+                <Mail className="h-4 w-4 text-purple-500" />
+                <a href={`mailto:${c.email}`} className="hover:text-purple-700">{c.email}</a>
+              </li>
+              <li className="flex items-center gap-2 text-sm text-gray-600">
+                <MessageCircle className="h-4 w-4 text-green-500" />
+                <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className="hover:text-green-600">WhatsApp: {c.whatsapp}</a>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-bold text-gray-800">მისამართი</h3>
+            <div className="flex items-start gap-2 text-sm text-gray-600">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-purple-500" />
+              <span>{c.address}</span>
+            </div>
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-bold text-gray-800">სამუშაო საათები</h3>
+            <p className="text-sm text-gray-600">{c.workHours}</p>
+            <p className="text-sm text-gray-600">{c.dayOff}</p>
+          </div>
+        </div>
+        <div className="mt-6 border-t border-purple-200/50 pt-4 text-center">
+          <p className="text-xs text-gray-500">© {new Date().getFullYear()} spiningebi.ge — ყველა უფლება დაცულია</p>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
 const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='250' fill='%23e2e8f0'%3E%3Crect width='400' height='250'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%2394a3b8'%3E%E1%83%A1%E1%83%A3%E1%83%A0%E1%83%90%E1%83%97%E1%83%98 %E1%83%90%E1%83%A0 %E1%83%90%E1%83%A0%E1%83%98%E1%83%A1%3C/text%3E%3C/svg%3E";
 
 function ImgWithFallback({
@@ -629,44 +677,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <footer className="mt-8 bg-gradient-to-r from-purple-100 via-purple-50 to-pink-50 border-t border-purple-200/50" data-testid="footer">
-        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <div>
-              <h3 className="mb-3 text-sm font-bold text-gray-800">საკონტაქტო ინფორმაცია</h3>
-              <ul className="space-y-2.5">
-                <li className="flex items-center gap-2 text-sm text-gray-600">
-                  <Phone className="h-4 w-4 text-purple-500" />
-                  <a href="tel:+995599523351" className="hover:text-purple-700">+995 599 52 33 51</a>
-                </li>
-                <li className="flex items-center gap-2 text-sm text-gray-600">
-                  <Mail className="h-4 w-4 text-purple-500" />
-                  <a href="mailto:spiningebi@gmail.com" className="hover:text-purple-700">spiningebi@gmail.com</a>
-                </li>
-                <li className="flex items-center gap-2 text-sm text-gray-600">
-                  <MessageCircle className="h-4 w-4 text-green-500" />
-                  <a href="https://wa.me/995599523351" target="_blank" rel="noopener noreferrer" className="hover:text-green-600">WhatsApp: +995 599 52 33 51</a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-3 text-sm font-bold text-gray-800">მისამართი</h3>
-              <div className="flex items-start gap-2 text-sm text-gray-600">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-purple-500" />
-                <span>საქართველო, ბათუმი</span>
-              </div>
-            </div>
-            <div>
-              <h3 className="mb-3 text-sm font-bold text-gray-800">სამუშაო საათები</h3>
-              <p className="text-sm text-gray-600">ორშაბათი - შაბათი: 10:00 - 19:00</p>
-              <p className="text-sm text-gray-600">კვირა: დასვენება</p>
-            </div>
-          </div>
-          <div className="mt-6 border-t border-purple-200/50 pt-4 text-center">
-            <p className="text-xs text-gray-500">© {new Date().getFullYear()} spiningebi.ge — ყველა უფლება დაცულია</p>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
 
       <MobileBottomNav
         onCategoriesOpen={() => setCategoryDrawerOpen(true)}
