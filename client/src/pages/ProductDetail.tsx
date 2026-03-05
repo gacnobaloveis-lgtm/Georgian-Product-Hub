@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Play, X, ShoppingCart, Minus, Plus, Coins, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Play, X, ShoppingCart, Minus, Plus, Coins, AlertCircle, Loader2, Home } from "lucide-react";
 import { Link } from "wouter";
 import type { Product } from "@shared/schema";
 import { PurchaseDialog } from "@/components/PurchaseDialog";
@@ -316,7 +316,10 @@ export default function ProductDetail() {
       <div className="mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="mb-4 sm:mb-6">
           <nav className="flex items-center gap-2 text-xs sm:text-sm" data-testid="breadcrumb">
-            <Link href="/" className="font-bold text-gray-700 hover:text-primary" data-testid="link-breadcrumb-home">მთავარი</Link>
+            <Link href="/" className="flex items-center gap-1.5 font-bold text-gray-700 hover:text-primary" data-testid="link-breadcrumb-home">
+              <Home className="h-4 w-4" />
+              მთავარი
+            </Link>
           </nav>
         </div>
 
