@@ -1,6 +1,7 @@
 import * as client from "openid-client";
 import { Strategy, type VerifyFunction } from "openid-client/passport";
 import FacebookStrategy from "passport-facebook";
+import GoogleStrategy from "passport-google-oauth20";
 
 import passport from "passport";
 import session from "express-session";
@@ -131,10 +132,11 @@ export async function setupAuth(app: Express) {
 
     app.get("/api/logout", (req, res) => {
       const user = req.user as any;
-      const isFacebookUser = user?.claims?.sub && String(user.claims.sub).startsWith("fb_");
+      const userSub = user?.claims?.sub ? String(user.claims.sub) : "";
+      const isExternalUser = userSub.startsWith("fb_") || userSub.startsWith("g_");
 
       req.logout(() => {
-        if (isFacebookUser) {
+        if (isExternalUser) {
           res.redirect("/");
         } else {
           res.redirect(
@@ -147,11 +149,87 @@ export async function setupAuth(app: Express) {
       });
     });
   } else {
-    app.get("/api/login", (_req, res) => res.redirect("/"));
-    app.get("/api/callback", (_req, res) => res.redirect("/"));
-    app.get("/api/logout", (req, res) => {
-      req.logout(() => res.redirect("/"));
-    });
+    const googleClientId = process.env.AUTH_GOOGLE_CLIENT_ID;
+    const googleClientSecret = process.env.AUTH_GOOGLE_CLIENT_SECRET;
+
+    if (googleClientId && googleClientSecret) {
+      const getGoogleCallbackUrl = (req: any) => `https://${req.hostname}/api/callback`;
+
+      const googleStrategies = new Map<string, string>();
+      const ensureGoogleStrategy = (req: any) => {
+        const callbackURL = getGoogleCallbackUrl(req);
+        if (!googleStrategies.has(callbackURL)) {
+          const strategyName = `google:${callbackURL}`;
+          passport.use(
+            strategyName,
+            new GoogleStrategy.Strategy(
+              {
+                clientID: googleClientId,
+                clientSecret: googleClientSecret,
+                callbackURL,
+                passReqToCallback: true as any,
+              },
+              async (req: any, _accessToken: string, _refreshToken: string, profile: any, done: any) => {
+                try {
+                  const googleId = `g_${profile.id}`;
+                  const email = profile.emails?.[0]?.value || null;
+                  const firstName = profile.name?.givenName || null;
+                  const lastName = profile.name?.familyName || null;
+                  const profileImageUrl = profile.photos?.[0]?.value || null;
+
+                  await authStorage.upsertUser({
+                    id: googleId,
+                    email,
+                    firstName,
+                    lastName,
+                    profileImageUrl,
+                  });
+
+                  const sessionUser: any = {};
+                  sessionUser.claims = { sub: googleId };
+                  sessionUser.expires_at = Math.floor(Date.now() / 1000) + 7 * 24 * 3600;
+                  done(null, sessionUser);
+                } catch (err) {
+                  done(err);
+                }
+              }
+            )
+          );
+          googleStrategies.set(callbackURL, strategyName);
+        }
+        return googleStrategies.get(callbackURL)!;
+      };
+
+      app.get("/api/login", (req, res, next) => {
+        const returnTo = req.query.returnTo;
+        if (returnTo && typeof returnTo === "string" && returnTo.startsWith("/")) {
+          (req as any).session.returnTo = returnTo;
+        }
+        const strategyName = ensureGoogleStrategy(req);
+        passport.authenticate(strategyName, {
+          scope: ["profile", "email"],
+        })(req, res, next);
+      });
+
+      app.get("/api/callback", (req, res, next) => {
+        const returnTo = (req as any).session?.returnTo || "/";
+        const strategyName = ensureGoogleStrategy(req);
+        passport.authenticate(strategyName, {
+          successRedirect: returnTo,
+          failureRedirect: "/",
+        })(req, res, next);
+      });
+
+      app.get("/api/logout", (req, res) => {
+        req.logout(() => res.redirect("/"));
+      });
+    } else {
+      app.get("/api/login", (_req, res) => res.redirect("/"));
+      app.get("/api/callback", (_req, res) => res.redirect("/"));
+      app.get("/api/logout", (req, res) => {
+        req.logout(() => res.redirect("/"));
+      });
+    }
   }
 
   const fbAppId = process.env.AUTH_FACEBOOK_ID;
@@ -246,7 +324,8 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  if (String(user.claims.sub).startsWith("fb_")) {
+  const sub = String(user.claims.sub);
+  if (sub.startsWith("fb_") || sub.startsWith("g_")) {
     const now = Math.floor(Date.now() / 1000);
     if (user.expires_at && now > user.expires_at) {
       return res.status(401).json({ message: "Unauthorized" });

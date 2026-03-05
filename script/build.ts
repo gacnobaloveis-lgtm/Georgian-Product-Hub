@@ -21,6 +21,7 @@ const allowlist = [
   "nodemailer",
   "openai",
   "passport",
+  "passport-google-oauth20",
   "passport-local",
   "pg",
   "stripe",
