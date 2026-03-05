@@ -16,7 +16,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft } from "lucide-react";
+import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle } from "lucide-react";
 import { LucideIcon } from "@/components/IconPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Link } from "wouter";
@@ -628,6 +628,45 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      <footer className="mt-8 bg-gradient-to-r from-purple-100 via-purple-50 to-pink-50 border-t border-purple-200/50" data-testid="footer">
+        <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <h3 className="mb-3 text-sm font-bold text-gray-800">საკონტაქტო ინფორმაცია</h3>
+              <ul className="space-y-2.5">
+                <li className="flex items-center gap-2 text-sm text-gray-600">
+                  <Phone className="h-4 w-4 text-purple-500" />
+                  <a href="tel:+995599523351" className="hover:text-purple-700">+995 599 52 33 51</a>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-600">
+                  <Mail className="h-4 w-4 text-purple-500" />
+                  <a href="mailto:spiningebi@gmail.com" className="hover:text-purple-700">spiningebi@gmail.com</a>
+                </li>
+                <li className="flex items-center gap-2 text-sm text-gray-600">
+                  <MessageCircle className="h-4 w-4 text-purple-500" />
+                  <span>Skype: spiningebi.ge</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="mb-3 text-sm font-bold text-gray-800">მისამართი</h3>
+              <div className="flex items-start gap-2 text-sm text-gray-600">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-purple-500" />
+                <span>საქართველო, ბათუმი</span>
+              </div>
+            </div>
+            <div>
+              <h3 className="mb-3 text-sm font-bold text-gray-800">სამუშაო საათები</h3>
+              <p className="text-sm text-gray-600">ორშაბათი - შაბათი: 10:00 - 19:00</p>
+              <p className="text-sm text-gray-600">კვირა: დასვენება</p>
+            </div>
+          </div>
+          <div className="mt-6 border-t border-purple-200/50 pt-4 text-center">
+            <p className="text-xs text-gray-500">© {new Date().getFullYear()} spiningebi.ge — ყველა უფლება დაცულია</p>
+          </div>
+        </div>
+      </footer>
 
       <MobileBottomNav
         onCategoriesOpen={() => setCategoryDrawerOpen(true)}
