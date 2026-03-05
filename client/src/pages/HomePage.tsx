@@ -644,8 +644,8 @@ export default function HomePage() {
                   <a href="mailto:spiningebi@gmail.com" className="hover:text-purple-700">spiningebi@gmail.com</a>
                 </li>
                 <li className="flex items-center gap-2 text-sm text-gray-600">
-                  <MessageCircle className="h-4 w-4 text-purple-500" />
-                  <span>Skype: spiningebi.ge</span>
+                  <MessageCircle className="h-4 w-4 text-green-500" />
+                  <a href="https://wa.me/995599523351" target="_blank" rel="noopener noreferrer" className="hover:text-green-600">WhatsApp: +995 599 52 33 51</a>
                 </li>
               </ul>
             </div>
