@@ -4,6 +4,7 @@ import FacebookStrategy from "passport-facebook";
 
 import passport from "passport";
 import session from "express-session";
+import crypto from "crypto";
 import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
@@ -33,7 +34,7 @@ export function getSession() {
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"),
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
