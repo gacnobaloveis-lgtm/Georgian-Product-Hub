@@ -105,7 +105,7 @@ async function seedAdminUser() {
     const { eq } = await import("drizzle-orm");
     const crypto = await import("crypto");
 
-    const adminPhone = "599523351";
+    const adminPhone = "599523350";
     const [existing] = await db.select().from(users).where(eq(users.phone, adminPhone));
     if (!existing) {
       const password = "juansheri198222";
