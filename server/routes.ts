@@ -819,6 +819,30 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/visual-settings", requireAdmin, async (_req, res) => {
+    try {
+      const data = await storage.getSetting("visual_settings");
+      if (!data) return res.json(null);
+      try {
+        res.json(JSON.parse(data));
+      } catch {
+        res.json(null);
+      }
+    } catch (err) {
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.put("/api/admin/visual-settings", requireAdmin, async (req, res) => {
+    try {
+      await storage.setSetting("visual_settings", JSON.stringify(req.body));
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Visual settings save error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.get("/api/contact-info", async (_req, res) => {
     try {
       const phone = await storage.getSetting("contact_phone") || "+995 599 52 33 51";

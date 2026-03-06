@@ -164,10 +164,14 @@ A web application for the Georgian market with full product CRUD management, ima
 
 ### Visual (ვიზუალი section)
 - Admin panel section for logo gallery and text style editor
-- 10 fishing-themed logos (fisherman, wobbler, rod, reel, braid, jig, spinner, vest, fish, hook) from attached assets
+- 10 built-in fishing-themed logos + custom logo upload via /api/media/upload
+- Remove uploaded logos with X button (built-in logos cannot be removed)
 - Text designer with live preview: main text + subtitle, font selector (10 options), font size, text/bg color pickers, bold/italic toggles
 - 10 preset styles (gold, neon blue, neon green, red fire, white classic, purple, pink, sea green, outline, gradient)
-- PNG download via canvas rendering
+- "დამახსოვრება" saves all settings (selected logo, uploaded logos, text styles) to server via site_settings key "visual_settings"
+- Settings auto-load on section open from GET /api/admin/visual-settings
+- PNG download via canvas rendering (secondary button)
+- API: GET /api/admin/visual-settings, PUT /api/admin/visual-settings (requireAdmin)
 - Component: `client/src/components/VisualSection.tsx`
 
 ### Analytics (ანალიტიკა section)

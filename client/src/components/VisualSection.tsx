@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { GlassPanel } from "@/components/GlassPanel";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Download, Type, Palette } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Save, Download, Type, Palette, Upload, Loader2, X } from "lucide-react";
 
 import logo1 from "@assets/fisherman_transparent.png";
 import logo2 from "@assets/image_1771887558144.png";
@@ -16,7 +19,7 @@ import logo8 from "@assets/image_1772362338173.png";
 import logo9 from "@assets/image_1771888285281.png";
 import logo10 from "@assets/image_1771882949475.png";
 
-const LOGOS = [
+const BUILTIN_LOGOS = [
   { src: logo1, label: "მეთევზე" },
   { src: logo2, label: "ვობლერი" },
   { src: logo3, label: "სპინინგის ჯოხი" },
@@ -55,8 +58,42 @@ const PRESET_STYLES = [
   { label: "გრადიენტი", color: "", bg: "linear-gradient(135deg, #1a1a2e, #2d1a44)", shadow: "none", stroke: "" },
 ];
 
+interface VisualSettings {
+  selectedLogo: number | null;
+  uploadedLogos: { src: string; label: string }[];
+  text: string;
+  font: string;
+  fontSize: string;
+  textColor: string;
+  bgColor: string;
+  textShadow: string;
+  textStroke: string;
+  isBold: boolean;
+  isItalic: boolean;
+  customText: string;
+}
+
+const DEFAULT_SETTINGS: VisualSettings = {
+  selectedLogo: null,
+  uploadedLogos: [],
+  text: "spiningebi.ge",
+  font: "FiraGO",
+  fontSize: "48",
+  textColor: "#FFD700",
+  bgColor: "#1a1a2e",
+  textShadow: "2px 2px 4px rgba(255,215,0,0.5)",
+  textStroke: "",
+  isBold: true,
+  isItalic: false,
+  customText: "",
+};
+
 export function VisualSection() {
+  const { toast } = useToast();
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
   const [selectedLogo, setSelectedLogo] = useState<number | null>(null);
+  const [uploadedLogos, setUploadedLogos] = useState<{ src: string; label: string }[]>([]);
   const [text, setText] = useState("spiningebi.ge");
   const [font, setFont] = useState("FiraGO");
   const [fontSize, setFontSize] = useState("48");
@@ -67,6 +104,97 @@ export function VisualSection() {
   const [isBold, setIsBold] = useState(true);
   const [isItalic, setIsItalic] = useState(false);
   const [customText, setCustomText] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const { data: savedSettings } = useQuery<VisualSettings | null>({
+    queryKey: ["/api/admin/visual-settings"],
+  });
+
+  useEffect(() => {
+    if (savedSettings && !loaded) {
+      setSelectedLogo(savedSettings.selectedLogo);
+      setUploadedLogos(savedSettings.uploadedLogos || []);
+      setText(savedSettings.text || "spiningebi.ge");
+      setFont(savedSettings.font || "FiraGO");
+      setFontSize(savedSettings.fontSize || "48");
+      setTextColor(savedSettings.textColor || "#FFD700");
+      setBgColor(savedSettings.bgColor || "#1a1a2e");
+      setTextShadow(savedSettings.textShadow || "2px 2px 4px rgba(255,215,0,0.5)");
+      setTextStroke(savedSettings.textStroke || "");
+      setIsBold(savedSettings.isBold ?? true);
+      setIsItalic(savedSettings.isItalic ?? false);
+      setCustomText(savedSettings.customText || "");
+      setLoaded(true);
+    } else if (savedSettings === null && !loaded) {
+      setLoaded(true);
+    }
+  }, [savedSettings, loaded]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (settings: VisualSettings) => {
+      await apiRequest("PUT", "/api/admin/visual-settings", settings);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/visual-settings"] });
+      toast({ title: "შენახულია", description: "ვიზუალის პარამეტრები დამახსოვრებულია" });
+    },
+    onError: () => {
+      toast({ variant: "destructive", title: "შეცდომა", description: "შენახვა ვერ მოხერხდა" });
+    },
+  });
+
+  function handleSave() {
+    saveMutation.mutate({
+      selectedLogo,
+      uploadedLogos,
+      text,
+      font,
+      fontSize,
+      textColor,
+      bgColor,
+      textShadow,
+      textStroke,
+      isBold,
+      isItalic,
+      customText,
+    });
+  }
+
+  async function handleLogoUpload(files: FileList) {
+    const imageFiles = Array.from(files).filter(f => f.type.startsWith("image/"));
+    if (imageFiles.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      imageFiles.forEach(f => formData.append("files", f));
+      const res = await fetch("/api/media/upload", { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) throw new Error("ატვირთვა ვერ მოხერხდა");
+      const uploaded = await res.json();
+      const newLogos = uploaded.map((m: { path: string; originalName: string }) => ({
+        src: m.path,
+        label: m.originalName.replace(/\.[^.]+$/, ""),
+      }));
+      setUploadedLogos(prev => [...prev, ...newLogos]);
+      toast({ title: "ატვირთულია", description: `${imageFiles.length} ლოგო აიტვირთა` });
+    } catch (err) {
+      toast({ variant: "destructive", title: "შეცდომა", description: err instanceof Error ? err.message : "ატვირთვის შეცდომა" });
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  function removeUploadedLogo(idx: number) {
+    setUploadedLogos(prev => prev.filter((_, i) => i !== idx));
+    if (selectedLogo !== null && selectedLogo >= BUILTIN_LOGOS.length) {
+      const uploadIdx = selectedLogo - BUILTIN_LOGOS.length;
+      if (uploadIdx === idx) setSelectedLogo(null);
+      else if (uploadIdx > idx) setSelectedLogo(selectedLogo - 1);
+    }
+  }
+
+  const allLogos = [...BUILTIN_LOGOS, ...uploadedLogos];
 
   function applyPreset(idx: number) {
     const p = PRESET_STYLES[idx];
@@ -112,13 +240,13 @@ export function VisualSection() {
     if (customText) {
       const subSize = size * 0.4;
       ctx.font = `${isBold ? "bold " : ""}${isItalic ? "italic " : ""}${subSize}px ${font}`;
-      
+
       if (textStroke) {
         ctx.strokeStyle = textStroke.split(" ").pop() || "white";
         ctx.lineWidth = Math.max(1, (parseInt(textStroke) || 2) * 0.6);
         ctx.strokeText(customText, 400, 200 + size * 0.7);
       }
-      
+
       ctx.fillStyle = textColor !== "transparent" ? textColor : "white";
       ctx.fillText(customText, 400, 200 + size * 0.7);
     }
@@ -134,27 +262,67 @@ export function VisualSection() {
       <GlassPanel>
         <h3 className="text-base font-semibold mb-4 flex items-center gap-2" data-testid="text-visual-logos-title">
           <Palette className="h-5 w-5 text-primary" />
-          თევზაობის ლოგოები
+          ლოგოები
         </h3>
         <div className="grid grid-cols-5 sm:grid-cols-5 gap-3">
-          {LOGOS.map((logo, idx) => (
-            <button
-              key={idx}
-              onClick={() => setSelectedLogo(selectedLogo === idx ? null : idx)}
-              className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-2 transition-all hover:shadow-md ${selectedLogo === idx ? "border-primary bg-primary/10 shadow-lg" : "border-muted bg-card hover:border-primary/30"}`}
-              data-testid={`button-logo-${idx}`}
-            >
-              <img src={logo.src} alt={logo.label} className="h-12 w-12 sm:h-16 sm:w-16 object-contain" />
-              <span className="text-[10px] sm:text-xs text-muted-foreground text-center leading-tight">{logo.label}</span>
-            </button>
+          {allLogos.map((logo, idx) => (
+            <div key={idx} className="relative">
+              <button
+                onClick={() => setSelectedLogo(selectedLogo === idx ? null : idx)}
+                className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-2 transition-all hover:shadow-md w-full ${selectedLogo === idx ? "border-primary bg-primary/10 shadow-lg" : "border-muted bg-card hover:border-primary/30"}`}
+                data-testid={`button-logo-${idx}`}
+              >
+                <img src={logo.src} alt={logo.label} className="h-12 w-12 sm:h-16 sm:w-16 object-contain" />
+                <span className="text-[10px] sm:text-xs text-muted-foreground text-center leading-tight">{logo.label}</span>
+              </button>
+              {idx >= BUILTIN_LOGOS.length && (
+                <button
+                  onClick={() => removeUploadedLogo(idx - BUILTIN_LOGOS.length)}
+                  className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white z-10"
+                  data-testid={`button-remove-logo-${idx}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
           ))}
+
+          <button
+            onClick={() => logoInputRef.current?.click()}
+            disabled={isUploading}
+            className="flex flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-muted-foreground/30 p-2 transition-all hover:border-primary/50 hover:bg-primary/5 min-h-[80px] sm:min-h-[100px]"
+            data-testid="button-upload-logo"
+          >
+            {isUploading ? (
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            ) : (
+              <>
+                <Upload className="h-6 w-6 text-muted-foreground" />
+                <span className="text-[10px] sm:text-xs text-muted-foreground text-center leading-tight">ატვირთვა</span>
+              </>
+            )}
+          </button>
+          <input
+            ref={logoInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={e => {
+              if (e.target.files && e.target.files.length > 0) {
+                handleLogoUpload(e.target.files);
+                e.target.value = "";
+              }
+            }}
+            data-testid="input-logo-upload"
+          />
         </div>
 
-        {selectedLogo !== null && (
+        {selectedLogo !== null && selectedLogo < allLogos.length && (
           <div className="mt-4 flex justify-center">
             <div className="rounded-2xl border-2 border-primary/30 bg-card p-6 shadow-xl">
-              <img src={LOGOS[selectedLogo].src} alt={LOGOS[selectedLogo].label} className="h-32 w-32 sm:h-48 sm:w-48 object-contain" />
-              <p className="text-center text-sm font-medium mt-2">{LOGOS[selectedLogo].label}</p>
+              <img src={allLogos[selectedLogo].src} alt={allLogos[selectedLogo].label} className="h-32 w-32 sm:h-48 sm:w-48 object-contain" />
+              <p className="text-center text-sm font-medium mt-2">{allLogos[selectedLogo].label}</p>
             </div>
           </div>
         )}
@@ -334,14 +502,29 @@ export function VisualSection() {
             </label>
           </div>
 
-          <Button
-            onClick={downloadCanvas}
-            className="min-h-[44px] w-full"
-            data-testid="button-visual-download"
-          >
-            <Download className="mr-2 h-4 w-4" />
-            ჩამოტვირთვა (PNG)
-          </Button>
+          <div className="flex gap-3">
+            <Button
+              onClick={handleSave}
+              disabled={saveMutation.isPending || isUploading}
+              className="min-h-[44px] flex-1"
+              data-testid="button-visual-save"
+            >
+              {saveMutation.isPending ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> ინახება...</>
+              ) : (
+                <><Save className="mr-2 h-4 w-4" /> დამახსოვრება</>
+              )}
+            </Button>
+            <Button
+              onClick={downloadCanvas}
+              variant="outline"
+              className="min-h-[44px]"
+              data-testid="button-visual-download"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              PNG
+            </Button>
+          </div>
         </div>
       </GlassPanel>
     </div>
