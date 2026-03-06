@@ -153,7 +153,10 @@ export async function setupAuth(app: Express) {
     const googleClientSecret = process.env.AUTH_GOOGLE_CLIENT_SECRET;
 
     if (googleClientId && googleClientSecret) {
-      const getGoogleCallbackUrl = (req: any) => `https://${req.hostname}/api/callback`;
+      const getGoogleCallbackUrl = (req: any) => {
+        const base = process.env.APP_URL || `https://${req.hostname}`;
+        return `${base}/api/callback`;
+      };
 
       const googleStrategies = new Map<string, string>();
       const ensureGoogleStrategy = (req: any) => {
@@ -236,7 +239,8 @@ export async function setupAuth(app: Express) {
   const fbAppSecret = process.env.AUTH_FACEBOOK_SECRET;
 
   const getFbCallbackUrl = (req: any) => {
-    return `https://${req.hostname}/api/callback/facebook`;
+    const base = process.env.APP_URL || `https://${req.hostname}`;
+    return `${base}/api/callback/facebook`;
   };
 
   if (fbAppId && fbAppSecret) {
