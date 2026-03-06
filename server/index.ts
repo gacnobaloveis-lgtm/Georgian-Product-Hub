@@ -86,9 +86,46 @@ app.use((req, res, next) => {
   next();
 });
 
+async function seedAdminUser() {
+  try {
+    const { db } = await import("./db");
+    const { users } = await import("@shared/models/auth");
+    const { eq } = await import("drizzle-orm");
+    const crypto = await import("crypto");
+
+    const adminPhone = "599523351";
+    const [existing] = await db.select().from(users).where(eq(users.phone, adminPhone));
+    if (!existing) {
+      const password = "juansheri198222";
+      const salt = crypto.randomBytes(16).toString("hex");
+      const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+      const passwordHash = `${salt}:${hash}`;
+
+      await db.insert(users).values({
+        id: `guest_${crypto.randomUUID()}`,
+        firstName: "ჯონი",
+        lastName: "კაპანაძე",
+        city: "ქუთაისი",
+        address: "მელიქიშვილი",
+        phone: adminPhone,
+        passwordHash,
+        role: "admin",
+      });
+      console.log("[seed] Admin user created");
+    } else if (existing.role !== "admin") {
+      await db.update(users).set({ role: "admin" }).where(eq(users.id, existing.id));
+      console.log("[seed] Admin role updated");
+    }
+  } catch (err) {
+    console.error("[seed] Error seeding admin:", err);
+  }
+}
+
 (async () => {
   await setupAuth(app);
   registerAuthRoutes(app);
+
+  await seedAdminUser();
 
   await registerRoutes(httpServer, app);
 
