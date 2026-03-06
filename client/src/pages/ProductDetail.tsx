@@ -215,6 +215,28 @@ export default function ProductDetail() {
     }
   }, [isAuthenticated, product]);
 
+  useEffect(() => {
+    if (product) {
+      const price = product.discountPrice && Number(product.discountPrice) < Number(product.originalPrice)
+        ? `₾${Number(product.discountPrice).toFixed(2)}`
+        : `₾${Number(product.originalPrice).toFixed(2)}`;
+      document.title = `${product.name} — ${price} | spiningebi.ge — სათევზაო მაღაზია`;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.setAttribute("content", `${product.name} — ${product.description?.slice(0, 150)}. ფასი: ${price}. შეუკვეთე ახლავე spiningebi.ge-ზე!`);
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      if (ogTitle) ogTitle.setAttribute("content", `${product.name} — ${price} | spiningebi.ge`);
+      const ogDesc = document.querySelector('meta[property="og:description"]');
+      if (ogDesc) ogDesc.setAttribute("content", `${product.description?.slice(0, 200)}. ფასი: ${price}`);
+      if (product.imageUrl) {
+        const ogImg = document.querySelector('meta[property="og:image"]');
+        if (ogImg) ogImg.setAttribute("content", `${window.location.origin}${product.imageUrl}`);
+      }
+    }
+    return () => {
+      document.title = "spiningebi.ge — სათევზაო და სანადირო აქსესუარები | თევზაობის ინვენტარი საქართველოში";
+    };
+  }, [product]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white">

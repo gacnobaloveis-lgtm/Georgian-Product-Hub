@@ -198,6 +198,17 @@ A web application for the Georgian market with full product CRUD management, ima
 - Role assignment via "სტატუსები" section in admin panel (admin-only)
 - `requireAdminOnly` middleware restricts role changes and user deletion to full admins only
 
+### SEO Optimization
+- Full Georgian + English meta tags in `client/index.html`
+- `lang="ka"`, canonical URL to spiningebi.ge
+- Meta description, keywords covering: სათევზაო, სპინინგი, ვობლერი, fishing, spinning, etc.
+- Open Graph (og:title, og:description, og:image, og:url) and Twitter Card tags
+- JSON-LD structured data: Store schema with business info (address, phone, hours)
+- Dynamic SEO on product pages: document.title, meta description, OG tags update per product
+- `/sitemap.xml` — auto-generated XML sitemap with all products
+- `/robots.txt` — crawler directives (allow /, disallow /admin-*, /api/*)
+- Product detail pages set title to "{name} — {price} | spiningebi.ge"
+
 ## Environment Variables
 - `DATABASE_URL` — PostgreSQL connection string (auto-managed)
 - `SESSION_SECRET` — Express session secret

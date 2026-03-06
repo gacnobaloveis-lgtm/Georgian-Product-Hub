@@ -1003,5 +1003,49 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/sitemap.xml", async (_req, res) => {
+    try {
+      const allProducts = await storage.getProducts();
+      const baseUrl = "https://spiningebi.ge";
+      const now = new Date().toISOString().split("T")[0];
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>`;
+
+      for (const p of allProducts) {
+        xml += `
+  <url>
+    <loc>${baseUrl}/product/${p.id}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+      }
+
+      xml += `\n</urlset>`;
+      res.set("Content-Type", "application/xml").send(xml);
+    } catch {
+      res.status(500).send("Error generating sitemap");
+    }
+  });
+
+  app.get("/robots.txt", (_req, res) => {
+    res.set("Content-Type", "text/plain").send(
+`User-agent: *
+Allow: /
+Disallow: /admin-login
+Disallow: /admin-dashboard
+Disallow: /api/
+
+Sitemap: https://spiningebi.ge/sitemap.xml`
+    );
+  });
+
   return httpServer;
 }
