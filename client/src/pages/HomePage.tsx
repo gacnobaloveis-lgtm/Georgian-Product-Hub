@@ -695,7 +695,6 @@ export default function HomePage() {
       <AuthLoginDialog
         open={authDialogOpen}
         onOpenChange={setAuthDialogOpen}
-        returnTo="/profile"
       />
 
       {categories && (

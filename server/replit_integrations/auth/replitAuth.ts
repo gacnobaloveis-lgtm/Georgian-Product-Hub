@@ -133,10 +133,10 @@ export async function setupAuth(app: Express) {
     app.get("/api/logout", (req, res) => {
       const user = req.user as any;
       const userSub = user?.claims?.sub ? String(user.claims.sub) : "";
-      const isExternalUser = userSub.startsWith("fb_") || userSub.startsWith("g_");
+      const isNonOidcUser = userSub.startsWith("fb_") || userSub.startsWith("g_") || userSub.startsWith("guest_");
 
       req.logout(() => {
-        if (isExternalUser) {
+        if (isNonOidcUser) {
           res.redirect("/");
         } else {
           res.redirect(
@@ -234,6 +234,48 @@ export async function setupAuth(app: Express) {
       });
     }
   }
+
+  app.post("/api/register", async (req: any, res) => {
+    try {
+      const { firstName, lastName, city, address, phone } = req.body;
+      if (!firstName?.trim() || !lastName?.trim() || !city?.trim() || !address?.trim() || !phone?.trim()) {
+        return res.status(400).json({ message: "ყველა ველი სავალდებულოა" });
+      }
+
+      const userId = `guest_${crypto.randomUUID()}`;
+      await authStorage.upsertUser({
+        id: userId,
+        email: null,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        profileImageUrl: null,
+      });
+
+      const { db } = await import("../../db");
+      const { users } = await import("@shared/models/auth");
+      const { eq } = await import("drizzle-orm");
+      await db.update(users).set({
+        city: city.trim(),
+        address: address.trim(),
+        phone: phone.trim(),
+      }).where(eq(users.id, userId));
+
+      const sessionUser: any = {};
+      sessionUser.claims = { sub: userId };
+      sessionUser.expires_at = Math.floor(Date.now() / 1000) + 7 * 24 * 3600;
+
+      req.login(sessionUser, (err: any) => {
+        if (err) {
+          console.error("[auth] register login error:", err);
+          return res.status(500).json({ message: "რეგისტრაცია ვერ მოხერხდა" });
+        }
+        res.json({ id: userId, firstName: firstName.trim(), lastName: lastName.trim(), city: city.trim(), address: address.trim(), phone: phone.trim() });
+      });
+    } catch (err) {
+      console.error("[auth] register error:", err);
+      res.status(500).json({ message: "რეგისტრაცია ვერ მოხერხდა" });
+    }
+  });
 
   const fbAppId = process.env.AUTH_FACEBOOK_ID;
   const fbAppSecret = process.env.AUTH_FACEBOOK_SECRET;

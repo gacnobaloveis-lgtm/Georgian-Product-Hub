@@ -653,7 +653,6 @@ export default function ProductDetail() {
         <AuthLoginDialog
           open={authDialogOpen}
           onOpenChange={setAuthDialogOpen}
-          returnTo={`/product/${product.id}`}
         />
       </div>
     </div>

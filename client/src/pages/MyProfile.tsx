@@ -155,7 +155,6 @@ export default function MyProfile() {
           <AuthLoginDialog
             open={authDialogOpen}
             onOpenChange={setAuthDialogOpen}
-            returnTo="/profile"
           />
         </div>
       </div>

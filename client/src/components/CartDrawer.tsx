@@ -125,6 +125,11 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
     enterCheckout();
   }
 
+  function handleRegistered() {
+    setAuthDialogOpen(false);
+    enterCheckout();
+  }
+
   function enterCheckout() {
     setCheckoutMode(true);
     setProfileLoading(true);
@@ -555,13 +560,8 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
 
       <AuthLoginDialog
         open={authDialogOpen}
-        onOpenChange={(v) => {
-          setAuthDialogOpen(v);
-          if (!v && isAuthenticated) {
-            enterCheckout();
-          }
-        }}
-        returnTo="/"
+        onOpenChange={setAuthDialogOpen}
+        onRegistered={handleRegistered}
       />
     </>
   );
