@@ -86,8 +86,20 @@ app.use((req, res, next) => {
   next();
 });
 
+async function ensurePasswordHashColumn() {
+  try {
+    const { db } = await import("./db");
+    const { sql } = await import("drizzle-orm");
+    await db.execute(sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash varchar`);
+    console.log("[migrate] password_hash column ensured");
+  } catch (err) {
+    console.error("[migrate] Error ensuring password_hash column:", err);
+  }
+}
+
 async function seedAdminUser() {
   try {
+    await ensurePasswordHashColumn();
     const { db } = await import("./db");
     const { users } = await import("@shared/models/auth");
     const { eq } = await import("drizzle-orm");

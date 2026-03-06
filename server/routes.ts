@@ -461,7 +461,12 @@ export async function registerRoutes(
         await storage.setReferralCode(userId, code);
         found.referralCode = code;
       }
-      res.json(found || null);
+      if (found) {
+        const { passwordHash, ...safeUser } = found as any;
+        res.json(safeUser);
+      } else {
+        res.json(null);
+      }
     } catch (err) {
       res.status(500).json({ message: "შეცდომა" });
     }
