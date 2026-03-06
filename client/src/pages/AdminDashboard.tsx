@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink } from "lucide-react";
+import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories";
@@ -19,6 +19,7 @@ import { useAdminLogout, useAdminStatus } from "@/hooks/use-admin";
 import { useAdminUsers, useUpdateUser, useDeleteUser } from "@/hooks/use-users";
 import type { Product } from "@shared/schema";
 import type { User, Order } from "@shared/models/auth";
+import { VisualSection } from "@/components/VisualSection";
 
 const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' fill='%23e2e8f0'%3E%3Crect width='80' height='80'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%2394a3b8'%3E%E1%83%90%E1%83%A0%E1%83%90%E1%83%A1%E1%83%A3%E1%83%A0%E1%83%90%E1%83%97%E1%83%98%3C/text%3E%3C/svg%3E";
 
@@ -1553,7 +1554,7 @@ function StatusesSection() {
   );
 }
 
-type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses";
+type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>(null);
@@ -1633,6 +1634,29 @@ export default function AdminDashboard() {
               </div>
             </div>
             <OrdersSection />
+          </AnimatedShell>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeSection === "visual") {
+    return (
+      <div className="min-h-screen bg-mesh">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+          <AnimatedShell className="space-y-6">
+            <div className="flex items-center justify-between">
+              <TopBar title="ადმინ პანელი" subtitle="ვიზუალი" />
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setActiveSection(null)} data-testid="button-back">
+                  უკან
+                </Button>
+                <Link href="/">
+                  <Button variant="ghost" size="sm" data-testid="link-homepage">მთავარი</Button>
+                </Link>
+              </div>
+            </div>
+            <VisualSection />
           </AnimatedShell>
         </div>
       </div>
@@ -1838,6 +1862,22 @@ export default function AdminDashboard() {
                   </div>
                   <h3 className="text-lg font-semibold">ავტო-ძრავა</h3>
                   <p className="text-sm text-muted-foreground">გაყიდული ნივთების ავტომატური აღრიცხვა და რედაქტირება</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {isFullAdmin && (
+              <Card
+                className="cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-primary/40"
+                onClick={() => setActiveSection("visual")}
+                data-testid="card-section-visual"
+              >
+                <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <Paintbrush className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold">ვიზუალი</h3>
+                  <p className="text-sm text-muted-foreground">ლოგოები და ტექსტის სტილის რედაქტორი</p>
                 </CardContent>
               </Card>
             )}

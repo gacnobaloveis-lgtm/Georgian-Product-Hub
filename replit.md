@@ -162,6 +162,14 @@ A web application for the Georgian market with full product CRUD management, ima
 - DB tables: `referral_logs` (referrer_user_id, buyer_user_id, order_id, product_name, product_price, credit_awarded, created_at), `site_settings` (key/value pairs)
 - API: GET /api/admin/referral-logs, GET /api/admin/settings, PUT /api/admin/settings (admin-only)
 
+### Visual (ვიზუალი section)
+- Admin panel section for logo gallery and text style editor
+- 10 fishing-themed logos (fisherman, wobbler, rod, reel, braid, jig, spinner, vest, fish, hook) from attached assets
+- Text designer with live preview: main text + subtitle, font selector (10 options), font size, text/bg color pickers, bold/italic toggles
+- 10 preset styles (gold, neon blue, neon green, red fire, white classic, purple, pink, sea green, outline, gradient)
+- PNG download via canvas rendering
+- Component: `client/src/components/VisualSection.tsx`
+
 ### Analytics (ანალიტიკა section)
 - Tracks visitor referrer sources (which websites send traffic)
 - Middleware records every page visit: referrer domain, URL, page path, user-agent
