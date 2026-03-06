@@ -323,15 +323,15 @@ export default function ProductDetail() {
           </nav>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:gap-8">
           <div className="space-y-2 sm:space-y-4">
             <div className="overflow-hidden rounded-lg border border-gray-100 bg-white">
               {showVideo && youtubeId ? (
                 <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                   <iframe
-                    src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&origin=${encodeURIComponent(window.location.origin)}&enablejsapi=1&rel=0`}
+                    src={`https://www.youtube.com/embed/${youtubeId}?rel=0&playsinline=1&origin=${encodeURIComponent(window.location.origin)}`}
                     title="YouTube ვიდეო"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                     referrerPolicy="strict-origin-when-cross-origin"
                     className="absolute inset-0 h-full w-full"
