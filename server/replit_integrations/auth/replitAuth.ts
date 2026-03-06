@@ -237,10 +237,13 @@ export async function setupAuth(app: Express) {
 
   const fbAppId = process.env.AUTH_FACEBOOK_ID;
   const fbAppSecret = process.env.AUTH_FACEBOOK_SECRET;
+  console.log(`[auth] Facebook config: ID=${fbAppId ? "SET" : "NOT SET"}, Secret=${fbAppSecret ? "SET" : "NOT SET"}`);
 
   const getFbCallbackUrl = (req: any) => {
     const base = process.env.APP_URL || `https://${req.hostname}`;
-    return `${base}/api/callback/facebook`;
+    const url = `${base}/api/callback/facebook`;
+    console.log(`[auth] Facebook callback URL: ${url}`);
+    return url;
   };
 
   if (fbAppId && fbAppSecret) {
@@ -315,8 +318,9 @@ export async function setupAuth(app: Express) {
       })(req, res, next);
     });
   } else {
+    console.log("[auth] Facebook OAuth NOT configured - missing AUTH_FACEBOOK_ID or AUTH_FACEBOOK_SECRET");
     app.get("/api/login/facebook", (_req, res) => {
-      res.redirect("/");
+      res.status(500).json({ message: "Facebook OAuth is not configured. Set AUTH_FACEBOOK_ID and AUTH_FACEBOOK_SECRET." });
     });
   }
 }
