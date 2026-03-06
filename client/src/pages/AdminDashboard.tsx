@@ -892,6 +892,40 @@ function UsersSection() {
   );
 }
 
+function groupOrdersByUser24h(orders: Order[]) {
+  const sorted = [...orders].sort((a, b) => {
+    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return tb - ta;
+  });
+
+  type OrderGroup = { userId: string; fullName: string; phone: string; city: string; country: string; address: string; orders: Order[]; latestTime: number };
+  const groups: OrderGroup[] = [];
+  const H24 = 24 * 60 * 60 * 1000;
+
+  for (const order of sorted) {
+    const orderTime = order.createdAt ? new Date(order.createdAt).getTime() : 0;
+    const existing = groups.find(
+      (g) => g.userId === order.userId && Math.abs(g.latestTime - orderTime) < H24
+    );
+    if (existing) {
+      existing.orders.push(order);
+    } else {
+      groups.push({
+        userId: order.userId,
+        fullName: order.fullName,
+        phone: order.phone,
+        city: order.city,
+        country: order.country,
+        address: order.address,
+        orders: [order],
+        latestTime: orderTime,
+      });
+    }
+  }
+  return groups;
+}
+
 function OrdersSection() {
   const { toast } = useToast();
   const { data: ordersList, isLoading } = useQuery<Order[]>({
@@ -923,6 +957,8 @@ function OrdersSection() {
     },
   });
 
+  const groups = ordersList ? groupOrdersByUser24h(ordersList) : [];
+
   return (
     <GlassPanel className="p-5 sm:p-7">
       <div className="mb-4 flex items-center gap-2">
@@ -939,68 +975,77 @@ function OrdersSection() {
       ) : !ordersList || ordersList.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">შეკვეთები ჯერ არ არის</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm" data-testid="table-orders">
-            <thead>
-              <tr className="border-b border-muted">
-                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground">№</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground">პროდუქტი</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground">რაოდ.</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground">ფერი</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground">მომხმარებელი</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground">მისამართი</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground">ტელეფონი</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground">ფასი</th>
-                <th className="px-3 py-2.5 text-left font-semibold text-muted-foreground">თარიღი</th>
-                <th className="px-3 py-2.5 text-right font-semibold text-muted-foreground">გაგზავნილი</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ordersList.map((order, index) => {
-                const isShipped = order.status === "shipped";
-                return (
-                <tr key={order.id} className="border-b border-muted/50 transition-colors hover:bg-muted/30" data-testid={`row-order-${index}`}>
-                  <td className="px-3 py-3 font-medium">{index + 1}</td>
-                  <td className="px-3 py-3 font-medium" data-testid={`text-order-product-${index}`}>{order.productName}</td>
-                  <td className="px-3 py-3 text-center" data-testid={`text-order-qty-${index}`}>{order.quantity || 1}</td>
-                  <td className="px-3 py-3 text-xs" data-testid={`text-order-color-${index}`}>{(order as any).selectedColor || "—"}</td>
-                  <td className="px-3 py-3" data-testid={`text-order-user-${index}`}>{order.fullName}</td>
-                  <td className="px-3 py-3 text-xs">
-                    <p>{order.city}, {order.country}</p>
-                    <p className="text-muted-foreground">{order.address}</p>
-                  </td>
-                  <td className="px-3 py-3 text-xs" data-testid={`text-order-phone-${index}`}>{order.phone}</td>
-                  <td className="px-3 py-3 font-medium text-primary" data-testid={`text-order-price-${index}`}>₾{Number(order.productPrice).toFixed(2)}</td>
-                  <td className="px-3 py-3 text-xs text-muted-foreground">
-                    {order.createdAt ? new Date(order.createdAt).toLocaleDateString("ka-GE", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }) : "—"}
-                  </td>
-                  <td className="px-3 py-3 text-right">
-                    <button
-                      data-testid={`toggle-order-shipped-${index}`}
-                      disabled={updateStatus.isPending}
-                      onClick={() => updateStatus.mutate({ id: order.id, status: isShipped ? "pending" : "shipped" })}
-                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
-                        isShipped ? "bg-green-500" : "bg-gray-300"
-                      }`}
-                    >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                        isShipped ? "translate-x-6" : "translate-x-1"
-                      }`} />
-                    </button>
-                  </td>
-                </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className="space-y-4">
+          {groups.map((group, gIdx) => {
+            const totalPrice = group.orders.reduce((sum, o) => sum + Number(o.productPrice) * (o.quantity || 1), 0);
+            const allShipped = group.orders.every((o) => o.status === "shipped");
+            return (
+              <div key={gIdx} className="rounded-lg border border-card-border bg-card overflow-hidden" data-testid={`order-group-${gIdx}`}>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 bg-muted/40 px-4 py-3 border-b border-muted/50">
+                  <span className="font-semibold text-sm" data-testid={`text-group-user-${gIdx}`}>{group.fullName}</span>
+                  <span className="text-xs text-muted-foreground">{group.phone}</span>
+                  <span className="text-xs text-muted-foreground">{group.city}, {group.country}</span>
+                  <span className="text-xs text-muted-foreground">{group.address}</span>
+                  <span className="ml-auto text-xs font-semibold text-primary" data-testid={`text-group-total-${gIdx}`}>ჯამი: ₾{totalPrice.toFixed(2)}</span>
+                  {group.orders.length > 1 && (
+                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{group.orders.length} შეკვეთა</span>
+                  )}
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm" data-testid={`table-orders-group-${gIdx}`}>
+                    <thead>
+                      <tr className="border-b border-muted/30">
+                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">პროდუქტი</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">რაოდ.</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">ფერი</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">ფასი</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">დრო</th>
+                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">გაგზავნილი</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.orders.map((order, oIdx) => {
+                        const isShipped = order.status === "shipped";
+                        return (
+                          <tr key={order.id} className="border-b border-muted/20 transition-colors hover:bg-muted/20" data-testid={`row-order-${gIdx}-${oIdx}`}>
+                            <td className="px-3 py-2.5 font-medium" data-testid={`text-order-product-${gIdx}-${oIdx}`}>{order.productName}</td>
+                            <td className="px-3 py-2.5 text-center" data-testid={`text-order-qty-${gIdx}-${oIdx}`}>{order.quantity || 1}</td>
+                            <td className="px-3 py-2.5 text-xs" data-testid={`text-order-color-${gIdx}-${oIdx}`}>{(order as any).selectedColor || "—"}</td>
+                            <td className="px-3 py-2.5 font-medium text-primary" data-testid={`text-order-price-${gIdx}-${oIdx}`}>₾{Number(order.productPrice).toFixed(2)}</td>
+                            <td className="px-3 py-2.5 text-xs text-muted-foreground">
+                              {order.createdAt ? new Date(order.createdAt).toLocaleDateString("ka-GE", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }) : "—"}
+                            </td>
+                            <td className="px-3 py-2.5 text-right">
+                              <button
+                                data-testid={`toggle-order-shipped-${gIdx}-${oIdx}`}
+                                disabled={updateStatus.isPending}
+                                onClick={() => updateStatus.mutate({ id: order.id, status: isShipped ? "pending" : "shipped" })}
+                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
+                                  isShipped ? "bg-green-500" : "bg-gray-300"
+                                }`}
+                              >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                                  isShipped ? "translate-x-6" : "translate-x-1"
+                                }`} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            );
+          })}
           <p className="mt-3 text-xs text-muted-foreground" data-testid="text-orders-count">
-            სულ: {ordersList.length} შეკვეთა
+            სულ: {ordersList.length} შეკვეთა ({groups.length} მომხმარებელი)
           </p>
         </div>
       )}
