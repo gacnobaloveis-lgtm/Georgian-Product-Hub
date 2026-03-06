@@ -543,7 +543,11 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base" data-testid="text-cart-confirm-title">შეკვეთის დადასტურება</AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-relaxed" data-testid="text-cart-confirm-message">
-              შეგახსენებთ, რომ ტრანსპორტირების საფასური (11.50 ლარი) ანაზღაურდება კურიერთან. {selectedItems.length} ნივთის შეკვეთა — ₾{selectedTotal.toFixed(2)}. გსურთ გაგრძელება?
+              {profile?.city?.trim().toLowerCase() === "ქუთაისი" ? (
+                `ქუთაისში მიტანა უფასოა! ${selectedItems.length} ნივთის შეკვეთა — ₾${selectedTotal.toFixed(2)}. გსურთ გაგრძელება?`
+              ) : (
+                `შეგახსენებთ, რომ ტრანსპორტირების საფასური (11.50 ლარი) ანაზღაურდება კურიერთან. ${selectedItems.length} ნივთის შეკვეთა — ₾${selectedTotal.toFixed(2)}. გსურთ გაგრძელება?`
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -431,7 +431,11 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base" data-testid="text-confirm-title">შეკვეთის დადასტურება</AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-relaxed" data-testid="text-confirm-message">
-              შეგახსენებთ, რომ ტრანსპორტირების საფასური (11.50 ლარი) ანაზღაურდება კურიერთან. სანამ თქვენი ამანათი საწყობიდან გამოვა, გაქვთ შანსი ამავე საკურიერო ფასში დაამატოთ სხვა ნივთებიც. ისარგებლეთ ამ შესაძლებლობით, სანამ ნივთი დამუშავების პროცესშია!
+              {profile?.city?.trim().toLowerCase() === "ქუთაისი" ? (
+                "ქუთაისში მიტანა უფასოა! სანამ თქვენი ამანათი საწყობიდან გამოვა, გაქვთ შანსი დაამატოთ სხვა ნივთებიც. ისარგებლეთ ამ შესაძლებლობით, სანამ ნივთი დამუშავების პროცესშია!"
+              ) : (
+                "შეგახსენებთ, რომ ტრანსპორტირების საფასური (11.50 ლარი) ანაზღაურდება კურიერთან. სანამ თქვენი ამანათი საწყობიდან გამოვა, გაქვთ შანსი ამავე საკურიერო ფასში დაამატოთ სხვა ნივთებიც. ისარგებლეთ ამ შესაძლებლობით, სანამ ნივთი დამუშავების პროცესშია!"
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
