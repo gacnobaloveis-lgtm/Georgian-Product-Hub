@@ -473,6 +473,10 @@ export default function HomePage() {
     : fishermanLogo;
   const heroText = visualSettings?.text || "spiningebi.ge";
   const heroSubtitle = visualSettings?.customText || "საუკეთესო თევზაობის აქსესუარები და აღჭურვილობა";
+  const heroFont = visualSettings?.font || "FiraGO";
+  const heroTextColor = visualSettings?.textColor && visualSettings.textColor !== "transparent" ? visualSettings.textColor : undefined;
+  const heroIsBold = visualSettings?.isBold ?? true;
+  const heroIsItalic = visualSettings?.isItalic ?? false;
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -567,9 +571,19 @@ export default function HomePage() {
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-12 lg:px-20">
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-wide text-white drop-shadow-lg sm:gap-3 sm:text-4xl lg:text-5xl" data-testid="text-hero-title">
+          <h1
+            className="flex items-center gap-2 tracking-wide drop-shadow-lg sm:gap-3"
+            style={{
+              fontFamily: heroFont,
+              color: heroTextColor || "#ffffff",
+              fontWeight: heroIsBold ? "bold" : "normal",
+              fontStyle: heroIsItalic ? "italic" : "normal",
+              fontSize: undefined,
+            }}
+            data-testid="text-hero-title"
+          >
             <img src={heroLogoSrc} alt="" className="h-10 w-10 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-14 sm:w-14 lg:h-16 lg:w-16" data-testid="img-logo" />
-            {heroText}
+            <span className="text-2xl sm:text-4xl lg:text-5xl">{heroText}</span>
           </h1>
           <p className="mt-1 max-w-lg text-sm text-white/80 drop-shadow sm:mt-2 sm:text-lg">
             {heroSubtitle}
