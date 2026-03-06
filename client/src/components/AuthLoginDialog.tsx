@@ -6,7 +6,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { SiGoogle, SiFacebook } from "react-icons/si";
-import { useQuery } from "@tanstack/react-query";
 
 interface AuthLoginDialogProps {
   open: boolean;
@@ -15,13 +14,6 @@ interface AuthLoginDialogProps {
 }
 
 export function AuthLoginDialog({ open, onOpenChange, returnTo = "/" }: AuthLoginDialogProps) {
-  const { data: methods } = useQuery<{ google: boolean; facebook: boolean }>({
-    queryKey: ["/api/auth/methods"],
-  });
-
-  const showGoogle = !methods || methods.google;
-  const showFacebook = !methods || methods.facebook;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
@@ -32,26 +24,22 @@ export function AuthLoginDialog({ open, onOpenChange, returnTo = "/" }: AuthLogi
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 pt-2">
-          {showGoogle && (
-            <a
-              href={`/api/login?returnTo=${encodeURIComponent(returnTo)}`}
-              className="flex items-center justify-center gap-3 rounded-lg border border-border bg-white px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-gray-50"
-              data-testid="button-login-google"
-            >
-              <SiGoogle className="h-5 w-5 text-[#4285F4]" />
-              Google-ით ავტორიზაცია
-            </a>
-          )}
-          {showFacebook && (
-            <a
-              href={`/api/login/facebook?returnTo=${encodeURIComponent(returnTo)}`}
-              className="flex items-center justify-center gap-3 rounded-lg border border-border bg-[#1877F2] px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#166FE5]"
-              data-testid="button-login-facebook"
-            >
-              <SiFacebook className="h-5 w-5" />
-              Facebook-ით ავტორიზაცია
-            </a>
-          )}
+          <a
+            href={`/api/login?returnTo=${encodeURIComponent(returnTo)}`}
+            className="flex items-center justify-center gap-3 rounded-lg border border-border bg-white px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-gray-50"
+            data-testid="button-login-google"
+          >
+            <SiGoogle className="h-5 w-5 text-[#4285F4]" />
+            Google-ით ავტორიზაცია
+          </a>
+          <a
+            href={`/api/login/facebook?returnTo=${encodeURIComponent(returnTo)}`}
+            className="flex items-center justify-center gap-3 rounded-lg border border-border bg-[#1877F2] px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#166FE5]"
+            data-testid="button-login-facebook"
+          >
+            <SiFacebook className="h-5 w-5" />
+            Facebook-ით ავტორიზაცია
+          </a>
         </div>
       </DialogContent>
     </Dialog>
