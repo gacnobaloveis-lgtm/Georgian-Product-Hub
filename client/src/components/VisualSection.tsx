@@ -137,6 +137,7 @@ export function VisualSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/visual-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/visual-settings/public"] });
       toast({ title: "შენახულია", description: "ვიზუალის პარამეტრები დამახსოვრებულია" });
     },
     onError: () => {
