@@ -31,6 +31,7 @@ import spinnerIcon from "@assets/image_1771888431502.png";
 import vestIcon from "@assets/image_1772362338173.png";
 import fishermanLogo from "@assets/fisherman_transparent.png";
 import eyeIconPath from "@assets/image_1771961384457.png";
+import { BUILTIN_LOGOS } from "@/components/VisualSection";
 
 function SiteFooter() {
   const { data: contact } = useQuery<{ phone: string; email: string; whatsapp: string; address: string; workHours: string; dayOff: string }>({
@@ -450,6 +451,29 @@ export default function HomePage() {
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const { totalCount: cartCount } = useCart();
 
+  interface VisualPublic {
+    selectedLogo: number | null;
+    uploadedLogos: { src: string; label: string }[];
+    text: string;
+    customText: string;
+    font: string;
+    fontSize: string;
+    textColor: string;
+    isBold: boolean;
+    isItalic: boolean;
+  }
+
+  const { data: visualSettings } = useQuery<VisualPublic | null>({
+    queryKey: ["/api/visual-settings/public"],
+  });
+
+  const allLogos = [...BUILTIN_LOGOS, ...(visualSettings?.uploadedLogos || [])];
+  const heroLogoSrc = visualSettings?.selectedLogo !== null && visualSettings?.selectedLogo !== undefined && allLogos[visualSettings.selectedLogo]
+    ? allLogos[visualSettings.selectedLogo].src
+    : fishermanLogo;
+  const heroText = visualSettings?.text || "spiningebi.ge";
+  const heroSubtitle = visualSettings?.customText || "საუკეთესო თევზაობის აქსესუარები და აღჭურვილობა";
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("guide") === "credit") {
@@ -544,11 +568,11 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-12 lg:px-20">
           <h1 className="flex items-center gap-2 text-2xl font-extrabold tracking-wide text-white drop-shadow-lg sm:gap-3 sm:text-4xl lg:text-5xl" data-testid="text-hero-title">
-            <img src={fishermanLogo} alt="" className="h-10 w-10 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-14 sm:w-14 lg:h-16 lg:w-16" data-testid="img-logo" />
-            spiningebi.ge
+            <img src={heroLogoSrc} alt="" className="h-10 w-10 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-14 sm:w-14 lg:h-16 lg:w-16" data-testid="img-logo" />
+            {heroText}
           </h1>
           <p className="mt-1 max-w-lg text-sm text-white/80 drop-shadow sm:mt-2 sm:text-lg">
-            საუკეთესო თევზაობის აქსესუარები და აღჭურვილობა
+            {heroSubtitle}
           </p>
         </div>
       </div>

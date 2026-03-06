@@ -172,6 +172,9 @@ A web application for the Georgian market with full product CRUD management, ima
 - Settings auto-load on section open from GET /api/admin/visual-settings
 - PNG download via canvas rendering (secondary button)
 - API: GET /api/admin/visual-settings, PUT /api/admin/visual-settings (requireAdmin)
+- Public API: GET /api/visual-settings/public (no auth, returns selectedLogo, uploadedLogos, text, customText, font, fontSize, textColor, isBold, isItalic)
+- Homepage hero section dynamically reads visual settings: logo, title text, and subtitle from /api/visual-settings/public
+- BUILTIN_LOGOS exported from VisualSection.tsx for reuse in HomePage.tsx
 - Component: `client/src/components/VisualSection.tsx`
 
 ### Analytics (ანალიტიკა section)

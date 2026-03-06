@@ -843,6 +843,31 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/visual-settings/public", async (_req, res) => {
+    try {
+      const data = await storage.getSetting("visual_settings");
+      if (!data) return res.json(null);
+      try {
+        const parsed = JSON.parse(data);
+        res.json({
+          selectedLogo: parsed.selectedLogo ?? null,
+          uploadedLogos: parsed.uploadedLogos || [],
+          text: parsed.text || "spiningebi.ge",
+          customText: parsed.customText || "",
+          font: parsed.font || "FiraGO",
+          fontSize: parsed.fontSize || "48",
+          textColor: parsed.textColor || "#FFD700",
+          isBold: parsed.isBold ?? true,
+          isItalic: parsed.isItalic ?? false,
+        });
+      } catch {
+        res.json(null);
+      }
+    } catch {
+      res.json(null);
+    }
+  });
+
   app.get("/api/contact-info", async (_req, res) => {
     try {
       const phone = await storage.getSetting("contact_phone") || "+995 599 52 33 51";

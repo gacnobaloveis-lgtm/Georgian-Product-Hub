@@ -19,7 +19,7 @@ import logo8 from "@assets/image_1772362338173.png";
 import logo9 from "@assets/image_1771888285281.png";
 import logo10 from "@assets/image_1771882949475.png";
 
-const BUILTIN_LOGOS = [
+export const BUILTIN_LOGOS = [
   { src: logo1, label: "მეთევზე" },
   { src: logo2, label: "ვობლერი" },
   { src: logo3, label: "სპინინგის ჯოხი" },
