@@ -695,7 +695,8 @@ export async function registerRoutes(
   app.get("/api/admin/users", requireAdmin, async (_req, res) => {
     try {
       const usersList = await storage.getUsers();
-      res.json(usersList);
+      const safeUsers = usersList.map(({ passwordHash, ...rest }) => rest);
+      res.json(safeUsers);
     } catch (err) {
       console.error("Users fetch error:", err);
       res.status(500).json({ message: "მომხმარებლების ჩატვირთვის შეცდომა" });
@@ -714,7 +715,8 @@ export async function registerRoutes(
         phone: phone != null ? sanitizeString(String(phone)) : undefined,
       });
       if (!updated) return res.status(404).json({ message: "მომხმარებელი ვერ მოიძებნა" });
-      res.json(updated);
+      const { passwordHash: _ph, ...safeUpdated } = updated as any;
+      res.json(safeUpdated);
     } catch (err) {
       console.error("User update error:", err);
       res.status(500).json({ message: "მომხმარებლის განახლების შეცდომა" });
@@ -729,7 +731,8 @@ export async function registerRoutes(
       }
       const updated = await storage.setUserRole(req.params.id, role);
       if (!updated) return res.status(404).json({ message: "მომხმარებელი ვერ მოიძებნა" });
-      res.json(updated);
+      const { passwordHash: _ph, ...safeUpdated } = updated as any;
+      res.json(safeUpdated);
     } catch (err) {
       console.error("Role update error:", err);
       res.status(500).json({ message: "როლის განახლების შეცდომა" });

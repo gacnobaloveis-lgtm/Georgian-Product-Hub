@@ -1,217 +1,75 @@
 # Georgian Market Web Application
 
 ## Overview
-A web application for the Georgian market with full product CRUD management, image gallery/album system, and a product catalog. All UI labels are in Georgian, using the FiraGO font. Currency is displayed in GEL (₾).
+This project is a web application designed for the Georgian market, featuring comprehensive product management, an image gallery system, and a public product catalog. The primary goal is to provide a localized e-commerce experience with all UI labels in Georgian, using the FiraGO font, and displaying currency in Georgian Lari (₾). The application supports a full product CRUD cycle, user authentication, a shopping cart, an order system, and a referral program. It aims to offer a robust and user-friendly platform for both administrators and customers, with a focus on mobile-first design and SEO.
 
-## Tech Stack
-- **Frontend**: React + TypeScript, TailwindCSS, Shadcn/UI, Wouter routing, TanStack Query
-- **Backend**: Node.js, Express
-- **Database**: PostgreSQL via Drizzle ORM
-- **Image Processing**: Sharp (resize to 800px, WebP conversion)
-- **File Upload**: Multer (multipart/form-data)
-- **Security**: express-session, helmet, express-rate-limit
+## User Preferences
+The user wants all UI text to be in Georgian and currency displayed in GEL (₾). The application should have a mobile-first design with specific UI components for smaller screens. The user prioritizes security, performance, and clear administrative control over content and users. They expect dynamic SEO features for product pages and a comprehensive analytics section.
 
-## Architecture
+## System Architecture
 
-### Pages
-- `/` — Public product catalog (customer-facing, clean grid with images, prices in ₾)
-- `/admin-login` — Admin login page (secret key authentication)
-- `/admin-dashboard` — Admin panel with product table, Edit and Delete buttons per product (auth-protected)
-- `/admin-add` — Form to add new products with file upload (auth-protected)
+### UI/UX Decisions
+- **Localization**: All UI labels in Georgian, FiraGO font, GEL (₾) currency.
+- **Mobile-First Design**: Responsive layout with specific adaptations for mobile (bottom navigation, full-screen drawers for categories and search, 2-column product grid, 44px minimum touch targets).
+- **Admin Panel**: Dedicated sections for product management, orders, users, referrals, visual settings, and analytics.
+- **Image Display**: Product catalog with clean grid, `ImgWithFallback` for missing images.
+- **Color Scheme/Templates**: Not explicitly defined but implies a clean, functional design based on Shadcn/UI and TailwindCSS.
 
-### Database Tables
-- `products` — id (serial), name, description, original_price, discount_price, youtube_url, image_url, album_images, category_id
-- `media` — id (serial), filename, original_name, path, size, created_at
-- `categories` — id (serial), name, icon (text, nullable - Lucide icon name)
+### Technical Implementations
+- **Frontend**: React + TypeScript, TailwindCSS, Shadcn/UI for components, Wouter for routing, TanStack Query for data fetching.
+- **Backend**: Node.js with Express.
+- **Database**: PostgreSQL managed with Drizzle ORM.
+- **Image Processing**: Sharp library for resizing images to 800px width and converting them to WebP format (quality 82). Images are stored in `public/uploads/`.
+- **File Upload**: Multer for handling `multipart/form-data` uploads with MIME type validation and size limits.
+- **Authentication**:
+    - **Admin**: Secret-key based login with `ADMIN_SECRET_KEY` environment variable.
+    - **User**: Phone number and password-based registration and login, with scrypt for password hashing. Guest users are supported.
+    - **Session Management**: `express-session` with httpOnly cookies and 7-day TTL in PostgreSQL.
+- **Security**:
+    - `express-session` for session management.
+    - `helmet` for setting security headers (CSP disabled).
+    - `express-rate-limit` (200 requests/15 mins) for API routes.
+    - Input sanitization (HTML entity encoding).
+    - File and path validation for uploads.
+    - `requireAdmin` and `requireAdminOnly` middleware for access control.
+- **State Management**: React Context (`CartContext`), TanStack Query.
+- **SEO**: Static and dynamic meta tags (Open Graph, Twitter Card), JSON-LD, sitemap.xml, robots.txt.
 
-### API Endpoints
-- `GET /api/products` — List all products (public)
-- `POST /api/products` — Create a product (admin-only)
-- `GET /api/products/:id` — Get single product (public)
-- `PUT /api/products/:id` — Update product (admin-only)
-- `DELETE /api/products/:id` — Delete a product (admin-only)
-- `GET /api/products/category/:categoryId` — Get products by category (public)
-- `GET /api/media` — List all uploaded media (public)
-- `POST /api/media/upload` — Upload images (admin-only)
-- `DELETE /api/media/:id` — Delete a media item (admin-only)
-- `GET /api/categories` — List categories (public)
-- `POST /api/categories` — Create category (admin-only)
-- `PATCH /api/categories/:id` — Update category icon/name (admin-only)
-- `DELETE /api/categories/:id` — Delete category (admin-only)
-- `POST /api/orders/credit` — Create order using credit balance (authenticated)
-- `POST /api/admin/login` — Admin login with secret key
-- `POST /api/admin/logout` — Admin logout
-- `GET /api/admin/status` — Check admin session status
-- `GET /api/sync-check` — Check uploads vs DB sync (admin-only)
+### Feature Specifications
+- **Product Management**: Full CRUD operations for products, including image gallery.
+- **Category System**: Products linked to categories, category filtering, custom icons.
+- **Shopping Cart**: LocalStorage-based cart, no login required to add items, adjustable quantities, batch purchase, login required at checkout.
+- **Order System**: Direct purchase or cart checkout, user profile updates on order, distinct orders per item. Admin panel for order viewing.
+- **Referral System**: Unique referral codes per user, credit accumulation for referrers on successful orders, anti-fraud checks, admin management of credit settings.
+- **Visual Customization**: Admin section for logo gallery (built-in and custom), text style editor (font, size, color, bold/italic, presets), dynamic display on homepage.
+- **Analytics**: Tracks page visits, referrer sources, user-agent, with time-period filtering and source breakdown.
+- **Admin Roles**: Four levels (`admin`, `moderator`, `sales_admin`, `user`) with granular access permissions.
 
-### Security
-- **Authentication**: Secret-key based admin login via `ADMIN_SECRET_KEY` env var
-- **Session Management**: express-session with `SESSION_SECRET`, httpOnly cookies, sameSite: lax
-- **Admin Middleware**: `requireAdmin` middleware on all mutating routes (POST/PUT/DELETE)
-- **Rate Limiting**: 200 requests per 15 minutes on `/api/` routes via express-rate-limit
-- **Security Headers**: Helmet middleware (CSP disabled for compatibility)
-- **Input Sanitization**: HTML entity encoding on user inputs (name, description, youtubeUrl)
-- **File Validation**: MIME type whitelist (JPEG, PNG, WebP, GIF, BMP), 10MB size limit
-- **Path Validation**: Album image paths validated to start with `/uploads/`
-- **Filename Sanitization**: Special characters stripped from uploaded filenames
-- **Frontend Route Guards**: `AdminRoute` component redirects unauthenticated users to `/admin-login`
+### System Design Choices
+- **API Endpoints**: RESTful API design for products, media, categories, orders, authentication, and admin functionalities.
+- **Data Schemas**: Defined using Drizzle ORM and Zod for validation, ensuring consistency between frontend and backend.
+- **Modular Structure**: Key directories for `shared/`, `server/`, `client/src/pages/`, `client/src/hooks/`, `client/src/components/`, `public/uploads/`.
 
-### Key Directories
-- `shared/` — Schema (Drizzle + Zod) and API route contracts
-- `server/` — Express backend (routes, storage, db connection)
-- `client/src/pages/` — React page components
-- `client/src/hooks/` — Custom hooks (useProducts, useMedia, useAdmin, useCategories)
-- `client/src/components/` — Reusable UI components (AdminRoute, AnimatedShell, GlassPanel, TopBar)
-- `public/uploads/` — Processed uploaded images (WebP, 800px width)
-
-## Image Handling
-- All uploaded images are resized to 800px width, converted to WebP (quality 82) via Sharp
-- Saved to `public/uploads/` directory
-- Served via `express.static('public')` + dedicated `/uploads` route with cache headers
-- Image paths stored in DB as `/uploads/filename.webp`
-- Frontend uses `ImgWithFallback` component — shows placeholder SVG if image is missing
-- Editing a product without uploading a new image preserves the existing image path
-- Sync check endpoint verifies files on disk match database entries
-
-## Category System
-- Categories stored in `categories` table (id, name)
-- Products have `categoryId` field linking to categories
-- Category filtering via sidebar (desktop) and bottom drawer (mobile)
-- `/api/products/category/:categoryId` endpoint for filtered product lists
-- Custom fishing equipment icons per category via `getCategoryIcon()` helper
-
-## Mobile-First UI (< 768px)
-- **Bottom Navigation**: Fixed bottom bar with Home, Categories, Search, Admin icons (60px height, safe-area-aware)
-- **Category Drawer**: Full-screen Sheet overlay from bottom (85vh) with all categories
-- **Search Drawer**: Full-screen Sheet overlay from top with instant product search
-- **Product Grid**: 2 columns on mobile, 3 on sm+ breakpoint
-- **Touch Targets**: All buttons minimum 44px height (`min-h-[44px]`)
-- **Responsive Text**: Smaller text sizes on mobile, scaling up on sm+
-- **Desktop Sidebar**: Hidden on mobile (`hidden lg:block`), sticky sidebar on large screens
-- **Desktop Nav**: Hidden on mobile (`hidden md:block`), shown on medium+
-- **Bottom Padding**: `pb-20` on mobile to account for fixed bottom nav
-
-## Localization
-- All UI text is in Georgian
-- FiraGO font loaded via Google Fonts
-- UTF-8 support for Georgian characters in database
-- Currency symbol: ₾ (GEL)
-
-## User Authentication (Phone + Password)
-- Direct registration with phone number + password (no OAuth required)
-  - Registration form: fullName, city, address, phone, password
-  - Guest users created with `guest_` prefixed UUID in users table
-  - Password hashed using scrypt (salt:hash format) stored in `password_hash` column
-- Login with phone number + password (`POST /api/login/phone`)
-- "Remember me" checkbox saves phone number in localStorage for auto-fill
-- Replit Auth (OIDC) still available as fallback when `REPL_ID` is set
-- Facebook/Google OAuth routes still exist server-side but buttons removed from UI
-- `isAuthenticated` middleware handles all session types (OIDC, Facebook, Google, guest)
-- Logout redirects guest_/fb_/g_ users to `/` instead of OIDC end-session
-- Users table stores: id, email, firstName, lastName, profileImageUrl, passwordHash, address, city, phone, createdAt, updatedAt
-- Sessions stored in PostgreSQL `sessions` table (7-day TTL)
-- Admin panel "Users" section shows all registered users in a table
-- API endpoints: POST /api/register, POST /api/login/phone
-
-## Shopping Cart
-- Cart stored in localStorage (no login required to add items)
-- Cart hook: `client/src/hooks/use-cart.ts` with CartContext provider in App.tsx
-- CartDrawer: `client/src/components/CartDrawer.tsx` — bottom sheet with item list, selection, checkout
-- Cart icon in mobile bottom nav and desktop nav with red badge showing item count
-- Users can add products from ProductDetail page (validates color selection and stock)
-- Cart items: productId, name, price, imageUrl, quantity, selectedColor, maxStock
-- Select/deselect individual items or all at once for batch purchase
-- Quantity adjustable in cart (min 1, max stock)
-- "ყიდვა" button only appears when items are selected, shows total price
-- Login required only at checkout (when clicking buy on selected items)
-- Checkout creates separate orders for each selected cart item
-- Successfully ordered items are automatically removed from cart
-
-## Purchase / Order System
-- Direct "ყიდვა" button on ProductDetail still works for single-item purchase
-- "კალათა" button on ProductDetail adds item to cart
-- Form fields: fullName (manual), country (auto "საქართველო"), city (dropdown of Georgian cities), address (manual), phone (manual)
-- If user is not logged in, form data is saved to sessionStorage and user is redirected to Google Auth; after login the order is auto-submitted
-- If user is already logged in, order is created immediately and user profile is updated with address/city/phone
-- Orders table: id, userId, productId, productName, productPrice, quantity, fullName, country, city, address, phone, status, createdAt
-- Products have optional `shippingPrice` field set by admin
-- Quantity counter on ProductDetail page (min 1, +/- buttons)
-- PurchaseDialog shows price breakdown: unit price × quantity, shipping, and total
-- Admin panel has "შეკვეთები" (Orders) section showing all orders in a table
-- API endpoints: POST /api/orders, GET /api/orders/my, GET /api/admin/orders, GET /api/profile, PUT /api/profile
-
-## Referral System
-- Each user gets a unique `referralCode` (6 chars, e.g., "GIO123") auto-generated on first profile load
-- Users table has `referral_code` (unique varchar) and `my_credit` (numeric, default 0) columns
-- Share button on product cards opens Facebook sharer with `?ref=CODE` appended to the product URL
-- Middleware reads `?ref=` query param and stores it in an httpOnly cookie for 30 days
-- On order creation, if a `ref` cookie exists:
-  - Looks up the referrer by referral code
-  - Anti-fraud: referrer must be a different user than the buyer (`referrer.id !== userId`)
-  - Credit amount is configurable via `site_settings` table (default 5)
-  - Adds configured credit to the referrer's `myCredit` balance
-  - Creates a `referral_logs` entry tracking: referrer, buyer, order, product, credit awarded
-  - Clears the ref cookie
-- Profile page shows "ჩემი კრედიტი" balance and referral code with copy button
-- Dependencies: cookie-parser
-
-### Referral Admin (ავტო-ძრავა section)
-- **სტატისტიკა tab**: Product sold/view counts with inline editing
-- **გადაზიარებები tab**: Referral log history — shows referrer name, buyer name, product, price, credit awarded, date
-- **კრედიტის მართვა tab**: Configure credit per sale and credit-to-GEL exchange rate (admin-only for saving)
-- DB tables: `referral_logs` (referrer_user_id, buyer_user_id, order_id, product_name, product_price, credit_awarded, created_at), `site_settings` (key/value pairs)
-- API: GET /api/admin/referral-logs, GET /api/admin/settings, PUT /api/admin/settings (admin-only)
-
-### Visual (ვიზუალი section)
-- Admin panel section for logo gallery and text style editor
-- 10 built-in fishing-themed logos + custom logo upload via /api/media/upload
-- Remove uploaded logos with X button (built-in logos cannot be removed)
-- Text designer with live preview: main text + subtitle, font selector (10 options), font size, text/bg color pickers, bold/italic toggles
-- 10 preset styles (gold, neon blue, neon green, red fire, white classic, purple, pink, sea green, outline, gradient)
-- "დამახსოვრება" saves all settings (selected logo, uploaded logos, text styles) to server via site_settings key "visual_settings"
-- Settings auto-load on section open from GET /api/admin/visual-settings
-- PNG download via canvas rendering (secondary button)
-- API: GET /api/admin/visual-settings, PUT /api/admin/visual-settings (requireAdmin)
-- Public API: GET /api/visual-settings/public (no auth, returns selectedLogo, uploadedLogos, text, customText, font, fontSize, textColor, isBold, isItalic)
-- Homepage hero section dynamically reads visual settings: logo, title text, and subtitle from /api/visual-settings/public
-- BUILTIN_LOGOS exported from VisualSection.tsx for reuse in HomePage.tsx
-- Component: `client/src/components/VisualSection.tsx`
-
-### Analytics (ანალიტიკა section)
-- Tracks visitor referrer sources (which websites send traffic)
-- Middleware records every page visit: referrer domain, URL, page path, user-agent
-- Filters out own-domain referrers (self-visits) and API/asset requests
-- "პირდაპირი შესვლა" label for direct visits (no referrer)
-- Time period filter: 1 day, 7 days, 30 days, 90 days
-- Shows total visits count and per-source breakdown with percentage bars
-- DB table: `page_visits` (referrer_domain, referrer_url, page_path, user_agent, created_at) with indexes
-- API: GET /api/admin/analytics?days=7 (admin-only)
-
-## Admin Role System (4 Levels)
-- **admin** — Full access to all sections (products, orders, site management, users, statuses, autodrava)
-- **moderator** — Access to: products, orders, users, autodrava (no site management, no statuses, no user deletion)
-- **sales_admin** (გაყიდვების ადმინი) — Access to: orders only; sees "გაყიდვების პანელი" title
-- **user** — Regular user, no admin panel access; admin link hidden
-- Users table has `role` column (varchar, default "user")
-- Admin panel link only visible to users with admin/moderator/sales_admin role (checked via `user.role`)
-- Same admin password for all roles; after password login, session role is set from DB role
-- Role assignment via "სტატუსები" section in admin panel (admin-only)
-- `requireAdminOnly` middleware restricts role changes and user deletion to full admins only
-
-### SEO Optimization
-- Full Georgian + English meta tags in `client/index.html`
-- `lang="ka"`, canonical URL to spiningebi.ge
-- Meta description, keywords covering: სათევზაო, სპინინგი, ვობლერი, fishing, spinning, etc.
-- Open Graph (og:title, og:description, og:image, og:url) and Twitter Card tags
-- JSON-LD structured data: Store schema with business info (address, phone, hours)
-- Dynamic SEO on product pages: document.title, meta description, OG tags update per product
-- `/sitemap.xml` — auto-generated XML sitemap with all products
-- `/robots.txt` — crawler directives (allow /, disallow /admin-*, /api/*)
-- Product detail pages set title to "{name} — {price} | spiningebi.ge"
-
-## Environment Variables
-- `DATABASE_URL` — PostgreSQL connection string (auto-managed)
-- `SESSION_SECRET` — Express session secret
-- `ADMIN_PASSWORD` — Secret key for admin authentication
-- `AUTH_FACEBOOK_ID` — Facebook App ID for OAuth login
-- `AUTH_FACEBOOK_SECRET` — Facebook App Secret for OAuth login
+## External Dependencies
+- **React**: Frontend UI library.
+- **TypeScript**: Statically typed JavaScript.
+- **TailwindCSS**: Utility-first CSS framework.
+- **Shadcn/UI**: UI component library.
+- **Wouter**: React router.
+- **TanStack Query**: Data fetching and caching library.
+- **Node.js**: Backend runtime environment.
+- **Express**: Web application framework for Node.js.
+- **PostgreSQL**: Relational database.
+- **Drizzle ORM**: TypeScript ORM for PostgreSQL.
+- **Sharp**: High-performance Node.js image processing library.
+- **Multer**: Middleware for handling `multipart/form-data`.
+- **express-session**: Session management middleware.
+- **helmet**: Security middleware for Express.
+- **express-rate-limit**: Basic rate-limiting middleware.
+- **scrypt**: Password hashing library.
+- **cookie-parser**: Middleware for parsing cookies (for referral system).
+- **Google Fonts**: For FiraGO font.
+- **Lucide Icons**: For category icons.
+- **Facebook Sharer**: For product sharing (referral system).
+- **Google Auth**: (Deprecated in UI but available server-side as fallback).
+- **Replit Auth (OIDC)**: (Fallback when `REPL_ID` is set).
