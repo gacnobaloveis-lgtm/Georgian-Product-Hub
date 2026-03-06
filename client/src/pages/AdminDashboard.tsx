@@ -47,6 +47,7 @@ interface EditFormState {
   originalPrice: string;
   discountPrice: string;
   stock: string;
+  youtubeUrl: string;
   colors: ColorEntry[];
   imageFile: File | null;
   imagePreview: string | null;
@@ -71,6 +72,7 @@ function ProductRow({ product }: { product: Product }) {
     originalPrice: product.originalPrice,
     discountPrice: product.discountPrice || "",
     stock: String(product.stock ?? 0),
+    youtubeUrl: product.youtubeUrl || "",
     colors: parseColors(product.colorStock),
     imageFile: null,
     imagePreview: null,
@@ -83,6 +85,7 @@ function ProductRow({ product }: { product: Product }) {
       originalPrice: product.originalPrice,
       discountPrice: product.discountPrice || "",
       stock: String(product.stock ?? 0),
+      youtubeUrl: product.youtubeUrl || "",
       colors: parseColors(product.colorStock),
       imageFile: null,
       imagePreview: null,
@@ -99,6 +102,7 @@ function ProductRow({ product }: { product: Product }) {
       originalPrice: product.originalPrice,
       discountPrice: product.discountPrice || "",
       stock: String(product.stock ?? 0),
+      youtubeUrl: product.youtubeUrl || "",
       colors: parseColors(product.colorStock),
       imageFile: null,
       imagePreview: null,
@@ -128,6 +132,7 @@ function ProductRow({ product }: { product: Product }) {
       if (c.color.trim()) colorStockObj[c.color.trim()] = parseInt(c.stock) || 0;
     });
     formData.append("colorStock", JSON.stringify(colorStockObj));
+    formData.append("youtubeUrl", editForm.youtubeUrl.trim());
     if (editForm.imageFile) {
       formData.append("image", editForm.imageFile);
     }
@@ -293,6 +298,20 @@ function ProductRow({ product }: { product: Product }) {
                   <Plus className="mr-1 h-3.5 w-3.5" /> ფერის დამატება
                 </Button>
               </div>
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <label className="text-xs font-medium text-muted-foreground">YouTube ვიდეო <span className="text-muted-foreground/60">(არჩევითი)</span></label>
+              <Input
+                value={editForm.youtubeUrl}
+                onChange={(e) => setEditForm((p) => ({ ...p, youtubeUrl: e.target.value }))}
+                placeholder="https://www.youtube.com/watch?v=... ან /shorts/..."
+                data-testid={`input-edit-youtube-${product.id}`}
+              />
+              {editForm.youtubeUrl.trim() && (
+                <p className="text-xs text-muted-foreground">
+                  მხარდაჭერილი ფორმატები: youtube.com/watch?v=..., youtube.com/shorts/..., youtu.be/...
+                </p>
+              )}
             </div>
           </div>
           <div className="mt-4 flex justify-end">
