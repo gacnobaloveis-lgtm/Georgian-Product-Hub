@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, UserPlus } from "lucide-react";
+import { Loader2, UserPlus, LogIn, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -20,39 +20,94 @@ const GEORGIAN_CITIES = [
   "გარდაბანი", "ბოლნისი", "ზესტაფონი",
 ];
 
+const REMEMBER_KEY = "spiningebi_remember_phone";
+
 interface AuthLoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  returnTo?: string;
   onRegistered?: () => void;
 }
 
 export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginDialogProps) {
   const { toast } = useToast();
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    fullName: "",
-    city: "",
-    address: "",
-    phone: "",
-  });
+  const [showPassword, setShowPassword] = useState(false);
 
-  async function handleSubmit() {
-    const nameParts = form.fullName.trim().split(/\s+/);
+  const [loginForm, setLoginForm] = useState({ phone: "", password: "", remember: false });
+  const [regForm, setRegForm] = useState({ fullName: "", city: "", address: "", phone: "", password: "" });
+
+  useEffect(() => {
+    if (open) {
+      const saved = localStorage.getItem(REMEMBER_KEY);
+      if (saved) {
+        setLoginForm(prev => ({ ...prev, phone: saved, remember: true }));
+        setMode("login");
+      }
+    }
+  }, [open]);
+
+  async function handleLogin() {
+    if (!loginForm.phone.trim()) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "შეიყვანეთ ტელეფონის ნომერი" });
+      return;
+    }
+    if (!loginForm.password) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "შეიყვანეთ პაროლი" });
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/login/phone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ phone: loginForm.phone.trim(), password: loginForm.password }),
+      });
+
+      if (res.ok) {
+        if (loginForm.remember) {
+          localStorage.setItem(REMEMBER_KEY, loginForm.phone.trim());
+        } else {
+          localStorage.removeItem(REMEMBER_KEY);
+        }
+        await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+        toast({ title: "წარმატებით შეხვედით!" });
+        onOpenChange(false);
+        onRegistered?.();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ variant: "destructive", title: "შეცდომა", description: data.message || "შესვლა ვერ მოხერხდა" });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleRegister() {
+    const nameParts = regForm.fullName.trim().split(/\s+/);
     if (nameParts.length < 2 || !nameParts[0] || !nameParts[1]) {
       toast({ variant: "destructive", title: "შეცდომა", description: "შეიყვანეთ სახელი და გვარი" });
       return;
     }
-    if (!form.city) {
+    if (!regForm.city) {
       toast({ variant: "destructive", title: "შეცდომა", description: "აირჩიეთ ქალაქი" });
       return;
     }
-    if (!form.address.trim()) {
+    if (!regForm.address.trim()) {
       toast({ variant: "destructive", title: "შეცდომა", description: "შეიყვანეთ მისამართი" });
       return;
     }
-    if (!form.phone.trim()) {
+    if (!regForm.phone.trim()) {
       toast({ variant: "destructive", title: "შეცდომა", description: "შეიყვანეთ ტელეფონის ნომერი" });
+      return;
+    }
+    if (!regForm.password || regForm.password.length < 4) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "პაროლი მინიმუმ 4 სიმბოლო უნდა იყოს" });
       return;
     }
 
@@ -67,9 +122,10 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
         body: JSON.stringify({
           firstName,
           lastName,
-          city: form.city,
-          address: form.address.trim(),
-          phone: form.phone.trim(),
+          city: regForm.city,
+          address: regForm.address.trim(),
+          phone: regForm.phone.trim(),
+          password: regForm.password,
         }),
       });
 
@@ -92,74 +148,193 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
+      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-center text-lg" data-testid="text-register-title">რეგისტრაცია</DialogTitle>
+          <DialogTitle className="text-center text-lg" data-testid="text-auth-title">
+            {mode === "login" ? "შესვლა" : "რეგისტრაცია"}
+          </DialogTitle>
           <DialogDescription className="text-center text-sm text-muted-foreground">
-            შეავსეთ თქვენი მონაცემები
+            {mode === "login" ? "შეიყვანეთ თქვენი მონაცემები" : "შეავსეთ თქვენი მონაცემები"}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col gap-3 pt-2">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">სახელი და გვარი</label>
-            <Input
-              value={form.fullName}
-              onChange={e => setForm(prev => ({ ...prev, fullName: e.target.value }))}
-              placeholder="სახელი გვარი"
-              className="min-h-[44px]"
-              data-testid="input-register-fullname"
-            />
-          </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">ქალაქი</label>
-            <Select value={form.city} onValueChange={v => setForm(prev => ({ ...prev, city: v }))}>
-              <SelectTrigger className="min-h-[44px]" data-testid="select-register-city">
-                <SelectValue placeholder="აირჩიეთ ქალაქი" />
-              </SelectTrigger>
-              <SelectContent>
-                {GEORGIAN_CITIES.map(city => (
-                  <SelectItem key={city} value={city}>{city}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">მისამართი</label>
-            <Input
-              value={form.address}
-              onChange={e => setForm(prev => ({ ...prev, address: e.target.value }))}
-              placeholder="ქუჩა, ბინა, რაიონი"
-              className="min-h-[44px]"
-              data-testid="input-register-address"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">ტელეფონი</label>
-            <Input
-              value={form.phone}
-              onChange={e => setForm(prev => ({ ...prev, phone: e.target.value }))}
-              placeholder="+995 5XX XXX XXX"
-              className="min-h-[44px]"
-              data-testid="input-register-phone"
-            />
-          </div>
-
-          <Button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="min-h-[44px] w-full mt-1"
-            data-testid="button-register-submit"
+        <div className="flex rounded-lg border border-border overflow-hidden mb-1">
+          <button
+            type="button"
+            onClick={() => setMode("login")}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${mode === "login" ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/50"}`}
+            data-testid="tab-login"
           >
-            {submitting ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> მიმდინარეობს...</>
-            ) : (
-              <><UserPlus className="mr-2 h-4 w-4" /> რეგისტრაცია</>
-            )}
-          </Button>
+            შესვლა
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("register")}
+            className={`flex-1 py-2 text-sm font-medium transition-colors ${mode === "register" ? "bg-primary text-primary-foreground" : "bg-muted/30 text-muted-foreground hover:bg-muted/50"}`}
+            data-testid="tab-register"
+          >
+            რეგისტრაცია
+          </button>
         </div>
+
+        {mode === "login" ? (
+          <div className="flex flex-col gap-3 pt-1">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">ტელეფონი</label>
+              <Input
+                value={loginForm.phone}
+                onChange={e => setLoginForm(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="+995 5XX XXX XXX"
+                className="min-h-[44px]"
+                data-testid="input-login-phone"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">პაროლი</label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={loginForm.password}
+                  onChange={e => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="პაროლი"
+                  className="min-h-[44px] pr-10"
+                  data-testid="input-login-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(p => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  data-testid="button-toggle-password"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={loginForm.remember}
+                onChange={e => setLoginForm(prev => ({ ...prev, remember: e.target.checked }))}
+                className="h-4 w-4 rounded border-border accent-primary"
+                data-testid="checkbox-remember"
+              />
+              <span className="text-xs text-muted-foreground">დამიმახსოვრე</span>
+            </label>
+
+            <Button
+              onClick={handleLogin}
+              disabled={submitting}
+              className="min-h-[44px] w-full mt-1"
+              data-testid="button-login-submit"
+            >
+              {submitting ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> მიმდინარეობს...</>
+              ) : (
+                <><LogIn className="mr-2 h-4 w-4" /> შესვლა</>
+              )}
+            </Button>
+
+            <p className="text-center text-xs text-muted-foreground">
+              არ გაქვთ ანგარიში?{" "}
+              <button type="button" onClick={() => setMode("register")} className="text-primary font-medium hover:underline" data-testid="link-to-register">
+                დარეგისტრირდით
+              </button>
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 pt-1">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">სახელი და გვარი</label>
+              <Input
+                value={regForm.fullName}
+                onChange={e => setRegForm(prev => ({ ...prev, fullName: e.target.value }))}
+                placeholder="სახელი გვარი"
+                className="min-h-[44px]"
+                data-testid="input-register-fullname"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">ქალაქი</label>
+              <Select value={regForm.city} onValueChange={v => setRegForm(prev => ({ ...prev, city: v }))}>
+                <SelectTrigger className="min-h-[44px]" data-testid="select-register-city">
+                  <SelectValue placeholder="აირჩიეთ ქალაქი" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GEORGIAN_CITIES.map(city => (
+                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">მისამართი</label>
+              <Input
+                value={regForm.address}
+                onChange={e => setRegForm(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="ქუჩა, ბინა, რაიონი"
+                className="min-h-[44px]"
+                data-testid="input-register-address"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">ტელეფონი</label>
+              <Input
+                value={regForm.phone}
+                onChange={e => setRegForm(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="+995 5XX XXX XXX"
+                className="min-h-[44px]"
+                data-testid="input-register-phone"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">პაროლი</label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={regForm.password}
+                  onChange={e => setRegForm(prev => ({ ...prev, password: e.target.value }))}
+                  placeholder="მინ. 4 სიმბოლო"
+                  className="min-h-[44px] pr-10"
+                  data-testid="input-register-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(p => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  data-testid="button-toggle-password-reg"
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <Button
+              onClick={handleRegister}
+              disabled={submitting}
+              className="min-h-[44px] w-full mt-1"
+              data-testid="button-register-submit"
+            >
+              {submitting ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> მიმდინარეობს...</>
+              ) : (
+                <><UserPlus className="mr-2 h-4 w-4" /> რეგისტრაცია</>
+              )}
+            </Button>
+
+            <p className="text-center text-xs text-muted-foreground">
+              უკვე გაქვთ ანგარიში?{" "}
+              <button type="button" onClick={() => setMode("login")} className="text-primary font-medium hover:underline" data-testid="link-to-login">
+                შესვლა
+              </button>
+            </p>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

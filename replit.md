@@ -97,17 +97,21 @@ A web application for the Georgian market with full product CRUD management, ima
 - UTF-8 support for Georgian characters in database
 - Currency symbol: ₾ (GEL)
 
-## User Authentication (Replit Auth + Facebook)
-- Google/GitHub/email login via Replit Auth (OpenID Connect)
-- Facebook Login via passport-facebook (OAuth 2.0)
-  - Env vars: `AUTH_FACEBOOK_ID`, `AUTH_FACEBOOK_SECRET`
-  - Facebook users stored with `fb_` prefixed ID in users table
-  - Callback URL dynamically generated from `req.hostname`
-  - `isAuthenticated` middleware handles both OIDC and Facebook sessions
-  - Logout redirects Facebook users to `/` instead of OIDC end-session
-- Users table stores: id, email, firstName, lastName, profileImageUrl, address, city, phone, createdAt, updatedAt
+## User Authentication (Phone + Password)
+- Direct registration with phone number + password (no OAuth required)
+  - Registration form: fullName, city, address, phone, password
+  - Guest users created with `guest_` prefixed UUID in users table
+  - Password hashed using scrypt (salt:hash format) stored in `password_hash` column
+- Login with phone number + password (`POST /api/login/phone`)
+- "Remember me" checkbox saves phone number in localStorage for auto-fill
+- Replit Auth (OIDC) still available as fallback when `REPL_ID` is set
+- Facebook/Google OAuth routes still exist server-side but buttons removed from UI
+- `isAuthenticated` middleware handles all session types (OIDC, Facebook, Google, guest)
+- Logout redirects guest_/fb_/g_ users to `/` instead of OIDC end-session
+- Users table stores: id, email, firstName, lastName, profileImageUrl, passwordHash, address, city, phone, createdAt, updatedAt
 - Sessions stored in PostgreSQL `sessions` table (7-day TTL)
 - Admin panel "Users" section shows all registered users in a table
+- API endpoints: POST /api/register, POST /api/login/phone
 
 ## Shopping Cart
 - Cart stored in localStorage (no login required to add items)

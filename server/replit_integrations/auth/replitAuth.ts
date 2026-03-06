@@ -235,13 +235,40 @@ export async function setupAuth(app: Express) {
     }
   }
 
+  async function hashPassword(password: string): Promise<string> {
+    const salt = crypto.randomBytes(16).toString("hex");
+    const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+    return `${salt}:${hash}`;
+  }
+
+  async function verifyPassword(password: string, stored: string): Promise<boolean> {
+    const [salt, hash] = stored.split(":");
+    if (!salt || !hash) return false;
+    const testHash = crypto.scryptSync(password, salt, 64).toString("hex");
+    return hash === testHash;
+  }
+
   app.post("/api/register", async (req: any, res) => {
     try {
-      const { firstName, lastName, city, address, phone } = req.body;
+      const { firstName, lastName, city, address, phone, password } = req.body;
       if (!firstName?.trim() || !lastName?.trim() || !city?.trim() || !address?.trim() || !phone?.trim()) {
         return res.status(400).json({ message: "ყველა ველი სავალდებულოა" });
       }
+      if (!password || password.length < 4) {
+        return res.status(400).json({ message: "პაროლი მინიმუმ 4 სიმბოლო უნდა იყოს" });
+      }
 
+      const { db } = await import("../../db");
+      const { users } = await import("@shared/models/auth");
+      const { eq } = await import("drizzle-orm");
+
+      const cleanPhone = phone.trim();
+      const [existingByPhone] = await db.select().from(users).where(eq(users.phone, cleanPhone));
+      if (existingByPhone) {
+        return res.status(400).json({ message: "ეს ტელეფონის ნომერი უკვე რეგისტრირებულია" });
+      }
+
+      const passwordHash = await hashPassword(password);
       const userId = `guest_${crypto.randomUUID()}`;
       await authStorage.upsertUser({
         id: userId,
@@ -251,13 +278,11 @@ export async function setupAuth(app: Express) {
         profileImageUrl: null,
       });
 
-      const { db } = await import("../../db");
-      const { users } = await import("@shared/models/auth");
-      const { eq } = await import("drizzle-orm");
       await db.update(users).set({
         city: city.trim(),
         address: address.trim(),
-        phone: phone.trim(),
+        phone: cleanPhone,
+        passwordHash,
       }).where(eq(users.id, userId));
 
       const sessionUser: any = {};
@@ -269,11 +294,50 @@ export async function setupAuth(app: Express) {
           console.error("[auth] register login error:", err);
           return res.status(500).json({ message: "რეგისტრაცია ვერ მოხერხდა" });
         }
-        res.json({ id: userId, firstName: firstName.trim(), lastName: lastName.trim(), city: city.trim(), address: address.trim(), phone: phone.trim() });
+        res.json({ id: userId, firstName: firstName.trim(), lastName: lastName.trim(), city: city.trim(), address: address.trim(), phone: cleanPhone });
       });
     } catch (err) {
       console.error("[auth] register error:", err);
       res.status(500).json({ message: "რეგისტრაცია ვერ მოხერხდა" });
+    }
+  });
+
+  app.post("/api/login/phone", async (req: any, res) => {
+    try {
+      const { phone, password } = req.body;
+      if (!phone?.trim() || !password) {
+        return res.status(400).json({ message: "შეიყვანეთ ტელეფონი და პაროლი" });
+      }
+
+      const { db } = await import("../../db");
+      const { users } = await import("@shared/models/auth");
+      const { eq } = await import("drizzle-orm");
+
+      const cleanPhone = phone.trim();
+      const [user] = await db.select().from(users).where(eq(users.phone, cleanPhone));
+      if (!user || !user.passwordHash) {
+        return res.status(401).json({ message: "ტელეფონი ან პაროლი არასწორია" });
+      }
+
+      const valid = await verifyPassword(password, user.passwordHash);
+      if (!valid) {
+        return res.status(401).json({ message: "ტელეფონი ან პაროლი არასწორია" });
+      }
+
+      const sessionUser: any = {};
+      sessionUser.claims = { sub: user.id };
+      sessionUser.expires_at = Math.floor(Date.now() / 1000) + 7 * 24 * 3600;
+
+      req.login(sessionUser, (err: any) => {
+        if (err) {
+          console.error("[auth] phone login error:", err);
+          return res.status(500).json({ message: "შესვლა ვერ მოხერხდა" });
+        }
+        res.json({ id: user.id, firstName: user.firstName, lastName: user.lastName });
+      });
+    } catch (err) {
+      console.error("[auth] phone login error:", err);
+      res.status(500).json({ message: "შესვლა ვერ მოხერხდა" });
     }
   });
 
