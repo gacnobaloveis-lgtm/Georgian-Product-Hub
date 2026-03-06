@@ -19,6 +19,9 @@ export function AuthLoginDialog({ open, onOpenChange, returnTo = "/" }: AuthLogi
     queryKey: ["/api/auth/methods"],
   });
 
+  const showGoogle = !methods || methods.google;
+  const showFacebook = !methods || methods.facebook;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
@@ -29,7 +32,7 @@ export function AuthLoginDialog({ open, onOpenChange, returnTo = "/" }: AuthLogi
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 pt-2">
-          {methods?.google !== false && (
+          {showGoogle && (
             <a
               href={`/api/login?returnTo=${encodeURIComponent(returnTo)}`}
               className="flex items-center justify-center gap-3 rounded-lg border border-border bg-white px-4 py-3 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-gray-50"
@@ -39,7 +42,7 @@ export function AuthLoginDialog({ open, onOpenChange, returnTo = "/" }: AuthLogi
               Google-ით ავტორიზაცია
             </a>
           )}
-          {methods?.facebook !== false && (
+          {showFacebook && (
             <a
               href={`/api/login/facebook?returnTo=${encodeURIComponent(returnTo)}`}
               className="flex items-center justify-center gap-3 rounded-lg border border-border bg-[#1877F2] px-4 py-3 text-sm font-medium text-white shadow-sm transition-colors hover:bg-[#166FE5]"
