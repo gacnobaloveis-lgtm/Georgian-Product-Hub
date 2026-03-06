@@ -700,7 +700,7 @@ export default function HomePage() {
                 </>
               ) : (
                 <>
-                  <h2 className="mb-3 text-center text-lg font-bold text-foreground sm:text-xl" data-testid="text-section-title">ტოპ გაყიდვადი პროდუქცია</h2>
+                  <h2 className="mb-3 text-center text-lg font-bold text-foreground sm:text-xl" data-testid="text-section-title"><span className="text-red-600">TOP</span>-გაყიდვადი პროდუქცია</h2>
                   {renderProductGrid(
                     products
                       ? [...products].sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0)).slice(0, window.innerWidth >= 1024 ? 9 : 8)
