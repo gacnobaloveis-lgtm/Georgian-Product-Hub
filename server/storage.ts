@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { products, media, categories, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category } from "@shared/schema";
 import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, lt } from "drizzle-orm";
 
 export interface IStorage {
   getProducts(): Promise<Product[]>;
@@ -25,6 +25,7 @@ export interface IStorage {
   getOrders(): Promise<Order[]>;
   getOrdersByUser(userId: string): Promise<Order[]>;
   updateOrderStatus(orderId: number, status: string): Promise<Order | undefined>;
+  deleteOrdersOlderThan(date: Date): Promise<number>;
   incrementSoldCount(productId: number, qty: number): Promise<void>;
   incrementViewCount(productId: number): Promise<void>;
   getUserByReferralCode(code: string): Promise<User | undefined>;
@@ -149,6 +150,11 @@ export class DatabaseStorage implements IStorage {
   async updateOrderStatus(orderId: number, status: string): Promise<Order | undefined> {
     const [updated] = await db.update(orders).set({ status }).where(eq(orders.id, orderId)).returning();
     return updated;
+  }
+
+  async deleteOrdersOlderThan(date: Date): Promise<number> {
+    const deleted = await db.delete(orders).where(lt(orders.createdAt, date)).returning();
+    return deleted.length;
   }
 
   async getUserByReferralCode(code: string): Promise<User | undefined> {

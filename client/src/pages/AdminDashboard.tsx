@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush } from "lucide-react";
+import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush, ChevronDown, ChevronRight, Archive } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories";
@@ -957,7 +957,111 @@ function OrdersSection() {
     },
   });
 
-  const groups = ordersList ? groupOrdersByUser24h(ordersList) : [];
+  const [openMonths, setOpenMonths] = useState<Set<string>>(new Set());
+
+  const MONTH_NAMES_KA: Record<number, string> = {
+    0: "იანვარი", 1: "თებერვალი", 2: "მარტი", 3: "აპრილი",
+    4: "მაისი", 5: "ივნისი", 6: "ივლისი", 7: "აგვისტო",
+    8: "სექტემბერი", 9: "ოქტომბერი", 10: "ნოემბერი", 11: "დეკემბერი",
+  };
+
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+
+  const ordersByMonth = (ordersList || []).reduce<Record<string, Order[]>>((acc, order) => {
+    const d = order.createdAt ? new Date(order.createdAt) : new Date();
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(order);
+    return acc;
+  }, {});
+
+  const sortedMonthKeys = Object.keys(ordersByMonth).sort((a, b) => {
+    const [ay, am] = a.split("-").map(Number);
+    const [by, bm] = b.split("-").map(Number);
+    return by * 12 + bm - (ay * 12 + am);
+  });
+
+  const currentMonthOrders = ordersByMonth[currentMonthKey] || [];
+  const archiveMonthKeys = sortedMonthKeys.filter((k) => k !== currentMonthKey);
+
+  const currentGroups = groupOrdersByUser24h(currentMonthOrders);
+
+  const toggleMonth = (key: string) => {
+    setOpenMonths((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  };
+
+  const renderOrderGroups = (groups: ReturnType<typeof groupOrdersByUser24h>, prefix: string) => (
+    <div className="space-y-3">
+      {groups.map((group, gIdx) => {
+        const totalPrice = group.orders.reduce((sum, o) => sum + Number(o.productPrice) * (o.quantity || 1), 0);
+        return (
+          <div key={gIdx} className="rounded-lg border border-card-border bg-card overflow-hidden" data-testid={`order-group-${prefix}-${gIdx}`}>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 bg-muted/40 px-4 py-3 border-b border-muted/50">
+              <span className="font-semibold text-sm" data-testid={`text-group-user-${prefix}-${gIdx}`}>{group.fullName}</span>
+              <span className="text-xs text-muted-foreground">{group.phone}</span>
+              <span className="text-xs text-muted-foreground">{group.city}, {group.country}</span>
+              <span className="text-xs text-muted-foreground">{group.address}</span>
+              <span className="ml-auto text-xs font-semibold text-primary" data-testid={`text-group-total-${prefix}-${gIdx}`}>ჯამი: ₾{totalPrice.toFixed(2)}</span>
+              {group.orders.length > 1 && (
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{group.orders.length} შეკვეთა</span>
+              )}
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-muted/30">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">პროდუქტი</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">რაოდ.</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">ფერი</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">ფასი</th>
+                    <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">დრო</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">გაგზავნილი</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group.orders.map((order, oIdx) => {
+                    const isShipped = order.status === "shipped";
+                    return (
+                      <tr key={order.id} className="border-b border-muted/20 transition-colors hover:bg-muted/20" data-testid={`row-order-${prefix}-${gIdx}-${oIdx}`}>
+                        <td className="px-3 py-2.5 font-medium">{order.productName}</td>
+                        <td className="px-3 py-2.5 text-center">{order.quantity || 1}</td>
+                        <td className="px-3 py-2.5 text-xs">{(order as any).selectedColor || "—"}</td>
+                        <td className="px-3 py-2.5 font-medium text-primary">₾{Number(order.productPrice).toFixed(2)}</td>
+                        <td className="px-3 py-2.5 text-xs text-muted-foreground">
+                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString("ka-GE", {
+                            year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+                          }) : "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <button
+                            data-testid={`toggle-order-shipped-${prefix}-${gIdx}-${oIdx}`}
+                            disabled={updateStatus.isPending}
+                            onClick={() => updateStatus.mutate({ id: order.id, status: isShipped ? "pending" : "shipped" })}
+                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
+                              isShipped ? "bg-green-500" : "bg-gray-300"
+                            }`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                              isShipped ? "translate-x-6" : "translate-x-1"
+                            }`} />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <GlassPanel className="p-5 sm:p-7">
@@ -975,77 +1079,61 @@ function OrdersSection() {
       ) : !ordersList || ordersList.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">შეკვეთები ჯერ არ არის</p>
       ) : (
-        <div className="space-y-4">
-          {groups.map((group, gIdx) => {
-            const totalPrice = group.orders.reduce((sum, o) => sum + Number(o.productPrice) * (o.quantity || 1), 0);
-            const allShipped = group.orders.every((o) => o.status === "shipped");
-            return (
-              <div key={gIdx} className="rounded-lg border border-card-border bg-card overflow-hidden" data-testid={`order-group-${gIdx}`}>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 bg-muted/40 px-4 py-3 border-b border-muted/50">
-                  <span className="font-semibold text-sm" data-testid={`text-group-user-${gIdx}`}>{group.fullName}</span>
-                  <span className="text-xs text-muted-foreground">{group.phone}</span>
-                  <span className="text-xs text-muted-foreground">{group.city}, {group.country}</span>
-                  <span className="text-xs text-muted-foreground">{group.address}</span>
-                  <span className="ml-auto text-xs font-semibold text-primary" data-testid={`text-group-total-${gIdx}`}>ჯამი: ₾{totalPrice.toFixed(2)}</span>
-                  {group.orders.length > 1 && (
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{group.orders.length} შეკვეთა</span>
-                  )}
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm" data-testid={`table-orders-group-${gIdx}`}>
-                    <thead>
-                      <tr className="border-b border-muted/30">
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">პროდუქტი</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">რაოდ.</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">ფერი</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">ფასი</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">დრო</th>
-                        <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">გაგზავნილი</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {group.orders.map((order, oIdx) => {
-                        const isShipped = order.status === "shipped";
-                        return (
-                          <tr key={order.id} className="border-b border-muted/20 transition-colors hover:bg-muted/20" data-testid={`row-order-${gIdx}-${oIdx}`}>
-                            <td className="px-3 py-2.5 font-medium" data-testid={`text-order-product-${gIdx}-${oIdx}`}>{order.productName}</td>
-                            <td className="px-3 py-2.5 text-center" data-testid={`text-order-qty-${gIdx}-${oIdx}`}>{order.quantity || 1}</td>
-                            <td className="px-3 py-2.5 text-xs" data-testid={`text-order-color-${gIdx}-${oIdx}`}>{(order as any).selectedColor || "—"}</td>
-                            <td className="px-3 py-2.5 font-medium text-primary" data-testid={`text-order-price-${gIdx}-${oIdx}`}>₾{Number(order.productPrice).toFixed(2)}</td>
-                            <td className="px-3 py-2.5 text-xs text-muted-foreground">
-                              {order.createdAt ? new Date(order.createdAt).toLocaleDateString("ka-GE", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              }) : "—"}
-                            </td>
-                            <td className="px-3 py-2.5 text-right">
-                              <button
-                                data-testid={`toggle-order-shipped-${gIdx}-${oIdx}`}
-                                disabled={updateStatus.isPending}
-                                onClick={() => updateStatus.mutate({ id: order.id, status: isShipped ? "pending" : "shipped" })}
-                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ${
-                                  isShipped ? "bg-green-500" : "bg-gray-300"
-                                }`}
-                              >
-                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                                  isShipped ? "translate-x-6" : "translate-x-1"
-                                }`} />
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+        <div className="space-y-6">
+          <div>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="text-sm font-semibold text-foreground">მიმდინარე თვე — {MONTH_NAMES_KA[now.getMonth()]} {now.getFullYear()}</span>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{currentMonthOrders.length} შეკვეთა</span>
+              <span className="text-xs font-semibold text-primary">
+                ₾{currentMonthOrders.reduce((s, o) => s + Number(o.productPrice) * (o.quantity || 1), 0).toFixed(2)}
+              </span>
+            </div>
+            {currentMonthOrders.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">ამ თვეში შეკვეთები ჯერ არ არის</p>
+            ) : (
+              renderOrderGroups(currentGroups, "cur")
+            )}
+          </div>
+
+          {archiveMonthKeys.length > 0 && (
+            <div>
+              <div className="mb-3 flex items-center gap-2">
+                <Archive className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-semibold text-muted-foreground">არქივი (ბოლო 5 თვე)</span>
               </div>
-            );
-          })}
-          <p className="mt-3 text-xs text-muted-foreground" data-testid="text-orders-count">
-            სულ: {ordersList.length} შეკვეთა ({groups.length} მომხმარებელი)
+              <div className="space-y-2">
+                {archiveMonthKeys.map((monthKey) => {
+                  const [year, month] = monthKey.split("-").map(Number);
+                  const monthOrders = ordersByMonth[monthKey];
+                  const monthRevenue = monthOrders.reduce((s, o) => s + Number(o.productPrice) * (o.quantity || 1), 0);
+                  const isOpen = openMonths.has(monthKey);
+                  const monthGroups = groupOrdersByUser24h(monthOrders);
+                  return (
+                    <div key={monthKey} className="rounded-lg border border-card-border overflow-hidden" data-testid={`archive-month-${monthKey}`}>
+                      <button
+                        onClick={() => toggleMonth(monthKey)}
+                        className="flex w-full items-center gap-3 bg-muted/30 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+                        data-testid={`btn-archive-toggle-${monthKey}`}
+                      >
+                        {isOpen ? <ChevronDown className="h-4 w-4 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+                        <span className="text-sm font-semibold">{MONTH_NAMES_KA[month]} {year}</span>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">{monthOrders.length} შეკვეთა</span>
+                        <span className="ml-auto text-sm font-bold text-primary" data-testid={`text-archive-revenue-${monthKey}`}>₾{monthRevenue.toFixed(2)}</span>
+                      </button>
+                      {isOpen && (
+                        <div className="border-t border-card-border bg-card p-4">
+                          {renderOrderGroups(monthGroups, `arch-${monthKey}`)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <p className="text-xs text-muted-foreground" data-testid="text-orders-count">
+            სულ: {ordersList.length} შეკვეთა
           </p>
         </div>
       )}

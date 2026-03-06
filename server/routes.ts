@@ -663,6 +663,12 @@ export async function registerRoutes(
 
   app.get("/api/admin/orders", requireAdmin, async (_req, res) => {
     try {
+      const fiveMonthsAgo = new Date();
+      fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
+      fiveMonthsAgo.setDate(1);
+      fiveMonthsAgo.setHours(0, 0, 0, 0);
+      await storage.deleteOrdersOlderThan(fiveMonthsAgo);
+
       const allOrders = await storage.getOrders();
       res.json(allOrders);
     } catch (err) {
