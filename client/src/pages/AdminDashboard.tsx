@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useProducts, useDeleteProduct, useUpdateProduct } from "@/hooks/use-products";
 import { AnimatedShell } from "@/components/AnimatedShell";
 import { GlassPanel } from "@/components/GlassPanel";
@@ -55,8 +55,9 @@ interface EditFormState {
   stock: string;
   youtubeUrl: string;
   colors: ColorEntry[];
-  imageFile: File | null;
-  imagePreview: string | null;
+  albumImages: string[];
+  newImageFiles: File[];
+  newImagePreviews: string[];
 }
 
 function ProductRow({ product }: { product: Product }) {
@@ -65,6 +66,13 @@ function ProductRow({ product }: { product: Product }) {
   const updateMutation = useUpdateProduct();
   const [isEditing, setIsEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const previewUrlsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    return () => {
+      previewUrlsRef.current.forEach(u => URL.revokeObjectURL(u));
+    };
+  }, []);
   function parseColors(cs: string | null): ColorEntry[] {
     try {
       const obj = JSON.parse(cs || "{}");
@@ -72,7 +80,14 @@ function ProductRow({ product }: { product: Product }) {
     } catch { return []; }
   }
 
-  const [editForm, setEditForm] = useState<EditFormState>({
+  function parseAlbum(): string[] {
+    try {
+      const arr = JSON.parse(product.albumImages || "[]");
+      return Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === "string") : [];
+    } catch { return []; }
+  }
+
+  const defaultEditState = (): EditFormState => ({
     name: product.name,
     description: product.description,
     originalPrice: product.originalPrice,
@@ -80,51 +95,93 @@ function ProductRow({ product }: { product: Product }) {
     stock: String(product.stock ?? 0),
     youtubeUrl: product.youtubeUrl || "",
     colors: parseColors(product.colorStock),
-    imageFile: null,
-    imagePreview: null,
+    albumImages: parseAlbum(),
+    newImageFiles: [],
+    newImagePreviews: [],
   });
 
+  const [editForm, setEditForm] = useState<EditFormState>(defaultEditState());
+
   function startEdit() {
-    setEditForm({
-      name: product.name,
-      description: product.description,
-      originalPrice: product.originalPrice,
-      discountPrice: product.discountPrice || "",
-      stock: String(product.stock ?? 0),
-      youtubeUrl: product.youtubeUrl || "",
-      colors: parseColors(product.colorStock),
-      imageFile: null,
-      imagePreview: null,
-    });
+    setEditForm(defaultEditState());
     setIsEditing(true);
     setConfirmDelete(false);
   }
 
   function cancelEdit() {
+    editForm.newImagePreviews.forEach(u => URL.revokeObjectURL(u));
     setIsEditing(false);
-    setEditForm({
-      name: product.name,
-      description: product.description,
-      originalPrice: product.originalPrice,
-      discountPrice: product.discountPrice || "",
-      stock: String(product.stock ?? 0),
-      youtubeUrl: product.youtubeUrl || "",
-      colors: parseColors(product.colorStock),
-      imageFile: null,
-      imagePreview: null,
-    });
+    setEditForm(defaultEditState());
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0] ?? null;
-    setEditForm((prev) => ({
+  function handleRemoveAlbumImage(index: number) {
+    setEditForm(prev => ({
       ...prev,
-      imageFile: file,
-      imagePreview: file ? URL.createObjectURL(file) : null,
+      albumImages: prev.albumImages.filter((_, i) => i !== index),
     }));
   }
 
+  function handleAddNewImages(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    const previews = files.map(f => URL.createObjectURL(f));
+    previewUrlsRef.current.push(...previews);
+    setEditForm(prev => ({
+      ...prev,
+      newImageFiles: [...prev.newImageFiles, ...files],
+      newImagePreviews: [...prev.newImagePreviews, ...previews],
+    }));
+    e.target.value = "";
+  }
+
+  function handleRemoveNewImage(index: number) {
+    setEditForm(prev => {
+      const url = prev.newImagePreviews[index];
+      URL.revokeObjectURL(url);
+      previewUrlsRef.current = previewUrlsRef.current.filter(u => u !== url);
+      return {
+        ...prev,
+        newImageFiles: prev.newImageFiles.filter((_, i) => i !== index),
+        newImagePreviews: prev.newImagePreviews.filter((_, i) => i !== index),
+      };
+    });
+  }
+
   async function handleSave() {
+    const totalImages = editForm.albumImages.length + editForm.newImageFiles.length;
+    if (totalImages === 0) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "მინიმუმ ერთი სურათი აუცილებელია" });
+      return;
+    }
+
+    let newUploadedPaths: string[] = [];
+    if (editForm.newImageFiles.length > 0) {
+      try {
+        const uploadFormData = new FormData();
+        editForm.newImageFiles.forEach(f => uploadFormData.append("files", f));
+        const uploadRes = await fetch("/api/media/upload", {
+          method: "POST",
+          body: uploadFormData,
+          credentials: "include",
+        });
+        if (!uploadRes.ok) {
+          toast({ variant: "destructive", title: "შეცდომა", description: "სურათების ატვირთვა ვერ მოხერხდა" });
+          return;
+        }
+        const uploaded = await uploadRes.json();
+        if (!Array.isArray(uploaded)) {
+          toast({ variant: "destructive", title: "შეცდომა", description: "სურათების ატვირთვის პასუხი არასწორია" });
+          return;
+        }
+        newUploadedPaths = uploaded.map((m: { path: string }) => m.path).filter(Boolean);
+      } catch (err) {
+        toast({ variant: "destructive", title: "შეცდომა", description: "სურათების ატვირთვა ვერ მოხერხდა" });
+        return;
+      }
+    }
+
+    const finalAlbum = [...editForm.albumImages, ...newUploadedPaths];
+
     const formData = new FormData();
     formData.append("name", editForm.name);
     formData.append("description", editForm.description);
@@ -139,12 +196,11 @@ function ProductRow({ product }: { product: Product }) {
     });
     formData.append("colorStock", JSON.stringify(colorStockObj));
     formData.append("youtubeUrl", editForm.youtubeUrl.trim());
-    if (editForm.imageFile) {
-      formData.append("image", editForm.imageFile);
-    }
+    formData.append("albumImages", JSON.stringify(finalAlbum));
 
     try {
       await updateMutation.mutateAsync({ id: product.id, formData });
+      editForm.newImagePreviews.forEach(u => URL.revokeObjectURL(u));
       toast({ title: "წარმატება", description: `"${editForm.name}" განახლდა` });
       setIsEditing(false);
     } catch (err) {
@@ -230,26 +286,64 @@ function ProductRow({ product }: { product: Product }) {
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
-              <label className="text-xs font-medium text-muted-foreground">სურათის შეცვლა (არჩევითი)</label>
-              <div className="flex items-center gap-3">
-                <ImgWithFallback
-                  src={editForm.imagePreview || product.imageUrl || undefined}
-                  alt={product.name}
-                  className="h-16 w-16 shrink-0 rounded-lg object-cover"
-                />
-                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/30 px-3 py-2 text-xs text-muted-foreground hover:border-primary">
-                  <Upload className="h-3.5 w-3.5" />
-                  {editForm.imageFile ? editForm.imageFile.name : "ახალი სურათი..."}
+              <label className="text-xs font-medium text-muted-foreground">სურათები</label>
+              <div className="flex flex-wrap gap-2">
+                {editForm.albumImages.map((imgUrl, idx) => (
+                  <div key={`existing-${idx}`} className="group relative">
+                    <ImgWithFallback
+                      src={imgUrl}
+                      alt={`სურათი ${idx + 1}`}
+                      className="h-20 w-20 rounded-lg object-cover border border-border"
+                    />
+                    {idx === 0 && (
+                      <span className="absolute left-0.5 top-0.5 rounded bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                        მთავარი
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveAlbumImage(idx)}
+                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/80"
+                      data-testid={`button-remove-album-img-${product.id}-${idx}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                {editForm.newImagePreviews.map((preview, idx) => (
+                  <div key={`new-${idx}`} className="group relative">
+                    <img
+                      src={preview}
+                      alt={`ახალი ${idx + 1}`}
+                      className="h-20 w-20 rounded-lg object-cover border-2 border-emerald-500"
+                    />
+                    <span className="absolute left-0.5 top-0.5 rounded bg-emerald-600 px-1 text-[9px] font-bold text-white">
+                      ახალი
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveNewImage(idx)}
+                      className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/80"
+                      data-testid={`button-remove-new-img-${product.id}-${idx}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                <label className="flex h-20 w-20 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/20 text-muted-foreground hover:border-primary hover:bg-muted/40" data-testid={`button-add-edit-image-${product.id}`}>
+                  <Plus className="h-5 w-5" />
+                  <span className="text-[10px] mt-0.5">დამატება</span>
                   <input
                     type="file"
                     accept="image/*"
+                    multiple
                     className="hidden"
-                    onChange={handleImageChange}
+                    onChange={handleAddNewImages}
                     data-testid={`input-edit-image-${product.id}`}
                   />
                 </label>
               </div>
-              <p className="text-xs text-muted-foreground">თუ არ აირჩევთ ახალ სურათს, ძველი შენარჩუნდება.</p>
+              <p className="text-xs text-muted-foreground">პირველი სურათი მთავარია. წაშალეთ ძველი ან დაამატეთ ახალი.</p>
             </div>
             <div className="space-y-2 sm:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">ფერები და მარაგი</label>
