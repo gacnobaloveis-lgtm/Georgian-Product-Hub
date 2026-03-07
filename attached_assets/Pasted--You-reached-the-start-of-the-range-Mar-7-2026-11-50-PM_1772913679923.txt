@@ -1,0 +1,127 @@
+
+
+You reached the start of the range
+Mar 7, 2026, 11:50 PM
+ 
+[Region: europe-west4]
+==============
+Using Nixpacks
+==============
+
+context: m2hb-d
+╔═════════════════════ Nixpacks v1.38.0 ═════════════════════╗
+║ setup      │ nodejs_20, npm-9_x, openssl                   ║
+║────────────────────────────────────────────────────────────║
+║ caddy      │ pkgs: caddy                                   ║
+║            │ cmds: caddy fmt --overwrite /assets/Caddyfile ║
+║────────────────────────────────────────────────────────────║
+║ install    │ npm ci                                        ║
+║────────────────────────────────────────────────────────────║
+║ build      │ npm run build                                 ║
+║────────────────────────────────────────────────────────────║
+║ start      │ npm run start                                 ║
+╚════════════════════════════════════════════════════════════╝
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+134ms
+
+internal
+load .dockerignore
+0ms
+
+internal
+load build context
+0ms
+
+stage-0
+WORKDIR /app/ cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix cached
+0ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix cached
+0ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d cached
+0ms
+
+stage-0
+COPY .nixpacks/assets /assets/ cached
+0ms
+
+stage-0
+COPY . /app/.
+56ms
+
+stage-0
+RUN  caddy fmt --overwrite /assets/Caddyfile
+162ms
+
+stage-0
+COPY . /app/.
+105ms
+
+stage-0
+RUN npm ci
+6s
+Run `npm audit` for details.
+
+stage-0
+COPY . /app/.
+194ms
+
+stage-0
+RUN npm run build
+6s
+⚡ Done in 115ms
+
+stage-0
+RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+92ms
+
+stage-0
+COPY . /app
+84ms
+
+auth
+sharing credentials for production-europe-west4-drams3a.railway-registry.com
+0ms
+
+importing to docker
+9s
+=== Successfully Built! ===
+Run:
+docker run -it production-europe-west4-drams3a.railway-registry.com/803bd2c9-2e70-4f16-8162-156b3e23b9d1:68b297d9-8914-4f69-a811-4819b48bfc1c
+Build time: 47.73 seconds
+ 
+====================
+Starting Healthcheck
+====================
+Path: /health
+Retry window: 3m0s
+ 
+Attempt #1 failed with service unavailable. Continuing to retry for 2m49s
+Attempt #2 failed with service unavailable. Continuing to retry for 2m38s
+Attempt #3 failed with service unavailable. Continuing to retry for 2m26s
+Attempt #4 failed with service unavailable. Continuing to retry for 2m12s
+Attempt #5 failed with service unavailable. Continuing to retry for 1m54s
+Attempt #6 failed with service unavailable. Continuing to retry for 1m28s
+Attempt #7 failed with service unavailable. Continuing to retry for 47s
+Attempt #8 failed with service unavailable. Continuing to retry for 7s
+ 
+1/1 replicas never became healthy!
+
+Healthcheck failed!

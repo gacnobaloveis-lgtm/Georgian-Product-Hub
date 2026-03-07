@@ -260,17 +260,12 @@ app.get("/health", async (_req, res) => {
 });
 
 const port = parseInt(process.env.PORT || "5000", 10);
-httpServer.listen(
-  {
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  },
-  () => {
-    log(`serving on port ${port}`);
-    initializeApp();
-  },
-);
+console.log(`[BOOT] About to listen on port ${port}...`);
+httpServer.listen(port, "0.0.0.0", () => {
+  console.log(`[BOOT] Server listening on port ${port}`);
+  log(`serving on port ${port}`);
+  initializeApp();
+});
 
 async function initializeApp() {
   try {
