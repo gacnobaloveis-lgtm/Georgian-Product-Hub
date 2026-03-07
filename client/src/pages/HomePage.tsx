@@ -570,31 +570,34 @@ export default function HomePage() {
           data-testid="img-hero"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-12 lg:px-20">
-          <h1
-            className="flex items-center gap-2 tracking-wide drop-shadow-lg sm:gap-3"
-            style={{
-              fontFamily: heroFont,
-              color: heroTextColor || "#ffffff",
-              fontWeight: heroIsBold ? "bold" : "normal",
-              fontStyle: heroIsItalic ? "italic" : "normal",
-              fontSize: undefined,
-            }}
-            data-testid="text-hero-title"
-          >
+        <div className="absolute inset-0 flex items-center px-4 sm:px-12 lg:px-20">
+          <div className="flex items-center gap-3 sm:gap-4">
             <img src={heroLogoSrc} alt="" className="h-12 w-12 shrink-0 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-20 sm:w-20 lg:h-24 lg:w-24" data-testid="img-logo" />
-            <span className="text-2xl sm:text-4xl lg:text-5xl">{heroText}</span>
-          </h1>
-          <p
-            className="mt-1 max-w-lg text-sm drop-shadow sm:mt-2 sm:text-lg"
-            style={{
-              fontFamily: heroFont,
-              color: heroTextColor ? `${heroTextColor}cc` : "rgba(255,255,255,0.8)",
-              fontStyle: heroIsItalic ? "italic" : "normal",
-            }}
-          >
-            {heroSubtitle}
-          </p>
+            <div className="flex flex-col">
+              <h1
+                className="tracking-wide drop-shadow-lg text-xl sm:text-4xl lg:text-5xl"
+                style={{
+                  fontFamily: heroFont,
+                  color: heroTextColor || "#ffffff",
+                  fontWeight: heroIsBold ? "bold" : "normal",
+                  fontStyle: heroIsItalic ? "italic" : "normal",
+                }}
+                data-testid="text-hero-title"
+              >
+                {heroText}
+              </h1>
+              <p
+                className="mt-0.5 text-xs drop-shadow sm:mt-1 sm:text-lg"
+                style={{
+                  fontFamily: heroFont,
+                  color: heroTextColor ? `${heroTextColor}cc` : "rgba(255,255,255,0.8)",
+                  fontStyle: heroIsItalic ? "italic" : "normal",
+                }}
+              >
+                {heroSubtitle}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
