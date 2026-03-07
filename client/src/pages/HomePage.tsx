@@ -566,16 +566,16 @@ export default function HomePage() {
         <img
           src="/images/hero-fishing.png"
           alt="მეთევზეობა"
-          className="h-36 w-full object-cover sm:h-56 lg:h-64"
+          className="h-40 w-full object-cover sm:h-52 lg:h-56"
           data-testid="img-hero"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-        <div className="absolute inset-0 flex items-center px-4 sm:px-12 lg:px-20">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <img src={heroLogoSrc} alt="" className="h-12 w-12 shrink-0 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-20 sm:w-20 lg:h-24 lg:w-24" data-testid="img-logo" />
-            <div className="flex flex-col">
+        <div className="absolute inset-0 flex items-center px-4 sm:px-8 lg:px-16">
+          <div className="flex items-center gap-3 sm:gap-5">
+            <img src={heroLogoSrc} alt="" className="h-14 w-14 shrink-0 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-16 sm:w-16 lg:h-20 lg:w-20" data-testid="img-logo" />
+            <div className="flex min-w-0 flex-col">
               <h1
-                className="tracking-wide drop-shadow-lg text-xl sm:text-4xl lg:text-5xl"
+                className="truncate tracking-wide drop-shadow-lg text-xl sm:text-3xl lg:text-4xl"
                 style={{
                   fontFamily: heroFont,
                   color: heroTextColor || "#ffffff",
@@ -587,7 +587,7 @@ export default function HomePage() {
                 {heroText}
               </h1>
               <p
-                className="mt-0.5 text-xs drop-shadow sm:mt-1 sm:text-lg"
+                className="mt-0.5 truncate text-xs drop-shadow sm:mt-1 sm:text-base lg:text-lg"
                 style={{
                   fontFamily: heroFont,
                   color: heroTextColor ? `${heroTextColor}cc` : "rgba(255,255,255,0.8)",
