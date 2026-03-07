@@ -237,66 +237,82 @@ function startSelfMonitoring() {
 let appReady = false;
 
 app.get("/health", async (_req, res) => {
-  const health = await checkHealth();
-  const uptime = process.uptime();
-  const memUsage = process.memoryUsage();
-  res.status(health.ok ? 200 : 503).json({
-    status: health.ok ? "healthy" : "unhealthy",
-    ready: appReady,
-    details: health.details,
-    uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
-    memory: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
-    timestamp: new Date().toISOString(),
-  });
+  try {
+    const health = await checkHealth();
+    const uptime = process.uptime();
+    const memUsage = process.memoryUsage();
+    res.status(health.ok ? 200 : 503).json({
+      status: health.ok ? "healthy" : "unhealthy",
+      ready: appReady,
+      details: health.details,
+      uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
+      memory: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    res.status(200).json({
+      status: "starting",
+      ready: false,
+      details: err.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
-(async () => {
-  await setupAuth(app);
-  registerAuthRoutes(app);
+const port = parseInt(process.env.PORT || "5000", 10);
+httpServer.listen(
+  {
+    port,
+    host: "0.0.0.0",
+    reusePort: true,
+  },
+  () => {
+    log(`serving on port ${port}`);
+    initializeApp();
+  },
+);
 
-  await registerRoutes(httpServer, app);
+async function initializeApp() {
+  try {
+    await setupAuth(app);
+    registerAuthRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    await registerRoutes(httpServer, app);
 
-    console.error("Internal Server Error:", err);
+    app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-    if (res.headersSent) {
-      return next(err);
-    }
+      console.error("Internal Server Error:", err);
 
-    return res.status(status).json({ message });
-  });
-
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else {
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
-  }
-
-  const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    async () => {
-      log(`serving on port ${port}`);
-
-      try {
-        await seedAdminUser();
-        await ensureMediaDataColumns();
-        await migrateFilesToDb();
-        log("All migrations completed successfully");
-      } catch (err: any) {
-        console.error("[STARTUP] Migration error (non-fatal):", err.message);
+      if (res.headersSent) {
+        return next(err);
       }
 
-      appReady = true;
-      startSelfMonitoring();
-    },
-  );
-})();
+      return res.status(status).json({ message });
+    });
+
+    if (process.env.NODE_ENV === "production") {
+      serveStatic(app);
+    } else {
+      const { setupVite } = await import("./vite");
+      await setupVite(httpServer, app);
+    }
+
+    log("App initialization completed");
+  } catch (err: any) {
+    console.error("[STARTUP] App init error:", err.message);
+  }
+
+  try {
+    await seedAdminUser();
+    await ensureMediaDataColumns();
+    await migrateFilesToDb();
+    log("All migrations completed successfully");
+  } catch (err: any) {
+    console.error("[STARTUP] Migration error (non-fatal):", err.message);
+  }
+
+  appReady = true;
+  startSelfMonitoring();
+}
