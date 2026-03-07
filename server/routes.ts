@@ -83,12 +83,20 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   app.use(cookieParser());
-  app.use(express.static(path.join(process.cwd(), "public")));
 
   app.use("/uploads", (req, res, next) => {
-    res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+    res.setHeader("Cache-Control", "public, max-age=86400");
     next();
-  }, express.static(uploadsDir));
+  }, express.static(uploadsDir, {
+    fallthrough: false,
+  }));
+
+  app.use("/uploads", (err: any, _req: any, res: any, _next: any) => {
+    res.setHeader("Cache-Control", "no-cache");
+    res.status(404).json({ message: "ფაილი ვერ მოიძებნა" });
+  });
+
+  app.use(express.static(path.join(process.cwd(), "public")));
 
   app.use((req: any, res, next) => {
     const refCode = req.query.ref;
