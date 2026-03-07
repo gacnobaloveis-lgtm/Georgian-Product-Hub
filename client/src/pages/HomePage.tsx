@@ -568,7 +568,7 @@ export default function HomePage() {
         <img
           src="/images/hero-fishing.png"
           alt="მეთევზეობა"
-          className="h-40 w-full object-cover sm:h-52 lg:h-56"
+          className="h-44 w-full object-cover sm:h-52 lg:h-56"
           data-testid="img-hero"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
@@ -583,7 +583,7 @@ export default function HomePage() {
             />
             <div className="flex min-w-0 flex-col">
               <h1
-                className="truncate tracking-wide drop-shadow-lg text-xl sm:text-3xl lg:text-4xl"
+                className="tracking-wide drop-shadow-lg text-xl leading-tight sm:text-3xl lg:text-4xl"
                 style={{
                   fontFamily: heroFont,
                   color: heroTextColor || "#ffffff",
@@ -595,7 +595,7 @@ export default function HomePage() {
                 {heroText}
               </h1>
               <p
-                className="mt-0.5 truncate text-xs drop-shadow sm:mt-1 sm:text-base lg:text-lg"
+                className="mt-0.5 text-xs leading-tight drop-shadow sm:mt-1 sm:text-base lg:text-lg"
                 style={{
                   fontFamily: heroFont,
                   color: visualSettings?.customTextColor
