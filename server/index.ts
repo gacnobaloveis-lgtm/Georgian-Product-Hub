@@ -189,6 +189,51 @@ async function migrateFilesToDb() {
   }
 }
 
+process.on("uncaughtException", (err) => {
+  console.error("[CRASH GUARD] Uncaught exception:", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[CRASH GUARD] Unhandled rejection:", reason);
+});
+
+let consecutiveFailures = 0;
+const MAX_FAILURES = 5;
+
+async function checkHealth(): Promise<{ ok: boolean; details: string }> {
+  try {
+    const { pool: dbPool } = await import("./db");
+    const result = await dbPool.query("SELECT 1 as alive");
+    if (result.rows[0]?.alive === 1) {
+      return { ok: true, details: "DB connected" };
+    }
+    return { ok: false, details: "DB query failed" };
+  } catch (err: any) {
+    return { ok: false, details: `DB error: ${err.message}` };
+  }
+}
+
+function startSelfMonitoring() {
+  const INTERVAL = 60_000;
+  setInterval(async () => {
+    const health = await checkHealth();
+    if (!health.ok) {
+      consecutiveFailures++;
+      console.error(`[MONITOR] Health check failed (${consecutiveFailures}/${MAX_FAILURES}): ${health.details}`);
+      if (consecutiveFailures >= MAX_FAILURES) {
+        console.error("[MONITOR] Too many failures, restarting process...");
+        process.exit(1);
+      }
+    } else {
+      if (consecutiveFailures > 0) {
+        console.log(`[MONITOR] Health restored after ${consecutiveFailures} failures`);
+      }
+      consecutiveFailures = 0;
+    }
+  }, INTERVAL);
+  console.log(`[MONITOR] Self-monitoring started (interval: ${INTERVAL / 1000}s, max failures: ${MAX_FAILURES})`);
+}
+
 (async () => {
   await setupAuth(app);
   registerAuthRoutes(app);
@@ -198,6 +243,19 @@ async function migrateFilesToDb() {
   await migrateFilesToDb();
 
   await registerRoutes(httpServer, app);
+
+  app.get("/health", async (_req, res) => {
+    const health = await checkHealth();
+    const uptime = process.uptime();
+    const memUsage = process.memoryUsage();
+    res.status(health.ok ? 200 : 503).json({
+      status: health.ok ? "healthy" : "unhealthy",
+      details: health.details,
+      uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
+      memory: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
+      timestamp: new Date().toISOString(),
+    });
+  });
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -228,6 +286,7 @@ async function migrateFilesToDb() {
     },
     () => {
       log(`serving on port ${port}`);
+      startSelfMonitoring();
     },
   );
 })();
