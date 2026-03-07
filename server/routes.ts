@@ -868,6 +868,8 @@ export async function registerRoutes(
           textColor: parsed.textColor || "#FFD700",
           isBold: parsed.isBold ?? true,
           isItalic: parsed.isItalic ?? false,
+          customTextColor: parsed.customTextColor || "",
+          customTextItalic: parsed.customTextItalic ?? false,
         });
       } catch {
         res.json(null);
