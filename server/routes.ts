@@ -90,7 +90,7 @@ export async function registerRoutes(
     const filePath = path.join(uploadsDir, filename);
 
     if (fs.existsSync(filePath)) {
-      res.setHeader("Cache-Control", "public, max-age=86400");
+      res.setHeader("Cache-Control", "public, max-age=3600, must-revalidate");
       return res.sendFile(filePath);
     }
 
@@ -102,14 +102,14 @@ export async function registerRoutes(
       if (result.rows.length > 0 && result.rows[0].data) {
         const row = result.rows[0];
         res.setHeader("Content-Type", row.mime_type || "image/webp");
-        res.setHeader("Cache-Control", "public, max-age=86400");
+        res.setHeader("Cache-Control", "public, max-age=3600, must-revalidate");
         return res.send(row.data);
       }
     } catch (err) {
       console.error("DB image fetch error:", err);
     }
 
-    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     res.status(404).json({ message: "ფაილი ვერ მოიძებნა" });
   });
 

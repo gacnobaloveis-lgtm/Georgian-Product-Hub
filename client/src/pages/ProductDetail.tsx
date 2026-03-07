@@ -14,6 +14,12 @@ import { queryClient } from "@/lib/queryClient";
 
 const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' fill='%23f1f5f9'%3E%3Crect width='600' height='400'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%2394a3b8'%3E%E1%83%A1%E1%83%A3%E1%83%A0%E1%83%90%E1%83%97%E1%83%98 %E1%83%90%E1%83%A0 %E1%83%90%E1%83%A0%E1%83%98%E1%83%A1%3C/text%3E%3C/svg%3E";
 
+function cacheBust(url: string | undefined): string | undefined {
+  if (!url) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}v=2`;
+}
+
 function ImgWithFallback({
   src,
   alt,
@@ -23,7 +29,7 @@ function ImgWithFallback({
   const [errored, setErrored] = useState(false);
   return (
     <img
-      src={errored || !src ? PLACEHOLDER_IMG : src}
+      src={errored || !src ? PLACEHOLDER_IMG : cacheBust(src)}
       alt={alt}
       className={className}
       onError={() => setErrored(true)}

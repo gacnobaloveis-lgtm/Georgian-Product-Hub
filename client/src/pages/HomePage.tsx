@@ -83,6 +83,12 @@ function SiteFooter() {
 
 const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='250' fill='%23e2e8f0'%3E%3Crect width='400' height='250'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='16' fill='%2394a3b8'%3E%E1%83%A1%E1%83%A3%E1%83%A0%E1%83%90%E1%83%97%E1%83%98 %E1%83%90%E1%83%A0 %E1%83%90%E1%83%A0%E1%83%98%E1%83%A1%3C/text%3E%3C/svg%3E";
 
+function cacheBust(url: string | undefined): string | undefined {
+  if (!url) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}v=2`;
+}
+
 function ImgWithFallback({
   src,
   alt,
@@ -92,7 +98,7 @@ function ImgWithFallback({
   const [errored, setErrored] = useState(false);
   return (
     <img
-      src={errored || !src ? PLACEHOLDER_IMG : src}
+      src={errored || !src ? PLACEHOLDER_IMG : cacheBust(src)}
       alt={alt}
       className={className}
       onError={() => setErrored(true)}
@@ -575,7 +581,7 @@ export default function HomePage() {
         <div className="absolute inset-0 flex items-center px-4 sm:px-8 lg:px-16">
           <div className="flex items-center gap-3 sm:gap-5">
             <img
-              src={heroLogoSrc}
+              src={cacheBust(heroLogoSrc)}
               alt=""
               className="h-14 w-14 shrink-0 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-16 sm:w-16 lg:h-20 lg:w-20"
               data-testid="img-logo"
