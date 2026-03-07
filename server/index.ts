@@ -234,28 +234,27 @@ function startSelfMonitoring() {
   console.log(`[MONITOR] Self-monitoring started (interval: ${INTERVAL / 1000}s, max failures: ${MAX_FAILURES})`);
 }
 
+let appReady = false;
+
+app.get("/health", async (_req, res) => {
+  const health = await checkHealth();
+  const uptime = process.uptime();
+  const memUsage = process.memoryUsage();
+  res.status(health.ok ? 200 : 503).json({
+    status: health.ok ? "healthy" : "unhealthy",
+    ready: appReady,
+    details: health.details,
+    uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
+    memory: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
+    timestamp: new Date().toISOString(),
+  });
+});
+
 (async () => {
   await setupAuth(app);
   registerAuthRoutes(app);
 
-  await seedAdminUser();
-  await ensureMediaDataColumns();
-  await migrateFilesToDb();
-
   await registerRoutes(httpServer, app);
-
-  app.get("/health", async (_req, res) => {
-    const health = await checkHealth();
-    const uptime = process.uptime();
-    const memUsage = process.memoryUsage();
-    res.status(health.ok ? 200 : 503).json({
-      status: health.ok ? "healthy" : "unhealthy",
-      details: health.details,
-      uptime: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m`,
-      memory: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
-      timestamp: new Date().toISOString(),
-    });
-  });
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
@@ -284,8 +283,19 @@ function startSelfMonitoring() {
       host: "0.0.0.0",
       reusePort: true,
     },
-    () => {
+    async () => {
       log(`serving on port ${port}`);
+
+      try {
+        await seedAdminUser();
+        await ensureMediaDataColumns();
+        await migrateFilesToDb();
+        log("All migrations completed successfully");
+      } catch (err: any) {
+        console.error("[STARTUP] Migration error (non-fatal):", err.message);
+      }
+
+      appReady = true;
       startSelfMonitoring();
     },
   );
