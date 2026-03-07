@@ -461,6 +461,8 @@ export default function HomePage() {
     textColor: string;
     isBold: boolean;
     isItalic: boolean;
+    customTextColor?: string;
+    customTextItalic?: boolean;
   }
 
   const { data: visualSettings } = useQuery<VisualPublic | null>({
@@ -596,8 +598,10 @@ export default function HomePage() {
                 className="mt-0.5 truncate text-xs drop-shadow sm:mt-1 sm:text-base lg:text-lg"
                 style={{
                   fontFamily: heroFont,
-                  color: heroTextColor ? `${heroTextColor}cc` : "rgba(255,255,255,0.8)",
-                  fontStyle: heroIsItalic ? "italic" : "normal",
+                  color: visualSettings?.customTextColor
+                    ? visualSettings.customTextColor
+                    : heroTextColor ? `${heroTextColor}cc` : "rgba(255,255,255,0.8)",
+                  fontStyle: (visualSettings?.customTextItalic ?? heroIsItalic) ? "italic" : "normal",
                 }}
               >
                 {heroSubtitle}

@@ -71,6 +71,8 @@ interface VisualSettings {
   isBold: boolean;
   isItalic: boolean;
   customText: string;
+  customTextColor?: string;
+  customTextItalic?: boolean;
 }
 
 const DEFAULT_SETTINGS: VisualSettings = {
@@ -104,6 +106,8 @@ export function VisualSection() {
   const [isBold, setIsBold] = useState(true);
   const [isItalic, setIsItalic] = useState(false);
   const [customText, setCustomText] = useState("");
+  const [customTextColor, setCustomTextColor] = useState("");
+  const [customTextItalic, setCustomTextItalic] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -125,6 +129,8 @@ export function VisualSection() {
       setIsBold(savedSettings.isBold ?? true);
       setIsItalic(savedSettings.isItalic ?? false);
       setCustomText(savedSettings.customText || "");
+      setCustomTextColor(savedSettings.customTextColor || "");
+      setCustomTextItalic(savedSettings.customTextItalic ?? false);
       setLoaded(true);
     } else if (savedSettings === null && !loaded) {
       setLoaded(true);
@@ -159,6 +165,8 @@ export function VisualSection() {
       isBold,
       isItalic,
       customText,
+      customTextColor,
+      customTextItalic,
     });
   }
 
@@ -378,10 +386,10 @@ export function VisualSection() {
                 style={{
                   fontFamily: font,
                   fontSize: `${(parseInt(fontSize) || 48) * 0.4}px`,
-                  color: textColor !== "transparent" ? textColor : "white",
+                  color: (customTextColor || textColor) !== "transparent" ? (customTextColor || textColor) : "white",
                   textShadow: textShadow !== "none" ? textShadow : undefined,
                   fontWeight: isBold ? "bold" : "normal",
-                  fontStyle: isItalic ? "italic" : "normal",
+                  fontStyle: customTextItalic ? "italic" : "normal",
                   WebkitTextStroke: textStroke || undefined,
                 }}
                 className="text-center mt-1"
@@ -418,7 +426,7 @@ export function VisualSection() {
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">დამატებითი ტექსტი</label>
+              <label className="text-xs font-medium">დამატებითი ტექსტი (სლოგანი)</label>
               <Input
                 value={customText}
                 onChange={e => setCustomText(e.target.value)}
@@ -426,6 +434,34 @@ export function VisualSection() {
                 className="min-h-[44px]"
                 data-testid="input-visual-custom"
               />
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-[10px] text-muted-foreground">ფერი:</label>
+                  <input
+                    type="color"
+                    value={customTextColor || textColor}
+                    onChange={e => setCustomTextColor(e.target.value)}
+                    className="h-7 w-7 cursor-pointer rounded border border-muted"
+                    data-testid="input-custom-text-color"
+                  />
+                </div>
+                <button
+                  onClick={() => setCustomTextItalic(!customTextItalic)}
+                  className={`rounded px-2 py-1 text-xs font-medium transition-all ${customTextItalic ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+                  data-testid="button-custom-text-italic"
+                >
+                  <span style={{ fontStyle: "italic" }}>I</span> დახრილი
+                </button>
+                {customTextColor && (
+                  <button
+                    onClick={() => setCustomTextColor("")}
+                    className="rounded px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                    data-testid="button-reset-custom-color"
+                  >
+                    გასუფთავება
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
