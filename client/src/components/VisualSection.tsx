@@ -273,7 +273,15 @@ export function VisualSection() {
                 className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-2 transition-all hover:shadow-md w-full ${selectedLogo === idx ? "border-primary bg-primary/10 shadow-lg" : "border-muted bg-card hover:border-primary/30"}`}
                 data-testid={`button-logo-${idx}`}
               >
-                <img src={logo.src} alt={logo.label} className="h-12 w-12 sm:h-16 sm:w-16 object-contain" />
+                <img
+                  src={logo.src}
+                  alt={logo.label}
+                  className="h-12 w-12 sm:h-16 sm:w-16 object-contain"
+                  onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }}
+                />
+                <div className="hidden h-12 w-12 sm:h-16 sm:w-16 flex items-center justify-center rounded-lg bg-muted text-muted-foreground text-[8px] text-center p-1">
+                  {logo.label}
+                </div>
                 <span className="text-[10px] sm:text-xs text-muted-foreground text-center leading-tight">{logo.label}</span>
               </button>
               {idx >= BUILTIN_LOGOS.length && (
@@ -322,7 +330,15 @@ export function VisualSection() {
         {selectedLogo !== null && selectedLogo < allLogos.length && (
           <div className="mt-4 flex justify-center">
             <div className="rounded-2xl border-2 border-primary/30 bg-card p-6 shadow-xl">
-              <img src={allLogos[selectedLogo].src} alt={allLogos[selectedLogo].label} className="h-32 w-32 sm:h-48 sm:w-48 object-contain" />
+              <img
+                src={allLogos[selectedLogo].src}
+                alt={allLogos[selectedLogo].label}
+                className="h-32 w-32 sm:h-48 sm:w-48 object-contain"
+                onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }}
+              />
+              <div className="hidden h-32 w-32 sm:h-48 sm:w-48 flex items-center justify-center rounded-xl bg-muted text-muted-foreground text-sm text-center p-2">
+                სურათი ვერ ჩაიტვირთა
+              </div>
               <p className="text-center text-sm font-medium mt-2">{allLogos[selectedLogo].label}</p>
             </div>
           </div>

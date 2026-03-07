@@ -572,7 +572,13 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
         <div className="absolute inset-0 flex items-center px-4 sm:px-8 lg:px-16">
           <div className="flex items-center gap-3 sm:gap-5">
-            <img src={heroLogoSrc} alt="" className="h-14 w-14 shrink-0 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-16 sm:w-16 lg:h-20 lg:w-20" data-testid="img-logo" />
+            <img
+              src={heroLogoSrc}
+              alt=""
+              className="h-14 w-14 shrink-0 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-16 sm:w-16 lg:h-20 lg:w-20"
+              data-testid="img-logo"
+              onError={(e) => { e.currentTarget.src = fishermanLogo; }}
+            />
             <div className="flex min-w-0 flex-col">
               <h1
                 className="truncate tracking-wide drop-shadow-lg text-xl sm:text-3xl lg:text-4xl"
