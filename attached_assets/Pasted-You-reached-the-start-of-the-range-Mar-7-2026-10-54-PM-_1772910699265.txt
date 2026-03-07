@@ -1,0 +1,132 @@
+You reached the start of the range
+Mar 7, 2026, 10:54 PM
+ 
+[Region: europe-west4]
+==============
+Using Nixpacks
+==============
+
+context: m2hb-d
+╔══════════════════════════════ Nixpacks v1.38.0 ══════════════════════════════╗
+║ setup      │ nodejs_18, npm-9_x, openssl                                     ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ caddy      │ pkgs: caddy                                                     ║
+║            │ cmds: caddy fmt --overwrite /assets/Caddyfile                   ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ install    │ npm ci                                                          ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ build      │ npm run build                                                   ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ start      │ exec caddy run --config /assets/Caddyfile --adapter caddyfile   ║
+║            │ 2>&1                                                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+287ms
+
+internal
+load .dockerignore
+0ms
+
+internal
+load build context
+0ms
+
+stage-0
+FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+20ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix cached
+0ms
+
+stage-0
+WORKDIR /app/ cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+26ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+7m 9s
+61 store paths deleted, 559.56 MiB freed
+
+stage-0
+COPY .nixpacks/assets /assets/
+94ms
+
+stage-0
+COPY . /app/.
+154ms
+
+stage-0
+RUN  caddy fmt --overwrite /assets/Caddyfile
+171ms
+
+stage-0
+COPY . /app/.
+55ms
+
+stage-0
+RUN npm ci
+8s
+Run `npm audit` for details.
+
+stage-0
+COPY . /app/.
+201ms
+
+stage-0
+RUN npm run build
+5s
+⚡ Done in 94ms
+
+stage-0
+RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+255ms
+
+stage-0
+COPY . /app
+123ms
+
+auth
+sharing credentials for production-europe-west4-drams3a.railway-registry.com
+0ms
+
+importing to docker
+9s
+=== Successfully Built! ===
+Run:
+docker run -it production-europe-west4-drams3a.railway-registry.com/803bd2c9-2e70-4f16-8162-156b3e23b9d1:a4a2b8d2-8ee6-457b-bc3b-9b5e36df3744
+Build time: 481.96 seconds
+ 
+====================
+Starting Healthcheck
+====================
+Path: /health
+Retry window: 2m0s
+ 
+Attempt #1 failed with service unavailable. Continuing to retry for 1m59s
+Attempt #2 failed with service unavailable. Continuing to retry for 1m58s
+Attempt #3 failed with service unavailable. Continuing to retry for 1m56s
+Attempt #4 failed with service unavailable. Continuing to retry for 1m52s
+Attempt #5 failed with service unavailable. Continuing to retry for 1m44s
+Attempt #6 failed with service unavailable. Continuing to retry for 1m28s
+Attempt #7 failed with service unavailable. Continuing to retry for 57s
+Attempt #8 failed with service unavailable. Continuing to retry for 27s
+ 
+1/1 replicas never became healthy!
+
+Healthcheck failed!
+
