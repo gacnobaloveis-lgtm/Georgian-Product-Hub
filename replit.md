@@ -19,7 +19,7 @@ The user wants all UI text to be in Georgian and currency displayed in GEL (₾)
 - **Frontend**: React + TypeScript, TailwindCSS, Shadcn/UI for components, Wouter for routing, TanStack Query for data fetching.
 - **Backend**: Node.js with Express.
 - **Database**: PostgreSQL managed with Drizzle ORM.
-- **Image Processing**: Sharp library for resizing images to 800px width and converting them to WebP format (quality 82). Images are stored in `public/uploads/`.
+- **Image Processing**: Sharp library for resizing images to 800px width and converting them to WebP format (quality 82). Images are stored in `public/uploads/` AND in the PostgreSQL database (`media.data` bytea column) for persistence across deployments. The `/uploads/:filename` route serves from filesystem first, falling back to database if the file doesn't exist on disk.
 - **File Upload**: Multer for handling `multipart/form-data` uploads with MIME type validation and size limits.
 - **Authentication**:
     - **Admin**: Secret-key based login with `ADMIN_SECRET_KEY` environment variable.

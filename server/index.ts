@@ -133,11 +133,69 @@ async function seedAdminUser() {
   }
 }
 
+async function ensureMediaDataColumns() {
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`ALTER TABLE media ADD COLUMN IF NOT EXISTS data bytea`);
+    await pool.query(`ALTER TABLE media ADD COLUMN IF NOT EXISTS mime_type varchar DEFAULT 'image/webp'`);
+    console.log("[migrate] media data/mime_type columns ensured");
+  } catch (err) {
+    console.error("[migrate] Error ensuring media data columns:", err);
+  }
+}
+
+async function migrateFilesToDb() {
+  try {
+    const { pool } = await import("./db");
+    const path = await import("path");
+    const fs = await import("fs");
+    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+
+    const result = await pool.query("SELECT id, filename FROM media WHERE data IS NULL");
+    let migrated = 0;
+    for (const row of result.rows) {
+      const filePath = path.join(uploadsDir, row.filename);
+      if (fs.existsSync(filePath)) {
+        const buffer = fs.readFileSync(filePath);
+        await pool.query("UPDATE media SET data = $1, mime_type = $2 WHERE id = $3", [buffer, "image/webp", row.id]);
+        migrated++;
+      }
+    }
+
+    if (!fs.existsSync(uploadsDir)) return;
+    const allFiles = fs.readdirSync(uploadsDir).filter(f => f.endsWith(".webp") || f.endsWith(".png") || f.endsWith(".jpg"));
+    const mediaRes = await pool.query("SELECT filename FROM media");
+    const knownFiles = new Set(mediaRes.rows.map((r: any) => r.filename));
+    let newInserted = 0;
+    for (const fn of allFiles) {
+      if (knownFiles.has(fn)) continue;
+      const filePath = path.join(uploadsDir, fn);
+      const buffer = fs.readFileSync(filePath);
+      const ext = fn.split(".").pop();
+      const mime = ext === "png" ? "image/png" : ext === "jpg" ? "image/jpeg" : "image/webp";
+      await pool.query(
+        "INSERT INTO media (filename, original_name, path, size, data, mime_type) VALUES ($1, $2, $3, $4, $5, $6)",
+        [fn, fn, `/uploads/${fn}`, String(buffer.length), buffer, mime]
+      );
+      newInserted++;
+    }
+
+    const total = migrated + newInserted;
+    if (total > 0) {
+      console.log(`[migrate] ${total} images migrated to database (${migrated} updated, ${newInserted} new)`);
+    }
+  } catch (err) {
+    console.error("[migrate] Error migrating files to DB:", err);
+  }
+}
+
 (async () => {
   await setupAuth(app);
   registerAuthRoutes(app);
 
   await seedAdminUser();
+  await ensureMediaDataColumns();
+  await migrateFilesToDb();
 
   await registerRoutes(httpServer, app);
 

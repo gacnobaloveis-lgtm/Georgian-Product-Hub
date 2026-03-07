@@ -10,6 +10,7 @@ import fs from "fs";
 import { randomUUID } from "crypto";
 import express from "express";
 import cookieParser from "cookie-parser";
+import { pool } from "./db";
 
 const uploadsDir = path.join(process.cwd(), "public", "uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -84,14 +85,30 @@ export async function registerRoutes(
 ): Promise<Server> {
   app.use(cookieParser());
 
-  app.use("/uploads", (req, res, next) => {
-    res.setHeader("Cache-Control", "public, max-age=86400");
-    next();
-  }, express.static(uploadsDir, {
-    fallthrough: false,
-  }));
+  app.get("/uploads/:filename", async (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(uploadsDir, filename);
 
-  app.use("/uploads", (err: any, _req: any, res: any, _next: any) => {
+    if (fs.existsSync(filePath)) {
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.sendFile(filePath);
+    }
+
+    try {
+      const result = await pool.query(
+        "SELECT data, mime_type FROM media WHERE filename = $1 AND data IS NOT NULL",
+        [filename]
+      );
+      if (result.rows.length > 0 && result.rows[0].data) {
+        const row = result.rows[0];
+        res.setHeader("Content-Type", row.mime_type || "image/webp");
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        return res.send(row.data);
+      }
+    } catch (err) {
+      console.error("DB image fetch error:", err);
+    }
+
     res.setHeader("Cache-Control", "no-cache");
     res.status(404).json({ message: "ფაილი ვერ მოიძებნა" });
   });
@@ -340,18 +357,29 @@ export async function registerRoutes(
         const filename = `${randomUUID()}.webp`;
         const outputPath = path.join(uploadsDir, filename);
 
-        await sharp(file.buffer)
+        const webpBuffer = await sharp(file.buffer)
           .resize(800, null, { withoutEnlargement: true })
           .webp({ quality: 82 })
-          .toFile(outputPath);
+          .toBuffer();
 
-        const stats = fs.statSync(outputPath);
+        fs.writeFileSync(outputPath, webpBuffer);
+
         const mediaItem = await storage.createMedia({
           filename,
           originalName: sanitizeFilename(file.originalname),
           path: `/uploads/${filename}`,
-          size: String(stats.size),
+          size: String(webpBuffer.length),
         });
+
+        try {
+          await pool.query(
+            "UPDATE media SET data = $1, mime_type = $2 WHERE id = $3",
+            [webpBuffer, "image/webp", mediaItem.id]
+          );
+        } catch (dbErr) {
+          console.error("Failed to store image in DB:", dbErr);
+        }
+
         results.push(mediaItem);
       }
 
