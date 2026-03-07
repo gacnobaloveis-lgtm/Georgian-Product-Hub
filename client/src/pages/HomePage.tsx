@@ -582,7 +582,7 @@ export default function HomePage() {
             }}
             data-testid="text-hero-title"
           >
-            <img src={heroLogoSrc} alt="" className="h-16 w-16 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-20 sm:w-20 lg:h-24 lg:w-24" data-testid="img-logo" />
+            <img src={heroLogoSrc} alt="" className="h-12 w-12 shrink-0 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-20 sm:w-20 lg:h-24 lg:w-24" data-testid="img-logo" />
             <span className="text-2xl sm:text-4xl lg:text-5xl">{heroText}</span>
           </h1>
           <p className="mt-1 max-w-lg text-sm text-white/80 drop-shadow sm:mt-2 sm:text-lg">
