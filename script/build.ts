@@ -11,7 +11,6 @@ const allowlist = [
   "cookie-parser",
   "cors",
   "date-fns",
-  "drizzle-orm",
   "drizzle-zod",
   "express",
   "express-rate-limit",
@@ -60,7 +59,8 @@ async function buildAll() {
     define: {
       "process.env.NODE_ENV": '"production"',
     },
-    minify: true,
+    minify: false,
+    sourcemap: true,
     external: externals,
     logLevel: "info",
   });
