@@ -391,6 +391,120 @@ export async function setupAuth(app: Express) {
     }
   });
 
+  const resetCodes = new Map<string, { codeHash: string; userId: string; expires: number; attempts: number }>();
+  const resetRateLimit = new Map<string, { count: number; resetAt: number }>();
+
+  app.post("/api/forgot-password", async (req: any, res) => {
+    try {
+      const { email } = req.body;
+      if (!email?.trim()) {
+        return res.status(400).json({ message: "შეიყვანეთ ელ. ფოსტა" });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+
+      const rateEntry = resetRateLimit.get(cleanEmail);
+      if (rateEntry && Date.now() < rateEntry.resetAt && rateEntry.count >= 3) {
+        return res.json({ success: true });
+      }
+      if (!rateEntry || Date.now() >= rateEntry.resetAt) {
+        resetRateLimit.set(cleanEmail, { count: 1, resetAt: Date.now() + 15 * 60 * 1000 });
+      } else {
+        rateEntry.count++;
+      }
+
+      const { db } = await import("../../db");
+      const { users } = await import("@shared/models/auth");
+      const { eq } = await import("drizzle-orm");
+
+      const [user] = await db.select().from(users).where(eq(users.email, cleanEmail));
+      if (!user) {
+        return res.json({ success: true });
+      }
+
+      const codeNum = crypto.randomInt(100000, 999999);
+      const code = codeNum.toString();
+      const codeHash = crypto.createHash("sha256").update(code).digest("hex");
+      resetCodes.set(cleanEmail, { codeHash, userId: user.id, expires: Date.now() + 10 * 60 * 1000, attempts: 0 });
+
+      const apiKey = process.env.RESEND_API_KEY;
+      if (apiKey) {
+        const { Resend } = await import("resend");
+        const resend = new Resend(apiKey);
+        await resend.emails.send({
+          from: "no-reply@spiningebi.ge",
+          to: cleanEmail,
+          subject: "პაროლის აღდგენის კოდი - spiningebi.ge",
+          html: `
+            <div style="font-family: 'FiraGO', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; background: #f9fafb; border-radius: 12px;">
+              <div style="text-align: center; margin-bottom: 24px;">
+                <h1 style="color: #7c3aed; font-size: 24px; margin: 0;">spiningebi.ge</h1>
+              </div>
+              <div style="background: white; padding: 24px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                <h2 style="color: #1f2937; font-size: 18px; margin: 0 0 12px;">პაროლის აღდგენა</h2>
+                <p style="color: #4b5563; font-size: 15px; line-height: 1.7;">
+                  თქვენი პაროლის აღდგენის კოდია:
+                </p>
+                <div style="text-align: center; margin: 20px 0;">
+                  <span style="display: inline-block; background: #7c3aed; color: white; padding: 14px 32px; border-radius: 8px; font-size: 28px; font-weight: bold; letter-spacing: 6px;">${code}</span>
+                </div>
+                <p style="color: #9ca3af; font-size: 13px; text-align: center;">
+                  კოდი მოქმედებს 10 წუთის განმავლობაში
+                </p>
+              </div>
+            </div>
+          `,
+        });
+        console.log(`[email] Reset code sent to ${cleanEmail}`);
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("[auth] forgot-password error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.post("/api/reset-password", async (req: any, res) => {
+    try {
+      const { email, code, newPassword } = req.body;
+      if (!email?.trim() || !code?.trim() || !newPassword) {
+        return res.status(400).json({ message: "ყველა ველი სავალდებულოა" });
+      }
+      if (newPassword.length < 4) {
+        return res.status(400).json({ message: "პაროლი მინიმუმ 4 სიმბოლო უნდა იყოს" });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const stored = resetCodes.get(cleanEmail);
+      if (!stored || Date.now() > stored.expires) {
+        return res.status(400).json({ message: "კოდი არასწორია ან ვადაგასულია" });
+      }
+      if (stored.attempts >= 5) {
+        resetCodes.delete(cleanEmail);
+        return res.status(400).json({ message: "მცდელობების ლიმიტი ამოიწურა, მოითხოვეთ ახალი კოდი" });
+      }
+      const inputHash = crypto.createHash("sha256").update(code.trim()).digest("hex");
+      if (inputHash !== stored.codeHash) {
+        stored.attempts++;
+        return res.status(400).json({ message: "კოდი არასწორია ან ვადაგასულია" });
+      }
+
+      const { db } = await import("../../db");
+      const { users } = await import("@shared/models/auth");
+      const { eq } = await import("drizzle-orm");
+
+      const newHash = await hashPassword(newPassword);
+      await db.update(users).set({ passwordHash: newHash }).where(eq(users.id, stored.userId));
+      resetCodes.delete(cleanEmail);
+
+      res.json({ success: true });
+    } catch (err) {
+      console.error("[auth] reset-password error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   const fbAppId = process.env.AUTH_FACEBOOK_ID;
   const fbAppSecret = process.env.AUTH_FACEBOOK_SECRET;
   console.log(`[auth] Facebook config: ID=${fbAppId ? "SET" : "NOT SET"}, Secret=${fbAppSecret ? "SET" : "NOT SET"}`);

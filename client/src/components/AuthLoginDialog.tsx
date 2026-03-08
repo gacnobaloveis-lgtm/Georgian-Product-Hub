@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, UserPlus, LogIn, Eye, EyeOff, ScrollText } from "lucide-react";
+import { Loader2, UserPlus, LogIn, Eye, EyeOff, ScrollText, KeyRound, ArrowLeft, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
@@ -40,6 +40,11 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
   const [regForm, setRegForm] = useState({ fullName: "", email: "", city: "", address: "", phone: "", password: "" });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [termsViewOpen, setTermsViewOpen] = useState(false);
+
+  const [forgotMode, setForgotMode] = useState<"email" | "code" | "newpass" | null>(null);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [resetCode, setResetCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   const { data: termsSections = [] } = useQuery<TermsSection[]>({
     queryKey: ["/api/terms-sections"],
@@ -89,6 +94,65 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
       } else {
         const data = await res.json().catch(() => ({}));
         toast({ variant: "destructive", title: "შეცდომა", description: data.message || "შესვლა ვერ მოხერხდა" });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleForgotSendCode() {
+    if (!forgotEmail.trim()) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "შეიყვანეთ ელ. ფოსტა" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail.trim() }),
+      });
+      if (res.ok) {
+        toast({ title: "კოდი გაიგზავნა", description: "შეამოწმეთ თქვენი ელ. ფოსტა" });
+        setForgotMode("code");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ variant: "destructive", title: "შეცდომა", description: data.message || "შეცდომა" });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleResetPassword() {
+    if (!resetCode.trim()) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "შეიყვანეთ კოდი" });
+      return;
+    }
+    if (!newPassword || newPassword.length < 4) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "პაროლი მინიმუმ 4 სიმბოლო უნდა იყოს" });
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail.trim(), code: resetCode.trim(), newPassword }),
+      });
+      if (res.ok) {
+        toast({ title: "პაროლი შეიცვალა", description: "ახლა შეგიძლიათ შესვლა ახალი პაროლით" });
+        setForgotMode(null);
+        setForgotEmail("");
+        setResetCode("");
+        setNewPassword("");
+      } else {
+        const data = await res.json().catch(() => ({}));
+        toast({ variant: "destructive", title: "შეცდომა", description: data.message || "შეცდომა" });
       }
     } catch {
       toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
@@ -165,13 +229,101 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
       <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-center text-lg" data-testid="text-auth-title">
-            {mode === "login" ? "შესვლა" : "რეგისტრაცია"}
+            {forgotMode ? "პაროლის აღდგენა" : mode === "login" ? "შესვლა" : "რეგისტრაცია"}
           </DialogTitle>
           <DialogDescription className="text-center text-sm text-muted-foreground">
-            {mode === "login" ? "შეიყვანეთ თქვენი მონაცემები" : "შეავსეთ თქვენი მონაცემები"}
+            {forgotMode === "email" ? "შეიყვანეთ რეგისტრაციისას მითითებული ელ. ფოსტა" : forgotMode === "code" ? "შეიყვანეთ ელ. ფოსტაზე მიღებული კოდი და ახალი პაროლი" : mode === "login" ? "შეიყვანეთ თქვენი მონაცემები" : "შეავსეთ თქვენი მონაცემები"}
           </DialogDescription>
         </DialogHeader>
 
+        {forgotMode ? (
+          <div className="flex flex-col gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => { setForgotMode(null); setResetCode(""); setNewPassword(""); }}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground w-fit"
+              data-testid="button-back-to-login"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> უკან შესვლაზე
+            </button>
+
+            {forgotMode === "email" && (
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">ელ. ფოსტა</label>
+                  <Input
+                    type="email"
+                    value={forgotEmail}
+                    onChange={e => setForgotEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    className="min-h-[44px]"
+                    data-testid="input-forgot-email"
+                  />
+                </div>
+                <Button
+                  onClick={handleForgotSendCode}
+                  disabled={submitting}
+                  className="min-h-[44px] w-full"
+                  data-testid="button-send-reset-code"
+                >
+                  {submitting ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> იგზავნება...</>
+                  ) : (
+                    <><Mail className="mr-2 h-4 w-4" /> კოდის გაგზავნა</>
+                  )}
+                </Button>
+              </>
+            )}
+
+            {forgotMode === "code" && (
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">კოდი (6 ციფრი)</label>
+                  <Input
+                    value={resetCode}
+                    onChange={e => setResetCode(e.target.value)}
+                    placeholder="123456"
+                    maxLength={6}
+                    className="min-h-[44px] text-center text-lg tracking-[0.3em]"
+                    data-testid="input-reset-code"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium">ახალი პაროლი</label>
+                  <Input
+                    type="password"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="ახალი პაროლი"
+                    className="min-h-[44px]"
+                    data-testid="input-new-password"
+                  />
+                </div>
+                <Button
+                  onClick={handleResetPassword}
+                  disabled={submitting}
+                  className="min-h-[44px] w-full"
+                  data-testid="button-reset-password"
+                >
+                  {submitting ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> მიმდინარეობს...</>
+                  ) : (
+                    <><KeyRound className="mr-2 h-4 w-4" /> პაროლის შეცვლა</>
+                  )}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setForgotMode("email")}
+                  className="text-xs text-center text-muted-foreground hover:text-primary"
+                  data-testid="button-resend-code"
+                >
+                  კოდი ვერ მიიღეთ? თავიდან გაგზავნა
+                </button>
+              </>
+            )}
+          </div>
+        ) : (
+        <>
         <div className="flex rounded-lg border border-border overflow-hidden mb-1">
           <button
             type="button"
@@ -249,6 +401,15 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                 <><LogIn className="mr-2 h-4 w-4" /> შესვლა</>
               )}
             </Button>
+
+            <button
+              type="button"
+              onClick={() => setForgotMode("email")}
+              className="text-xs text-primary hover:underline text-center -mt-1"
+              data-testid="link-forgot-password"
+            >
+              დაგავიწყდათ პაროლი?
+            </button>
 
             <p className="text-center text-xs text-muted-foreground">
               არ გაქვთ ანგარიში?{" "}
@@ -384,6 +545,8 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
               </button>
             </p>
           </div>
+        )}
+        </>
         )}
       </DialogContent>
 
