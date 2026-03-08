@@ -483,6 +483,7 @@ export default function HomePage() {
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const { totalCount: cartCount } = useCart();
   const { canInstall, install: installPwa } = usePwaInstall();
+  const [installDialogOpen, setInstallDialogOpen] = useState(false);
 
   interface VisualPublic {
     selectedLogo: number | null;
@@ -670,8 +671,8 @@ export default function HomePage() {
               </span>
             </button>
             {canInstall && (
-            <button onClick={installPwa} data-testid="link-nav-install">
-              <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-green-600 hover:text-green-700 transition-colors">
+            <button onClick={() => setInstallDialogOpen(true)} data-testid="link-nav-install">
+              <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-green-600 hover:text-green-700 transition-colors animate-pulse">
                 <Download className="h-5 w-5" />
                 აპლიკაციის ჩამოტვირთვა
               </span>
@@ -938,6 +939,66 @@ export default function HomePage() {
                 </div>
               )}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={installDialogOpen} onOpenChange={setInstallDialogOpen}>
+        <DialogContent className="max-w-md w-[92vw] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
+          <div className="bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 px-6 pt-8 pb-6 text-center">
+            <div className="mx-auto mb-4 h-24 w-24 rounded-2xl bg-white/20 p-3 backdrop-blur-sm shadow-lg ring-2 ring-white/30">
+              <img src={fishermanLogo} alt="spiningebi.ge" className="h-full w-full object-contain drop-shadow-lg" />
+            </div>
+            <h2 className="text-xl font-bold text-white mb-1">spiningebi.ge</h2>
+            <p className="text-purple-200 text-sm">სათევზაო და სანადირო მაღაზია</p>
+          </div>
+          <div className="px-6 py-5">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-center text-lg font-bold">
+                დააინსტალირეთ აპლიკაცია
+              </DialogTitle>
+              <DialogDescription className="text-center text-sm text-muted-foreground mt-1">
+                სწრაფი წვდომა თქვენს საყვარელ პროდუქციაზე
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 mb-5">
+              <div className="flex items-center gap-3 rounded-lg bg-purple-50 p-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
+                  <Download className="h-4 w-4 text-purple-600" />
+                </div>
+                <span className="text-sm text-gray-700">ერთი კლიკით გახსნა ეკრანიდან</span>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg bg-green-50 p-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                  <ShoppingCart className="h-4 w-4 text-green-600" />
+                </div>
+                <span className="text-sm text-gray-700">სწრაფი შეკვეთა და ნავიგაცია</span>
+              </div>
+              <div className="flex items-center gap-3 rounded-lg bg-blue-50 p-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                  <Gift className="h-4 w-4 text-blue-600" />
+                </div>
+                <span className="text-sm text-gray-700">შეტყობინებები აქციებზე და ფასდაკლებებზე</span>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                await installPwa();
+                setInstallDialogOpen(false);
+              }}
+              className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3.5 text-base font-bold text-white shadow-lg hover:from-purple-700 hover:to-indigo-700 transition-all active:scale-[0.98]"
+              data-testid="button-install-confirm"
+            >
+              <Download className="inline mr-2 h-5 w-5 -mt-0.5" />
+              ჩამოტვირთვა
+            </button>
+            <button
+              onClick={() => setInstallDialogOpen(false)}
+              className="w-full mt-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              data-testid="button-install-cancel"
+            >
+              არა, მადლობა
+            </button>
           </div>
         </DialogContent>
       </Dialog>
