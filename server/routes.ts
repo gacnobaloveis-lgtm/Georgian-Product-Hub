@@ -1044,6 +1044,81 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/terms-sections", async (_req, res) => {
+    try {
+      const sections = await storage.getTermsSections();
+      res.json(sections);
+    } catch (err) {
+      console.error("Terms sections fetch error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  app.post("/api/terms-sections", requireAdmin, async (req, res) => {
+    try {
+      const title = req.body?.title?.trim();
+      const content = req.body?.content?.trim();
+      if (!title || !content) {
+        return res.status(400).json({ message: "სათაური და შინაარსი აუცილებელია" });
+      }
+      const sortOrder = req.body?.sortOrder !== undefined ? Number(req.body.sortOrder) : 0;
+      const section = await storage.createTermsSection({
+        title: sanitizeString(title),
+        content: sanitizeString(content),
+        sortOrder,
+      });
+      res.status(201).json(section);
+    } catch (err) {
+      console.error("Terms section create error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  app.put("/api/terms-sections/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id) || id <= 0) {
+        return res.status(400).json({ message: "არასწორი ID" });
+      }
+      const updates: Record<string, any> = {};
+      if (req.body?.title !== undefined) {
+        const title = req.body.title.trim();
+        if (!title) return res.status(400).json({ message: "სათაური აუცილებელია" });
+        updates.title = sanitizeString(title);
+      }
+      if (req.body?.content !== undefined) {
+        const content = req.body.content.trim();
+        if (!content) return res.status(400).json({ message: "შინაარსი აუცილებელია" });
+        updates.content = sanitizeString(content);
+      }
+      if (req.body?.sortOrder !== undefined) {
+        updates.sortOrder = Number(req.body.sortOrder);
+      }
+      const updated = await storage.updateTermsSection(id, updates);
+      if (!updated) {
+        return res.status(404).json({ message: "სექცია ვერ მოიძებნა" });
+      }
+      res.json(updated);
+    } catch (err) {
+      console.error("Terms section update error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  app.delete("/api/terms-sections/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id) || id <= 0) {
+        return res.status(400).json({ message: "არასწორი ID" });
+      }
+      await storage.deleteTermsSection(id);
+      res.status(204).send();
+    } catch (err) {
+      console.error("Terms section delete error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
   app.get("/sitemap.xml", async (_req, res) => {
     try {
       const allProducts = await storage.getProducts();

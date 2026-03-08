@@ -16,12 +16,12 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle } from "lucide-react";
+import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText } from "lucide-react";
 import { LucideIcon } from "@/components/IconPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Link } from "wouter";
 import { useCategories } from "@/hooks/use-categories";
-import type { Product, Category } from "@shared/schema";
+import type { Product, Category, TermsSection } from "@shared/schema";
 import wobblerIcon from "@assets/image_1771887558144.png";
 import rodIcon from "@assets/image_1771887805060.png";
 import reelIcon from "@assets/image_1771887952843.png";
@@ -227,6 +227,7 @@ function getCategoryIcon(name: string) {
 function MobileBottomNav({
   onCategoriesOpen,
   onGuideOpen,
+  onTermsOpen,
   onCartOpen,
   selectedCategory,
   onGoHome,
@@ -236,6 +237,7 @@ function MobileBottomNav({
 }: {
   onCategoriesOpen: () => void;
   onGuideOpen: () => void;
+  onTermsOpen: () => void;
   onCartOpen: () => void;
   selectedCategory: Category | null;
   onGoHome: () => void;
@@ -283,6 +285,14 @@ function MobileBottomNav({
       >
         <BookOpen className="h-4 w-4" />
         <span>გზამკვლევი</span>
+      </button>
+      <button
+        onClick={onTermsOpen}
+        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
+        data-testid="nav-terms"
+      >
+        <ScrollText className="h-4 w-4" />
+        <span>წესები</span>
       </button>
       <button
         onClick={onProfileClick}
@@ -454,6 +464,7 @@ export default function HomePage() {
   const [guideOpen, setGuideOpen] = useState(false);
   const [guideSiteOpen, setGuideSiteOpen] = useState(false);
   const [guideCreditOpen, setGuideCreditOpen] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const { totalCount: cartCount } = useCart();
 
@@ -473,6 +484,11 @@ export default function HomePage() {
 
   const { data: visualSettings } = useQuery<VisualPublic | null>({
     queryKey: ["/api/visual-settings/public"],
+  });
+
+  const { data: termsSections } = useQuery<TermsSection[]>({
+    queryKey: ["/api/terms-sections"],
+    enabled: termsOpen,
   });
 
   const allLogos = [...BUILTIN_LOGOS, ...(visualSettings?.uploadedLogos || [])];
@@ -632,6 +648,12 @@ export default function HomePage() {
                 გზამკვლევი
               </span>
             </button>
+            <button onClick={() => setTermsOpen(true)} data-testid="link-nav-terms">
+              <span className="flex min-h-[44px] items-center gap-2 text-base font-semibold text-muted-foreground hover:text-primary transition-colors">
+                <ScrollText className="h-5 w-5" />
+                წესები & პირობები
+              </span>
+            </button>
           </div>
           <div className="flex items-center gap-5">
             <button
@@ -746,6 +768,7 @@ export default function HomePage() {
       <MobileBottomNav
         onCategoriesOpen={() => setCategoryDrawerOpen(true)}
         onGuideOpen={() => setGuideOpen(true)}
+        onTermsOpen={() => setTermsOpen(true)}
         onCartOpen={() => setCartDrawerOpen(true)}
         selectedCategory={selectedCategory}
         onGoHome={handleGoHome}
@@ -893,6 +916,33 @@ export default function HomePage() {
                 </div>
               )}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold" data-testid="text-terms-title">წესები & პირობები</DialogTitle>
+            <DialogDescription className="sr-only">წესები და პირობები</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5 pt-2">
+            {termsSections && termsSections.length > 0 ? (
+              termsSections
+                .sort((a, b) => a.sortOrder - b.sortOrder)
+                .map((section) => (
+                  <div key={section.id} data-testid={`terms-section-${section.id}`}>
+                    <h3 className="mb-2 text-base font-bold text-foreground" data-testid={`text-terms-section-title-${section.id}`}>
+                      {section.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap" data-testid={`text-terms-section-content-${section.id}`}>
+                      {section.content}
+                    </p>
+                  </div>
+                ))
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">წესები და პირობები ჯერ არ არის დამატებული.</p>
+            )}
           </div>
         </DialogContent>
       </Dialog>

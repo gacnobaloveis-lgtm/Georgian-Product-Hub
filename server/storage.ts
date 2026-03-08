@@ -1,7 +1,7 @@
 import { db } from "./db";
-import { products, media, categories, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category } from "@shared/schema";
+import { products, media, categories, termsSections, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection } from "@shared/schema";
 import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
-import { eq, desc, sql, lt } from "drizzle-orm";
+import { eq, desc, sql, lt, asc } from "drizzle-orm";
 
 export interface IStorage {
   getProducts(): Promise<Product[]>;
@@ -42,6 +42,10 @@ export interface IStorage {
   recordPageVisit(visit: InsertPageVisit): Promise<void>;
   getAnalytics(days: number): Promise<{ domain: string; count: number }[]>;
   getAnalyticsTotal(days: number): Promise<number>;
+  getTermsSections(): Promise<TermsSection[]>;
+  createTermsSection(section: InsertTermsSection): Promise<TermsSection>;
+  updateTermsSection(id: number, updates: Partial<InsertTermsSection>): Promise<TermsSection | undefined>;
+  deleteTermsSection(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -254,6 +258,24 @@ export class DatabaseStorage implements IStorage {
       .from(pageVisits)
       .where(sql`${pageVisits.createdAt} >= ${since}`);
     return row?.count ?? 0;
+  }
+
+  async getTermsSections(): Promise<TermsSection[]> {
+    return await db.select().from(termsSections).orderBy(asc(termsSections.sortOrder));
+  }
+
+  async createTermsSection(section: InsertTermsSection): Promise<TermsSection> {
+    const [newSection] = await db.insert(termsSections).values(section).returning();
+    return newSection;
+  }
+
+  async updateTermsSection(id: number, updates: Partial<InsertTermsSection>): Promise<TermsSection | undefined> {
+    const [updated] = await db.update(termsSections).set(updates).where(eq(termsSections.id, id)).returning();
+    return updated;
+  }
+
+  async deleteTermsSection(id: number): Promise<void> {
+    await db.delete(termsSections).where(eq(termsSections.id, id));
   }
 }
 

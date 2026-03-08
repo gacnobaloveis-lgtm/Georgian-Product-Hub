@@ -34,6 +34,17 @@ export const categories = pgTable("categories", {
   icon: text("icon"),
 });
 
+export const termsSections = pgTable("terms_sections", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const insertTermsSectionSchema = createInsertSchema(termsSections).omit({ id: true });
+export type InsertTermsSection = z.infer<typeof insertTermsSectionSchema>;
+export type TermsSection = typeof termsSections.$inferSelect;
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertMediaSchema = createInsertSchema(media).omit({ id: true, createdAt: true });

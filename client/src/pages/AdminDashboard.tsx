@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush, ChevronDown, ChevronRight, Archive } from "lucide-react";
+import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush, ChevronDown, ChevronRight, Archive, FileText, GripVertical, ArrowUp, ArrowDown } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories";
@@ -1806,7 +1806,266 @@ function StatusesSection() {
   );
 }
 
-type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual";
+function TermsSectionsManager() {
+  const { toast } = useToast();
+  const { data: sections, isLoading } = useQuery<{ id: number; title: string; content: string; sortOrder: number }[]>({
+    queryKey: ["/api/terms-sections"],
+  });
+
+  const [newTitle, setNewTitle] = useState("");
+  const [newContent, setNewContent] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function handleCreate() {
+    if (!newTitle.trim() || !newContent.trim()) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "სათაური და შინაარსი აუცილებელია" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const maxOrder = sections ? Math.max(0, ...sections.map(s => s.sortOrder)) : 0;
+      const res = await fetch("/api/terms-sections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ title: newTitle.trim(), content: newContent.trim(), sortOrder: maxOrder + 1 }),
+      });
+      if (!res.ok) throw new Error();
+      queryClient.invalidateQueries({ queryKey: ["/api/terms-sections"] });
+      setNewTitle("");
+      setNewContent("");
+      toast({ title: "დამატებულია" });
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function startEdit(section: { id: number; title: string; content: string }) {
+    setEditingId(section.id);
+    setEditTitle(section.title);
+    setEditContent(section.content);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditTitle("");
+    setEditContent("");
+  }
+
+  async function handleUpdate(id: number) {
+    if (!editTitle.trim() || !editContent.trim()) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "სათაური და შინაარსი აუცილებელია" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/terms-sections/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ title: editTitle.trim(), content: editContent.trim() }),
+      });
+      if (!res.ok) throw new Error();
+      queryClient.invalidateQueries({ queryKey: ["/api/terms-sections"] });
+      cancelEdit();
+      toast({ title: "განახლებულია" });
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleDelete(id: number) {
+    try {
+      const res = await fetch(`/api/terms-sections/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error();
+      queryClient.invalidateQueries({ queryKey: ["/api/terms-sections"] });
+      toast({ title: "წაშლილია" });
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა" });
+    }
+  }
+
+  async function handleReorder(id: number, direction: "up" | "down") {
+    if (!sections) return;
+    const sorted = [...sections].sort((a, b) => a.sortOrder - b.sortOrder);
+    const idx = sorted.findIndex(s => s.id === id);
+    if (idx < 0) return;
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= sorted.length) return;
+
+    try {
+      await fetch(`/api/terms-sections/${sorted[idx].id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sortOrder: sorted[swapIdx].sortOrder }),
+      });
+      await fetch(`/api/terms-sections/${sorted[swapIdx].id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sortOrder: sorted[idx].sortOrder }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/terms-sections"] });
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა" });
+    }
+  }
+
+  const sortedSections = sections ? [...sections].sort((a, b) => a.sortOrder - b.sortOrder) : [];
+
+  return (
+    <GlassPanel className="p-5 sm:p-7">
+      <div className="mb-4 flex items-center gap-2">
+        <FileText className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-semibold">წესები & პირობები</h2>
+      </div>
+
+      <div className="mb-6 space-y-3 rounded-lg border border-muted bg-muted/20 p-4">
+        <h3 className="text-sm font-semibold">ახალი სექციის დამატება</h3>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">სათაური</label>
+          <Input
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="მაგ: დაბრუნების პოლიტიკა"
+            data-testid="input-terms-new-title"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-medium text-muted-foreground block mb-1">შინაარსი</label>
+          <Textarea
+            value={newContent}
+            onChange={(e) => setNewContent(e.target.value)}
+            placeholder="სექციის ტექსტი..."
+            rows={4}
+            data-testid="input-terms-new-content"
+          />
+        </div>
+        <Button
+          onClick={handleCreate}
+          disabled={saving || !newTitle.trim() || !newContent.trim()}
+          data-testid="button-terms-add"
+        >
+          {saving ? "ინახება..." : <><Plus className="mr-1 h-4 w-4" /> დამატება</>}
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      ) : sortedSections.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">სექციები ჯერ არ არის დამატებული</p>
+      ) : (
+        <div className="space-y-3">
+          {sortedSections.map((section, idx) => (
+            <div
+              key={section.id}
+              className="rounded-lg border border-card-border bg-card p-4"
+              data-testid={`card-terms-section-${section.id}`}
+            >
+              {editingId === section.id ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground block mb-1">სათაური</label>
+                    <Input
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      data-testid={`input-terms-edit-title-${section.id}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground block mb-1">შინაარსი</label>
+                    <Textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      rows={4}
+                      data-testid={`input-terms-edit-content-${section.id}`}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleUpdate(section.id)}
+                      disabled={saving}
+                      data-testid={`button-terms-save-${section.id}`}
+                    >
+                      {saving ? "ინახება..." : <><Check className="mr-1 h-4 w-4" /> შენახვა</>}
+                    </Button>
+                    <Button variant="outline" onClick={cancelEdit} data-testid={`button-terms-cancel-${section.id}`}>
+                      გაუქმება
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-semibold text-sm" data-testid={`text-terms-title-${section.id}`}>{section.title}</h4>
+                      <p className="mt-1 text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap" data-testid={`text-terms-content-${section.id}`}>
+                        {section.content}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleReorder(section.id, "up")}
+                        disabled={idx === 0}
+                        data-testid={`button-terms-up-${section.id}`}
+                      >
+                        <ArrowUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleReorder(section.id, "down")}
+                        disabled={idx === sortedSections.length - 1}
+                        data-testid={`button-terms-down-${section.id}`}
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => startEdit(section)}
+                        data-testid={`button-terms-edit-${section.id}`}
+                      >
+                        <Pencil className="mr-1 h-3.5 w-3.5" /> რედაქტირება
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(section.id)}
+                        className="text-destructive"
+                        data-testid={`button-terms-delete-${section.id}`}
+                      >
+                        <Trash2 className="mr-1 h-3.5 w-3.5" /> წაშლა
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </GlassPanel>
+  );
+}
+
+type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>(null);
@@ -2007,6 +2266,29 @@ export default function AdminDashboard() {
     );
   }
 
+  if (activeSection === "terms") {
+    return (
+      <div className="min-h-screen bg-mesh">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+          <AnimatedShell className="space-y-6">
+            <div className="flex items-center justify-between">
+              <TopBar title="ადმინ პანელი" subtitle="წესები & პირობები" />
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setActiveSection(null)} data-testid="button-back">
+                  უკან
+                </Button>
+                <Link href="/">
+                  <Button variant="ghost" size="sm" data-testid="link-homepage">მთავარი</Button>
+                </Link>
+              </div>
+            </div>
+            <TermsSectionsManager />
+          </AnimatedShell>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-mesh">
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -2146,6 +2428,22 @@ export default function AdminDashboard() {
                   </div>
                   <h3 className="text-lg font-semibold">ანალიტიკა</h3>
                   <p className="text-sm text-muted-foreground">ტრაფიკის წყაროები — რომელი საიტებიდან მოდიან ვიზიტორები</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {isFullAdmin && (
+              <Card
+                className="cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-primary/40"
+                onClick={() => setActiveSection("terms")}
+                data-testid="card-section-terms"
+              >
+                <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <FileText className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold">წესები & პირობები</h3>
+                  <p className="text-sm text-muted-foreground">წესებისა და პირობების სექციების მართვა</p>
                 </CardContent>
               </Card>
             )}
