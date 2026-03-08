@@ -45,12 +45,12 @@ function SiteFooter() {
   return (
     <footer className="mt-8 bg-gradient-to-r from-purple-100 via-purple-50 to-pink-50 border-t border-purple-200/50" data-testid="footer">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        {termsSections.length > 0 && (
-          <div className="mb-6 pb-6 border-b border-purple-200/50" data-testid="footer-terms">
-            <h3 className="mb-4 text-base font-bold text-gray-900 flex items-center gap-2">
-              <ScrollText className="h-5 w-5 text-purple-600" />
-              წესები და პირობები
-            </h3>
+        <div className="mb-6 pb-6 border-b border-purple-200/50" data-testid="footer-terms">
+          <h3 className="mb-4 text-base font-bold text-gray-900 flex items-center gap-2">
+            <ScrollText className="h-5 w-5 text-purple-600" />
+            წესები და პირობები
+          </h3>
+          {termsSections.length > 0 ? (
             <div className="space-y-3">
               {termsSections.map((section) => (
                 <div key={section.id}>
@@ -59,8 +59,10 @@ function SiteFooter() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <p className="text-sm text-gray-500">მალე დაემატება</p>
+          )}
+        </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <h3 className="mb-3 text-sm font-bold text-gray-800">საკონტაქტო ინფორმაცია</h3>
