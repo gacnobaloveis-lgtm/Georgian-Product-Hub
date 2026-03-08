@@ -43,7 +43,7 @@ The user wants all UI text to be in Georgian and currency displayed in GEL (₾)
 - **Referral System**: Unique referral codes per user, credit accumulation for referrers on successful orders, anti-fraud checks, admin management of credit settings.
 - **Visual Customization**: Admin section for logo gallery (built-in and custom), text style editor (font, size, color, bold/italic, presets), dynamic display on homepage.
 - **Analytics**: Tracks page visits, referrer sources, user-agent, with time-period filtering and source breakdown.
-- **Terms & Conditions**: Admin-editable sections (title + content) displayed in a dialog on the homepage next to the Guide button. Managed via `terms_sections` DB table with CRUD API.
+- **Terms & Conditions**: Admin-editable sections (title + content) displayed in the footer above contact info. Managed via `terms_sections` DB table with CRUD API. Session table auto-creates on Railway (`createTableIfMissing: true`).
 - **Admin Roles**: Four levels (`admin`, `moderator`, `sales_admin`, `user`) with granular access permissions.
 
 ### System Design Choices
