@@ -33,7 +33,7 @@ import fishermanLogo from "@assets/fisherman_transparent.png";
 import eyeIconPath from "@assets/image_1771961384457.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 
-function SiteFooter() {
+function SiteFooter({ onOpenTerms }: { onOpenTerms?: () => void }) {
   const { data: contact } = useQuery<{ phone: string; email: string; whatsapp: string; address: string; workHours: string; dayOff: string }>({
     queryKey: ["/api/contact-info"],
   });
@@ -42,6 +42,19 @@ function SiteFooter() {
   return (
     <footer className="mt-8 bg-gradient-to-r from-purple-100 via-purple-50 to-pink-50 border-t border-purple-200/50" data-testid="footer">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {onOpenTerms && (
+          <div className="sm:hidden mb-4">
+            <button
+              type="button"
+              onClick={onOpenTerms}
+              className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900"
+              data-testid="footer-terms-mobile"
+            >
+              <ScrollText className="h-4 w-4" />
+              წესები და პირობები
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <h3 className="mb-3 text-sm font-bold text-gray-800">საკონტაქტო ინფორმაცია</h3>
@@ -752,7 +765,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <SiteFooter />
+      <SiteFooter onOpenTerms={() => setTermsDialogOpen(true)} />
 
       <MobileBottomNav
         onCategoriesOpen={() => setCategoryDrawerOpen(true)}
