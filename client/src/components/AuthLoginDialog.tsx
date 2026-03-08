@@ -282,7 +282,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                   <Input
                     value={resetCode}
                     onChange={e => setResetCode(e.target.value)}
-                    placeholder="123456"
+                    placeholder=""
                     maxLength={6}
                     className="min-h-[44px] text-center text-lg tracking-[0.3em]"
                     data-testid="input-reset-code"
