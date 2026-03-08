@@ -433,6 +433,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                 onChange={e => setRegForm(prev => ({ ...prev, fullName: e.target.value }))}
                 placeholder="სახელი გვარი"
                 className="min-h-[44px] border-foreground/30"
+                autoComplete="off"
                 data-testid="input-register-fullname"
               />
             </div>
@@ -445,6 +446,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                 onChange={e => setRegForm(prev => ({ ...prev, email: e.target.value }))}
                 placeholder=""
                 className="min-h-[44px] border-foreground/30"
+                autoComplete="off"
                 data-testid="input-register-email"
               />
             </div>
@@ -470,6 +472,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                 onChange={e => setRegForm(prev => ({ ...prev, address: e.target.value }))}
                 placeholder="ქუჩა, ბინა, რაიონი"
                 className="min-h-[44px] border-foreground/30"
+                autoComplete="off"
                 data-testid="input-register-address"
               />
             </div>
@@ -481,6 +484,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                 onChange={e => setRegForm(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="+995 5XX XXX XXX"
                 className="min-h-[44px] border-foreground/30"
+                autoComplete="off"
                 data-testid="input-register-phone"
               />
             </div>
@@ -494,6 +498,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                   onChange={e => setRegForm(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="მინ. 4 სიმბოლო"
                   className="min-h-[44px] pr-10 border-foreground/30"
+                  autoComplete="new-password"
                   data-testid="input-register-password"
                 />
                 <button
