@@ -626,19 +626,19 @@ export default function HomePage() {
         <div className="flex items-center justify-between pb-4">
           <div className="flex items-center gap-8">
             <button onClick={handleGoHome} data-testid="link-nav-home">
-              <span className={`flex min-h-[44px] items-center gap-2 text-base font-semibold ${!selectedCategory ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
+              <span className={`flex min-h-[44px] items-center gap-2 text-[15px] font-semibold ${!selectedCategory ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
                 <Home className="h-5 w-5" />
                 მთავარი
               </span>
             </button>
             <button onClick={() => setGuideOpen(true)} data-testid="link-nav-guide">
-              <span className="flex min-h-[44px] items-center gap-2 text-base font-semibold text-muted-foreground hover:text-primary transition-colors">
+              <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-muted-foreground hover:text-primary transition-colors">
                 <BookOpen className="h-5 w-5" />
                 გზამკვლევი
               </span>
             </button>
             <button onClick={() => setTermsDialogOpen(true)} data-testid="link-nav-terms">
-              <span className="flex min-h-[44px] items-center gap-2 text-base font-semibold text-muted-foreground hover:text-primary transition-colors">
+              <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-muted-foreground hover:text-primary transition-colors">
                 <ScrollText className="h-5 w-5" />
                 წესები და პირობები
               </span>
