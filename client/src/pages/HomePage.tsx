@@ -33,7 +33,7 @@ import fishermanLogo from "@assets/fisherman_transparent.png";
 import eyeIconPath from "@assets/image_1771961384457.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 
-function SiteFooter() {
+function SiteFooter({ onTermsOpen }: { onTermsOpen: () => void }) {
   const { data: contact } = useQuery<{ phone: string; email: string; whatsapp: string; address: string; workHours: string; dayOff: string }>({
     queryKey: ["/api/contact-info"],
   });
@@ -42,6 +42,16 @@ function SiteFooter() {
   return (
     <footer className="mt-8 bg-gradient-to-r from-purple-100 via-purple-50 to-pink-50 border-t border-purple-200/50" data-testid="footer">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-6 pb-6 border-b border-purple-200/50">
+          <button
+            onClick={onTermsOpen}
+            className="flex items-center gap-2 text-base font-bold text-gray-900 hover:text-purple-700 transition-colors"
+            data-testid="footer-terms-button"
+          >
+            <ScrollText className="h-5 w-5 text-purple-600" />
+            წესები და პირობები
+          </button>
+        </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <h3 className="mb-3 text-sm font-bold text-gray-800">საკონტაქტო ინფორმაცია</h3>
@@ -227,7 +237,6 @@ function getCategoryIcon(name: string) {
 function MobileBottomNav({
   onCategoriesOpen,
   onGuideOpen,
-  onTermsOpen,
   onCartOpen,
   selectedCategory,
   onGoHome,
@@ -237,7 +246,6 @@ function MobileBottomNav({
 }: {
   onCategoriesOpen: () => void;
   onGuideOpen: () => void;
-  onTermsOpen: () => void;
   onCartOpen: () => void;
   selectedCategory: Category | null;
   onGoHome: () => void;
@@ -285,14 +293,6 @@ function MobileBottomNav({
       >
         <BookOpen className="h-4 w-4" />
         <span>გზამკვლევი</span>
-      </button>
-      <button
-        onClick={onTermsOpen}
-        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
-        data-testid="nav-terms"
-      >
-        <ScrollText className="h-4 w-4" />
-        <span>წესები</span>
       </button>
       <button
         onClick={onProfileClick}
@@ -762,12 +762,11 @@ export default function HomePage() {
         </div>
       </div>
 
-      <SiteFooter />
+      <SiteFooter onTermsOpen={() => setTermsDialogOpen(true)} />
 
       <MobileBottomNav
         onCategoriesOpen={() => setCategoryDrawerOpen(true)}
         onGuideOpen={() => setGuideOpen(true)}
-        onTermsOpen={() => setTermsDialogOpen(true)}
         onCartOpen={() => setCartDrawerOpen(true)}
         selectedCategory={selectedCategory}
         onGoHome={handleGoHome}
