@@ -41,6 +41,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [termsViewOpen, setTermsViewOpen] = useState(false);
 
+  const [showEmailWarning, setShowEmailWarning] = useState(false);
   const [forgotMode, setForgotMode] = useState<"email" | "code" | "newpass" | null>(null);
   const [forgotEmail, setForgotEmail] = useState("");
   const [resetCode, setResetCode] = useState("");
@@ -185,6 +186,11 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
     }
     if (!agreedToTerms) {
       toast({ variant: "destructive", title: "შეცდომა", description: "გთხოვთ დაეთანხმოთ წესებს და პირობებს" });
+      return;
+    }
+
+    if (!regForm.email.trim() && !showEmailWarning) {
+      setShowEmailWarning(true);
       return;
     }
 
@@ -549,6 +555,44 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
         </>
         )}
       </DialogContent>
+
+      <Dialog open={showEmailWarning} onOpenChange={setShowEmailWarning}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center text-base" data-testid="text-email-warning-title">
+              ელ. ფოსტის მითითება
+            </DialogTitle>
+            <DialogDescription className="text-center text-sm text-muted-foreground mt-1">
+              გაფრთხილება
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground leading-relaxed text-center py-2" data-testid="text-email-warning-message">
+            მეილის მითითება აუცილებელია, რადგან შემდგომში პაროლის დავიწყების შემთხვევაში აღადგინოთ თქვენი ლოგინი. თუ არ გსურთ მეილის მითითება, დააჭირეთ გაგრძელებას.
+          </p>
+          <div className="flex flex-col gap-2 mt-1">
+            <Button
+              onClick={() => {
+                setShowEmailWarning(false);
+              }}
+              className="w-full min-h-[44px]"
+              data-testid="button-email-warning-back"
+            >
+              <Mail className="mr-2 h-4 w-4" /> მეილის დამატება
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEmailWarning(false);
+                handleRegister();
+              }}
+              className="w-full min-h-[44px]"
+              data-testid="button-email-warning-continue"
+            >
+              გაგრძელება მეილის გარეშე
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={termsViewOpen} onOpenChange={setTermsViewOpen}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
