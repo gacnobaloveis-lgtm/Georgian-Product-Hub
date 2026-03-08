@@ -133,6 +133,23 @@ async function seedAdminUser() {
   }
 }
 
+async function ensureTermsSectionsTable() {
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS terms_sections (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0
+      )
+    `);
+    console.log("[migrate] terms_sections table ensured");
+  } catch (err) {
+    console.error("[migrate] Error ensuring terms_sections table:", err);
+  }
+}
+
 async function ensureMediaDataColumns() {
   try {
     const { pool } = await import("./db");
@@ -301,6 +318,7 @@ async function initializeApp() {
 
   try {
     await seedAdminUser();
+    await ensureTermsSectionsTable();
     await ensureMediaDataColumns();
     await migrateFilesToDb();
     log("All migrations completed successfully");
