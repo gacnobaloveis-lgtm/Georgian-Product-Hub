@@ -919,28 +919,28 @@ export default function HomePage() {
       </Dialog>
 
       <Dialog open={termsDialogOpen} onOpenChange={setTermsDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg font-bold">
-              <ScrollText className="h-5 w-5 text-purple-600" />
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+              <ScrollText className="h-6 w-6 text-purple-600" />
               წესები და პირობები
             </DialogTitle>
             <DialogDescription className="sr-only">წესები და პირობები</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 pt-2" data-testid="terms-dialog-content">
+          <div className="space-y-5 pt-3" data-testid="terms-dialog-content">
             {termsSections.length > 0 ? (
               termsSections
                 .sort((a, b) => a.sortOrder - b.sortOrder)
                 .map((section) => (
-                  <div key={section.id} className="rounded-lg border border-muted bg-muted/20 p-4">
-                    <h4 className="mb-2 text-sm font-bold text-foreground" data-testid={`terms-title-${section.id}`}>{section.title}</h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed" data-testid={`terms-content-${section.id}`}>{section.content}</p>
+                  <div key={section.id} className="rounded-lg border border-muted bg-muted/20 p-5">
+                    <h4 className="mb-3 text-base font-bold text-foreground" data-testid={`terms-title-${section.id}`}>{section.title}</h4>
+                    <p className="text-[15px] text-muted-foreground whitespace-pre-wrap leading-7" data-testid={`terms-content-${section.id}`}>{section.content}</p>
                   </div>
                 ))
             ) : (
-              <div className="rounded-lg border border-muted bg-muted/20 p-6 text-center">
-                <ScrollText className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">მალე დაემატება</p>
+              <div className="rounded-lg border border-muted bg-muted/20 p-8 text-center">
+                <ScrollText className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+                <p className="text-base text-muted-foreground">მალე დაემატება</p>
               </div>
             )}
           </div>
