@@ -432,7 +432,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                 value={regForm.fullName}
                 onChange={e => setRegForm(prev => ({ ...prev, fullName: e.target.value }))}
                 placeholder="სახელი გვარი"
-                className="min-h-[44px]"
+                className="min-h-[44px] border-foreground/30"
                 data-testid="input-register-fullname"
               />
             </div>
@@ -443,8 +443,8 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                 type="email"
                 value={regForm.email}
                 onChange={e => setRegForm(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="example@mail.com"
-                className="min-h-[44px]"
+                placeholder=""
+                className="min-h-[44px] border-foreground/30"
                 data-testid="input-register-email"
               />
             </div>
@@ -452,7 +452,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
             <div className="space-y-1.5">
               <label className="text-xs font-medium">ქალაქი</label>
               <Select value={regForm.city} onValueChange={v => setRegForm(prev => ({ ...prev, city: v }))}>
-                <SelectTrigger className="min-h-[44px]" data-testid="select-register-city">
+                <SelectTrigger className="min-h-[44px] border-foreground/30" data-testid="select-register-city">
                   <SelectValue placeholder="აირჩიეთ ქალაქი" />
                 </SelectTrigger>
                 <SelectContent>
@@ -469,7 +469,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                 value={regForm.address}
                 onChange={e => setRegForm(prev => ({ ...prev, address: e.target.value }))}
                 placeholder="ქუჩა, ბინა, რაიონი"
-                className="min-h-[44px]"
+                className="min-h-[44px] border-foreground/30"
                 data-testid="input-register-address"
               />
             </div>
@@ -480,7 +480,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                 value={regForm.phone}
                 onChange={e => setRegForm(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="+995 5XX XXX XXX"
-                className="min-h-[44px]"
+                className="min-h-[44px] border-foreground/30"
                 data-testid="input-register-phone"
               />
             </div>
@@ -493,7 +493,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                   value={regForm.password}
                   onChange={e => setRegForm(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="მინ. 4 სიმბოლო"
-                  className="min-h-[44px] pr-10"
+                  className="min-h-[44px] pr-10 border-foreground/30"
                   data-testid="input-register-password"
                 />
                 <button
@@ -567,7 +567,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
             </DialogDescription>
           </DialogHeader>
           <p className="text-sm text-muted-foreground leading-relaxed text-center py-2" data-testid="text-email-warning-message">
-            მეილის მითითება აუცილებელია, რადგან შემდგომში პაროლის დავიწყების შემთხვევაში აღადგინოთ თქვენი ლოგინი. თუ არ გსურთ მეილის მითითება, დააჭირეთ გაგრძელებას.
+            ელ.ფოსტის მითითება აუცილებელია, რადგან შემდგომში პაროლის დავიწყების შემთხვევაში აღადგინოთ თქვენი ლოგინი. თუ არ გსურთ ელ.ფოსტის მითითება, დააჭირეთ გაგრძელებას.
           </p>
           <div className="flex flex-col gap-2 mt-1">
             <Button
@@ -577,7 +577,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
               className="w-full min-h-[44px]"
               data-testid="button-email-warning-back"
             >
-              <Mail className="mr-2 h-4 w-4" /> მეილის დამატება
+              <Mail className="mr-2 h-4 w-4" /> ელ.ფოსტის დამატება
             </Button>
             <Button
               variant="outline"
@@ -588,7 +588,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
               className="w-full min-h-[44px]"
               data-testid="button-email-warning-continue"
             >
-              გაგრძელება მეილის გარეშე
+              გაგრძელება ელ.ფოსტის გარეშე
             </Button>
           </div>
         </DialogContent>
