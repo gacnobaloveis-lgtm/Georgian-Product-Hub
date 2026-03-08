@@ -10,6 +10,49 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
+import { Resend } from "resend";
+
+async function sendWelcomeEmail(toEmail: string, firstName: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.log("[email] RESEND_API_KEY not set, skipping welcome email");
+    return;
+  }
+  const resend = new Resend(apiKey);
+  await resend.emails.send({
+    from: "no-reply@spiningebi.ge",
+    to: toEmail,
+    subject: "მოგესალმებით spiningebi.ge-ზე!",
+    html: `
+      <div style="font-family: 'FiraGO', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; background: #f9fafb; border-radius: 12px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #7c3aed; font-size: 24px; margin: 0;">spiningebi.ge</h1>
+          <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">საუკეთესო სასპინინგე აღჭურვილობა</p>
+        </div>
+        <div style="background: white; padding: 24px; border-radius: 8px; border: 1px solid #e5e7eb;">
+          <h2 style="color: #1f2937; font-size: 20px; margin: 0 0 12px;">გამარჯობა, ${firstName}!</h2>
+          <p style="color: #4b5563; font-size: 15px; line-height: 1.7; margin: 0 0 16px;">
+            მადლობა რომ დარეგისტრირდით ჩვენს საიტზე. ახლა შეგიძლიათ:
+          </p>
+          <ul style="color: #4b5563; font-size: 15px; line-height: 2; padding-left: 20px; margin: 0 0 16px;">
+            <li>პროდუქციის შერჩევა და შეკვეთა</li>
+            <li>კრედიტის დაგროვება რეფერალური სისტემით</li>
+            <li>შეკვეთების ისტორიის ნახვა</li>
+          </ul>
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="https://spiningebi.ge" style="display: inline-block; background: #7c3aed; color: white; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px;">
+              ეწვიეთ საიტს
+            </a>
+          </div>
+        </div>
+        <p style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 20px;">
+          © ${new Date().getFullYear()} spiningebi.ge — ყველა უფლება დაცულია
+        </p>
+      </div>
+    `,
+  });
+  console.log(`[email] Welcome email sent to ${toEmail}`);
+}
 
 const getOidcConfig = memoize(
   async () => {
@@ -250,7 +293,7 @@ export async function setupAuth(app: Express) {
 
   app.post("/api/register", async (req: any, res) => {
     try {
-      const { firstName, lastName, city, address, phone, password } = req.body;
+      const { firstName, lastName, email, city, address, phone, password } = req.body;
       if (!firstName?.trim() || !lastName?.trim() || !city?.trim() || !address?.trim() || !phone?.trim()) {
         return res.status(400).json({ message: "ყველა ველი სავალდებულოა" });
       }
@@ -263,6 +306,7 @@ export async function setupAuth(app: Express) {
       const { eq } = await import("drizzle-orm");
 
       const cleanPhone = phone.trim();
+      const cleanEmail = email?.trim() || null;
       const [existingByPhone] = await db.select().from(users).where(eq(users.phone, cleanPhone));
       if (existingByPhone) {
         return res.status(400).json({ message: "ეს ტელეფონის ნომერი უკვე რეგისტრირებულია" });
@@ -272,7 +316,7 @@ export async function setupAuth(app: Express) {
       const userId = `guest_${crypto.randomUUID()}`;
       await authStorage.upsertUser({
         id: userId,
-        email: null,
+        email: cleanEmail,
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         profileImageUrl: null,
@@ -285,6 +329,12 @@ export async function setupAuth(app: Express) {
         passwordHash,
       }).where(eq(users.id, userId));
 
+      if (cleanEmail) {
+        sendWelcomeEmail(cleanEmail, firstName.trim()).catch(err => {
+          console.error("[email] Welcome email error:", err);
+        });
+      }
+
       const sessionUser: any = {};
       sessionUser.claims = { sub: userId };
       sessionUser.expires_at = Math.floor(Date.now() / 1000) + 7 * 24 * 3600;
@@ -294,7 +344,7 @@ export async function setupAuth(app: Express) {
           console.error("[auth] register login error:", err);
           return res.status(500).json({ message: "რეგისტრაცია ვერ მოხერხდა" });
         }
-        res.json({ id: userId, firstName: firstName.trim(), lastName: lastName.trim(), city: city.trim(), address: address.trim(), phone: cleanPhone });
+        res.json({ id: userId, firstName: firstName.trim(), lastName: lastName.trim(), email: cleanEmail, city: city.trim(), address: address.trim(), phone: cleanPhone });
       });
     } catch (err) {
       console.error("[auth] register error:", err);

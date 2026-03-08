@@ -37,7 +37,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
   const [showPassword, setShowPassword] = useState(false);
 
   const [loginForm, setLoginForm] = useState({ phone: "", password: "", remember: false });
-  const [regForm, setRegForm] = useState({ fullName: "", city: "", address: "", phone: "", password: "" });
+  const [regForm, setRegForm] = useState({ fullName: "", email: "", city: "", address: "", phone: "", password: "" });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [termsViewOpen, setTermsViewOpen] = useState(false);
 
@@ -135,6 +135,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
         body: JSON.stringify({
           firstName,
           lastName,
+          email: regForm.email.trim() || undefined,
           city: regForm.city,
           address: regForm.address.trim(),
           phone: regForm.phone.trim(),
@@ -266,6 +267,18 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
                 placeholder="სახელი გვარი"
                 className="min-h-[44px]"
                 data-testid="input-register-fullname"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">ელ. ფოსტა</label>
+              <Input
+                type="email"
+                value={regForm.email}
+                onChange={e => setRegForm(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="example@mail.com"
+                className="min-h-[44px]"
+                data-testid="input-register-email"
               />
             </div>
 
