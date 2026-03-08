@@ -9,9 +9,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, UserPlus, LogIn, Eye, EyeOff } from "lucide-react";
+import { Loader2, UserPlus, LogIn, Eye, EyeOff, ScrollText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
+import type { TermsSection } from "@shared/schema";
 
 const GEORGIAN_CITIES = [
   "თბილისი", "ქუთაისი", "ბათუმი", "რუსთავი", "ფოთი", "ზუგდიდი",
@@ -36,6 +38,13 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
 
   const [loginForm, setLoginForm] = useState({ phone: "", password: "", remember: false });
   const [regForm, setRegForm] = useState({ fullName: "", city: "", address: "", phone: "", password: "" });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [termsViewOpen, setTermsViewOpen] = useState(false);
+
+  const { data: termsSections = [] } = useQuery<TermsSection[]>({
+    queryKey: ["/api/terms-sections"],
+    enabled: termsViewOpen,
+  });
 
   useEffect(() => {
     if (open) {
@@ -108,6 +117,10 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
     }
     if (!regForm.password || regForm.password.length < 4) {
       toast({ variant: "destructive", title: "შეცდომა", description: "პაროლი მინიმუმ 4 სიმბოლო უნდა იყოს" });
+      return;
+    }
+    if (!agreedToTerms) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "გთხოვთ დაეთანხმოთ წესებს და პირობებს" });
       return;
     }
 
@@ -314,9 +327,33 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
               </div>
             </div>
 
+            <div className="space-y-2">
+              <label className="flex items-start gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={e => setAgreedToTerms(e.target.checked)}
+                  className="h-4 w-4 mt-0.5 rounded border-border accent-primary flex-shrink-0"
+                  data-testid="checkbox-agree-terms"
+                />
+                <span className="text-xs text-muted-foreground leading-tight">
+                  ვეთანხმები{" "}
+                  <button
+                    type="button"
+                    onClick={() => setTermsViewOpen(true)}
+                    className="text-primary font-medium hover:underline inline-flex items-center gap-0.5"
+                    data-testid="button-view-terms-register"
+                  >
+                    <ScrollText className="h-3 w-3" />
+                    წესებს და პირობებს
+                  </button>
+                </span>
+              </label>
+            </div>
+
             <Button
               onClick={handleRegister}
-              disabled={submitting}
+              disabled={submitting || !agreedToTerms}
               className="min-h-[44px] w-full mt-1"
               data-testid="button-register-submit"
             >
@@ -336,6 +373,44 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
           </div>
         )}
       </DialogContent>
+
+      <Dialog open={termsViewOpen} onOpenChange={setTermsViewOpen}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-center text-lg" data-testid="text-terms-title-register">
+              <ScrollText className="inline h-5 w-5 mr-2" />
+              წესები & პირობები
+            </DialogTitle>
+            <DialogDescription className="text-center text-sm text-muted-foreground">
+              გაეცანით წესებს რეგისტრაციის წინ
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2" data-testid="terms-content-register">
+            {termsSections.length === 0 ? (
+              <p className="text-center text-sm text-muted-foreground py-4">
+                წესები და პირობები ჯერ არ არის დამატებული
+              </p>
+            ) : (
+              termsSections.map((section) => (
+                <div key={section.id} className="space-y-1">
+                  <h3 className="text-base font-bold" data-testid={`terms-title-${section.id}`}>{section.title}</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap" data-testid={`terms-content-${section.id}`}>{section.content}</p>
+                </div>
+              ))
+            )}
+          </div>
+          <Button
+            onClick={() => {
+              setAgreedToTerms(true);
+              setTermsViewOpen(false);
+            }}
+            className="w-full mt-2"
+            data-testid="button-accept-terms"
+          >
+            ვეთანხმები
+          </Button>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
