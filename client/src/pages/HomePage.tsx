@@ -16,7 +16,8 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText } from "lucide-react";
+import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText, Download } from "lucide-react";
+import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { LucideIcon } from "@/components/IconPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Link } from "wouter";
@@ -33,7 +34,7 @@ import fishermanLogo from "@assets/fisherman_transparent.png";
 import eyeIconPath from "@assets/image_1771961384457.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 
-function SiteFooter({ onOpenTerms }: { onOpenTerms?: () => void }) {
+function SiteFooter({ onOpenTerms, canInstall, onInstall }: { onOpenTerms?: () => void; canInstall?: boolean; onInstall?: () => void }) {
   const { data: contact } = useQuery<{ phone: string; email: string; whatsapp: string; address: string; workHours: string; dayOff: string }>({
     queryKey: ["/api/contact-info"],
   });
@@ -42,8 +43,8 @@ function SiteFooter({ onOpenTerms }: { onOpenTerms?: () => void }) {
   return (
     <footer className="mt-8 bg-gradient-to-r from-purple-100 via-purple-50 to-pink-50 border-t border-purple-200/50" data-testid="footer">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        {onOpenTerms && (
-          <div className="sm:hidden mb-4">
+        <div className="sm:hidden mb-4 flex flex-col gap-3">
+          {onOpenTerms && (
             <button
               type="button"
               onClick={onOpenTerms}
@@ -53,8 +54,19 @@ function SiteFooter({ onOpenTerms }: { onOpenTerms?: () => void }) {
               <ScrollText className="h-4 w-4" />
               წესები და პირობები
             </button>
-          </div>
-        )}
+          )}
+          {canInstall && onInstall && (
+            <button
+              type="button"
+              onClick={onInstall}
+              className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900"
+              data-testid="footer-install-app"
+            >
+              <Download className="h-4 w-4" />
+              აპლიკაციის ჩამოტვირთვა
+            </button>
+          )}
+        </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <h3 className="mb-3 text-sm font-bold text-gray-800">საკონტაქტო ინფორმაცია</h3>
@@ -470,6 +482,7 @@ export default function HomePage() {
   const [termsDialogOpen, setTermsDialogOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const { totalCount: cartCount } = useCart();
+  const { canInstall, install: installPwa } = usePwaInstall();
 
   interface VisualPublic {
     selectedLogo: number | null;
@@ -656,6 +669,14 @@ export default function HomePage() {
                 წესები და პირობები
               </span>
             </button>
+            {canInstall && (
+            <button onClick={installPwa} data-testid="link-nav-install">
+              <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-green-600 hover:text-green-700 transition-colors">
+                <Download className="h-5 w-5" />
+                აპლიკაციის ჩამოტვირთვა
+              </span>
+            </button>
+            )}
           </div>
           <div className="flex items-center gap-5">
             <button
@@ -765,7 +786,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <SiteFooter onOpenTerms={() => setTermsDialogOpen(true)} />
+      <SiteFooter onOpenTerms={() => setTermsDialogOpen(true)} canInstall={canInstall} onInstall={installPwa} />
 
       <MobileBottomNav
         onCategoriesOpen={() => setCategoryDrawerOpen(true)}
