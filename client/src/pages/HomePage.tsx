@@ -655,15 +655,6 @@ export default function HomePage() {
       <div className="mx-auto hidden max-w-6xl px-4 py-6 sm:px-6 md:block lg:px-8">
         <div className="flex items-center justify-between pb-4">
           <div className="flex items-center gap-8">
-            <button onClick={handleGoHome} className="flex items-center gap-2 mr-2 hover:opacity-80 transition-opacity" data-testid="link-nav-logo">
-              <img
-                src={cacheBust(heroLogoSrc)}
-                alt="spiningebi.ge"
-                className="h-9 w-9 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow"
-                onError={(e) => { e.currentTarget.src = fishermanLogo; }}
-              />
-              <span className="text-base font-bold text-foreground tracking-tight">spiningebi<span className="text-primary">.ge</span></span>
-            </button>
             <button onClick={handleGoHome} data-testid="link-nav-home">
               <span className={`flex min-h-[44px] items-center gap-2 text-[15px] font-semibold ${!selectedCategory ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
                 <Home className="h-5 w-5" />
