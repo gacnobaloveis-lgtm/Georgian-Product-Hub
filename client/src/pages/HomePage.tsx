@@ -612,16 +612,19 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
         <div className="absolute inset-0 flex items-center px-4 sm:px-8 lg:px-16">
           <div className="flex items-center gap-3 sm:gap-5">
-            <img
-              src={cacheBust(heroLogoSrc)}
-              alt=""
-              className="h-14 w-14 shrink-0 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-16 sm:w-16 lg:h-20 lg:w-20"
-              data-testid="img-logo"
-              onError={(e) => { e.currentTarget.src = fishermanLogo; }}
-            />
+            <button onClick={handleGoHome} className="shrink-0 hover:opacity-80 transition-opacity" data-testid="img-logo-btn">
+              <img
+                src={cacheBust(heroLogoSrc)}
+                alt="მთავარი"
+                className="h-14 w-14 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-16 sm:w-16 lg:h-20 lg:w-20"
+                data-testid="img-logo"
+                onError={(e) => { e.currentTarget.src = fishermanLogo; }}
+              />
+            </button>
             <div className="flex min-w-0 flex-col">
               <h1
-                className="tracking-wide drop-shadow-lg text-xl leading-tight sm:text-3xl lg:text-4xl"
+                onClick={handleGoHome}
+                className="cursor-pointer tracking-wide drop-shadow-lg text-xl leading-tight sm:text-3xl lg:text-4xl hover:opacity-80 transition-opacity"
                 style={{
                   fontFamily: heroFont,
                   color: heroTextColor || "#ffffff",
@@ -652,6 +655,15 @@ export default function HomePage() {
       <div className="mx-auto hidden max-w-6xl px-4 py-6 sm:px-6 md:block lg:px-8">
         <div className="flex items-center justify-between pb-4">
           <div className="flex items-center gap-8">
+            <button onClick={handleGoHome} className="flex items-center gap-2 mr-2 hover:opacity-80 transition-opacity" data-testid="link-nav-logo">
+              <img
+                src={cacheBust(heroLogoSrc)}
+                alt="spiningebi.ge"
+                className="h-9 w-9 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow"
+                onError={(e) => { e.currentTarget.src = fishermanLogo; }}
+              />
+              <span className="text-base font-bold text-foreground tracking-tight">spiningebi<span className="text-primary">.ge</span></span>
+            </button>
             <button onClick={handleGoHome} data-testid="link-nav-home">
               <span className={`flex min-h-[44px] items-center gap-2 text-[15px] font-semibold ${!selectedCategory ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
                 <Home className="h-5 w-5" />
