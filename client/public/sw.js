@@ -1,10 +1,7 @@
-const CACHE_NAME = "spiningebi-v1";
-const PRECACHE_URLS = ["/", "/favicon.png"];
+const CACHE_NAME = "spiningebi-v2";
+const STATIC_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".svg", ".ico", ".woff", ".woff2", ".ttf"];
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
-  );
+self.addEventListener("install", () => {
   self.skipWaiting();
 });
 
@@ -19,18 +16,27 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
-  const url = new URL(event.request.url);
-  if (url.pathname.startsWith("/api/")) return;
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response.ok && url.origin === self.location.origin) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        }
-        return response;
+  const url = new URL(event.request.url);
+
+  if (url.pathname.startsWith("/api/")) return;
+  if (url.origin !== self.location.origin) return;
+
+  const isStaticAsset = STATIC_EXTENSIONS.some(ext => url.pathname.endsWith(ext))
+    || url.pathname.startsWith("/assets/");
+
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        if (cached) return cached;
+        return fetch(event.request).then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        });
       })
-      .catch(() => caches.match(event.request))
-  );
+    );
+  }
 });
