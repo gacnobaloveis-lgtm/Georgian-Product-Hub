@@ -1404,13 +1404,23 @@ export async function registerRoutes(
           tag: `broadcast-${broadcast.id}`,
         });
         console.log(`[broadcast] pushing to ${allSubs.length} subs, image: ${absoluteImage}`);
+        let pushSent = 0, pushFailed = 0;
         for (const sub of allSubs) {
-          webpush.sendNotification(
+          await webpush.sendNotification(
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
             payload
-          ).catch(() => storage.removePushSubscription(sub.endpoint));
+          ).then(() => { pushSent++; }).catch(async (err: any) => {
+            pushFailed++;
+            console.warn(`[broadcast] push failed: status=${err?.statusCode} msg=${err?.message} endpoint=${sub.endpoint.slice(0, 60)}`);
+            if (err?.statusCode === 410 || err?.statusCode === 404) {
+              await storage.removePushSubscription(sub.endpoint);
+            }
+          });
         }
-      } catch (_) {}
+        console.log(`[broadcast] push done: ${pushSent} sent, ${pushFailed} failed`);
+      } catch (pushErr) {
+        console.error(`[broadcast] push error:`, pushErr);
+      }
 
       res.json(broadcast);
     } catch (err) {
