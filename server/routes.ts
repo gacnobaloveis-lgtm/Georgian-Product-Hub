@@ -1120,6 +1120,106 @@ export async function registerRoutes(
     }
   });
 
+  // ===== CHAT ROUTES =====
+  function requireAuth(req: Request, res: Response, next: NextFunction) {
+    if (!req.session?.userId) {
+      return res.status(401).json({ message: "გთხოვთ გაიაროთ ავტორიზაცია" });
+    }
+    next();
+  }
+
+  // Get current user's chat messages
+  app.get("/api/chat/messages", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId as string;
+      const messages = await storage.getChatMessages(userId);
+      res.json(messages);
+    } catch (err) {
+      console.error("Chat get error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // Send message (user)
+  app.post("/api/chat/messages", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId as string;
+      const { message } = req.body;
+      if (!message || typeof message !== "string" || !message.trim()) {
+        return res.status(400).json({ message: "შეტყობინება სავალდებულოა" });
+      }
+
+      const existing = await storage.getChatMessages(userId);
+      const userMsg = await storage.createChatMessage({
+        userId,
+        message: message.trim().substring(0, 1000),
+        senderType: "user",
+        isRead: 0,
+      });
+
+      // Auto bot reply only if this is the first user message
+      const prevUserMsgs = existing.filter(m => m.senderType === "user");
+      if (prevUserMsgs.length === 0) {
+        await storage.createChatMessage({
+          userId,
+          message: "გმადლობთ შეკითხვისთვის! spiningebi.ge ადმინისტრატორი 24 საათში გიპასუხებთ.",
+          senderType: "bot",
+          isRead: 1,
+        });
+      }
+
+      res.json(userMsg);
+    } catch (err) {
+      console.error("Chat send error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // Admin: get all conversations
+  app.get("/api/chat/conversations", requireAdmin, async (_req, res) => {
+    try {
+      const convs = await storage.getAllChatConversations();
+      res.json(convs);
+    } catch (err) {
+      console.error("Chat conversations error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // Admin: get messages for specific user
+  app.get("/api/chat/messages/:userId", requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      await storage.markChatRead(userId);
+      const messages = await storage.getChatMessages(userId);
+      res.json(messages);
+    } catch (err) {
+      console.error("Chat admin get error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // Admin: reply to user
+  app.post("/api/chat/reply/:userId", requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { message } = req.body;
+      if (!message || typeof message !== "string" || !message.trim()) {
+        return res.status(400).json({ message: "შეტყობინება სავალდებულოა" });
+      }
+      const msg = await storage.createChatMessage({
+        userId,
+        message: message.trim().substring(0, 1000),
+        senderType: "admin",
+        isRead: 1,
+      });
+      res.json(msg);
+    } catch (err) {
+      console.error("Chat reply error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
   app.get("/sitemap.xml", async (_req, res) => {
     try {
       const allProducts = await storage.getProducts();

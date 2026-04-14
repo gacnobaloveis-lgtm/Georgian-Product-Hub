@@ -1,4 +1,4 @@
-import { pgTable, text, serial, numeric, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, numeric, timestamp, integer, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -44,6 +44,19 @@ export const termsSections = pgTable("terms_sections", {
 export const insertTermsSectionSchema = createInsertSchema(termsSections).omit({ id: true });
 export type InsertTermsSection = z.infer<typeof insertTermsSectionSchema>;
 export type TermsSection = typeof termsSections.$inferSelect;
+
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  message: text("message").notNull(),
+  senderType: varchar("sender_type").notNull(), // 'user' | 'admin' | 'bot'
+  createdAt: timestamp("created_at").defaultNow(),
+  isRead: integer("is_read").default(0),
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+export type ChatMessage = typeof chatMessages.$inferSelect;
 
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });

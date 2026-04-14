@@ -1,0 +1,187 @@
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { Send, ArrowLeft, MessageCircle, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
+import { apiRequest } from "@/lib/queryClient";
+import type { ChatMessage } from "@shared/schema";
+
+function formatTime(date: Date | string | null) {
+  if (!date) return "";
+  const d = new Date(date);
+  return d.toLocaleTimeString("ka-GE", { hour: "2-digit", minute: "2-digit" });
+}
+
+export default function LiveContactPage() {
+  const [, setLocation] = useLocation();
+  const { user, isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+  const [input, setInput] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const userName = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || "მომხმარებელი" : "";
+
+  const { data: messages = [] } = useQuery<ChatMessage[]>({
+    queryKey: ["/api/chat/messages"],
+    enabled: isAuthenticated,
+    refetchInterval: 4000,
+  });
+
+  const sendMutation = useMutation({
+    mutationFn: async (message: string) => {
+      return await apiRequest("POST", "/api/chat/messages", { message });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
+      setInput("");
+    },
+  });
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  function handleSend() {
+    const text = input.trim();
+    if (!text || sendMutation.isPending) return;
+    sendMutation.mutate(text);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen bg-background">
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-border shadow-sm">
+        <div className="mx-auto max-w-2xl px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            data-testid="button-back-chat"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            უკან
+          </button>
+          <div className="flex-1 flex items-center gap-2.5">
+            <div className="relative">
+              <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                <MessageCircle className="h-5 w-5 text-primary" />
+              </div>
+              <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 border-2 border-white" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-foreground">spiningebi.ge</p>
+              <p className="text-xs text-emerald-600">ონლაინ</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 mx-auto w-full max-w-2xl px-4 py-4 space-y-3 overflow-y-auto">
+        {/* Greeting */}
+        <div className="flex items-end gap-2">
+          <div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+            SP
+          </div>
+          <div className="max-w-[75%]">
+            <p className="text-[11px] text-muted-foreground mb-1">spiningebi.ge</p>
+            <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-2.5">
+              <p className="text-sm">გამარჯობა! მოგესალმებათ spiningebi.ge ადმინისტრატორი. დასვით თქვენი შეკითხვა, სიამოვნებით დაგეხმარებით! 🎣</p>
+            </div>
+          </div>
+        </div>
+
+        {!isAuthenticated ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <div className="rounded-full bg-muted p-4">
+              <Lock className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="text-sm text-muted-foreground">მიწერა შეუძლიათ მხოლოდ რეგისტრირებულ მომხმარებლებს</p>
+            <Button onClick={() => setLocation("/")} variant="default" size="sm">
+              შესვლა / რეგისტრაცია
+            </Button>
+          </div>
+        ) : (
+          <>
+            {messages.map((msg) => {
+              const isUser = msg.senderType === "user";
+              const isAdmin = msg.senderType === "admin";
+              const isBot = msg.senderType === "bot";
+
+              if (isUser) {
+                return (
+                  <div key={msg.id} className="flex items-end gap-2 justify-end">
+                    <div className="max-w-[75%]">
+                      <p className="text-[11px] text-muted-foreground mb-1 text-right">{userName}</p>
+                      <div className="rounded-2xl rounded-br-sm bg-primary px-4 py-2.5">
+                        <p className="text-sm text-primary-foreground">{msg.message}</p>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1 text-right">{formatTime(msg.createdAt)}</p>
+                    </div>
+                    <div className="h-7 w-7 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
+                      {(user?.firstName?.[0] || "მ").toUpperCase()}
+                    </div>
+                  </div>
+                );
+              }
+
+              return (
+                <div key={msg.id} className="flex items-end gap-2">
+                  <div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                    SP
+                  </div>
+                  <div className="max-w-[75%]">
+                    <p className="text-[11px] text-muted-foreground mb-1">{isAdmin ? "spiningebi.ge" : "spiningebi.ge 🤖"}</p>
+                    <div className={`rounded-2xl rounded-bl-sm px-4 py-2.5 ${isAdmin ? "bg-emerald-50 border border-emerald-100" : "bg-muted"}`}>
+                      <p className="text-sm">{msg.message}</p>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1">{formatTime(msg.createdAt)}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Input */}
+      {isAuthenticated && (
+        <div className="sticky bottom-0 bg-white/95 backdrop-blur border-t border-border">
+          <div className="mx-auto max-w-2xl px-4 py-3">
+            <div className="flex items-end gap-2">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="შეტყობინება..."
+                rows={1}
+                className="flex-1 resize-none rounded-xl border border-border bg-muted px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors min-h-[44px] max-h-[120px]"
+                data-testid="input-chat-message"
+                style={{ height: "auto", overflowY: "auto" }}
+              />
+              <Button
+                onClick={handleSend}
+                disabled={!input.trim() || sendMutation.isPending}
+                size="icon"
+                className="h-11 w-11 rounded-xl shrink-0"
+                data-testid="button-send-chat"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

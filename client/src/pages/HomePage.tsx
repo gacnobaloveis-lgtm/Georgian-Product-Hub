@@ -63,6 +63,15 @@ function SiteFooter({ canInstall, onInstall }: { canInstall?: boolean; onInstall
             <Info className="h-4 w-4" />
             ჩვენს შესახებ
           </button>
+          <button
+            type="button"
+            onClick={() => setLocation("/live-contact")}
+            className="flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-800"
+            data-testid="footer-live-contact-mobile"
+          >
+            <MessageCircle className="h-4 w-4" />
+            ლივე კონტაქტი
+          </button>
           {canInstall && onInstall && (
             <button
               type="button"
@@ -126,6 +135,16 @@ function SiteFooter({ canInstall, onInstall }: { canInstall?: boolean; onInstall
                 >
                   <Info className="h-4 w-4 text-purple-500" />
                   ჩვენს შესახებ
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setLocation("/live-contact")}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-emerald-600 transition-colors"
+                  data-testid="footer-live-contact-link"
+                >
+                  <MessageCircle className="h-4 w-4 text-emerald-500" />
+                  ლივე კონტაქტი
                 </button>
               </li>
             </ul>
@@ -708,6 +727,11 @@ export default function HomePage() {
               className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all">
               <Info className="h-4 w-4" />
               ჩვენს შესახებ
+            </button>
+            <button onClick={() => setLocation("/live-contact")} data-testid="link-nav-live-contact"
+              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all">
+              <MessageCircle className="h-4 w-4" />
+              ლივე კონტაქტი
             </button>
             {canInstall && (
               <button onClick={() => setInstallDialogOpen(true)} data-testid="link-nav-install"

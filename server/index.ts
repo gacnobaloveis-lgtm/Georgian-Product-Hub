@@ -150,6 +150,25 @@ async function ensureTermsSectionsTable() {
   }
 }
 
+async function ensureChatMessagesTable() {
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR NOT NULL,
+        message TEXT NOT NULL,
+        sender_type VARCHAR NOT NULL DEFAULT 'user',
+        created_at TIMESTAMP DEFAULT NOW(),
+        is_read INTEGER DEFAULT 0
+      )
+    `);
+    console.log("[migrate] chat_messages table ensured");
+  } catch (err) {
+    console.error("[migrate] Error ensuring chat_messages table:", err);
+  }
+}
+
 async function ensureMediaDataColumns() {
   try {
     const { pool } = await import("./db");
@@ -319,6 +338,7 @@ async function initializeApp() {
   try {
     await seedAdminUser();
     await ensureTermsSectionsTable();
+    await ensureChatMessagesTable();
     await ensureMediaDataColumns();
     await migrateFilesToDb();
     log("All migrations completed successfully");

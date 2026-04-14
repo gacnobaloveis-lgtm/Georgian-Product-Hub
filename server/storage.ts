@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { products, media, categories, termsSections, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection } from "@shared/schema";
+import { products, media, categories, termsSections, chatMessages, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage } from "@shared/schema";
 import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
 import { eq, desc, sql, lt, asc } from "drizzle-orm";
 
@@ -46,6 +46,10 @@ export interface IStorage {
   createTermsSection(section: InsertTermsSection): Promise<TermsSection>;
   updateTermsSection(id: number, updates: Partial<InsertTermsSection>): Promise<TermsSection | undefined>;
   deleteTermsSection(id: number): Promise<void>;
+  getChatMessages(userId: string): Promise<ChatMessage[]>;
+  createChatMessage(msg: InsertChatMessage): Promise<ChatMessage>;
+  getAllChatConversations(): Promise<{ userId: string; firstName: string | null; lastName: string | null; lastMessage: string; lastAt: Date | null; unread: number }[]>;
+  markChatRead(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -276,6 +280,42 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTermsSection(id: number): Promise<void> {
     await db.delete(termsSections).where(eq(termsSections.id, id));
+  }
+
+  async getChatMessages(userId: string): Promise<ChatMessage[]> {
+    return await db.select().from(chatMessages).where(eq(chatMessages.userId, userId)).orderBy(asc(chatMessages.createdAt));
+  }
+
+  async createChatMessage(msg: InsertChatMessage): Promise<ChatMessage> {
+    const [created] = await db.insert(chatMessages).values(msg).returning();
+    return created;
+  }
+
+  async getAllChatConversations(): Promise<{ userId: string; firstName: string | null; lastName: string | null; lastMessage: string; lastAt: Date | null; unread: number }[]> {
+    const result = await db.execute(sql`
+      SELECT
+        cm.user_id,
+        u.first_name,
+        u.last_name,
+        (SELECT message FROM chat_messages WHERE user_id = cm.user_id ORDER BY created_at DESC LIMIT 1) AS last_message,
+        (SELECT created_at FROM chat_messages WHERE user_id = cm.user_id ORDER BY created_at DESC LIMIT 1) AS last_at,
+        (SELECT COUNT(*) FROM chat_messages WHERE user_id = cm.user_id AND sender_type = 'user' AND is_read = 0) AS unread
+      FROM (SELECT DISTINCT user_id FROM chat_messages) cm
+      LEFT JOIN users u ON u.id = cm.user_id
+      ORDER BY last_at DESC
+    `);
+    return (result.rows as any[]).map(r => ({
+      userId: r.user_id,
+      firstName: r.first_name,
+      lastName: r.last_name,
+      lastMessage: r.last_message,
+      lastAt: r.last_at,
+      unread: Number(r.unread),
+    }));
+  }
+
+  async markChatRead(userId: string): Promise<void> {
+    await db.execute(sql`UPDATE chat_messages SET is_read = 1 WHERE user_id = ${userId} AND sender_type = 'user'`);
   }
 }
 
