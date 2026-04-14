@@ -19,7 +19,6 @@ export default function LiveContactPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
-  const [optimistic, setOptimistic] = useState<string[]>([]);
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<"login" | "register">("login");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -35,25 +34,25 @@ export default function LiveContactPage() {
 
   const sendMutation = useMutation({
     mutationFn: async (message: string) => {
-      return await apiRequest("POST", "/api/chat/messages", { message });
+      const res = await apiRequest("POST", "/api/chat/messages", { message });
+      return res as ChatMessage;
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
-      setOptimistic([]);
-    },
-    onError: () => {
-      setOptimistic([]);
+    onSuccess: (newMsg) => {
+      queryClient.setQueryData<ChatMessage[]>(["/api/chat/messages"], (old = []) => {
+        if (old.some((m) => m.id === newMsg.id)) return old;
+        return [...old, newMsg];
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
     },
   });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, optimistic]);
+  }, [messages]);
 
   function handleSend() {
     const text = input.trim();
     if (!text || sendMutation.isPending) return;
-    setOptimistic((prev) => [...prev, text]);
     setInput("");
     sendMutation.mutate(text);
   }
@@ -176,12 +175,12 @@ export default function LiveContactPage() {
               );
             })}
 
-            {optimistic.map((text, i) => (
-              <div key={`optimistic-${i}`} className="flex items-end gap-2 justify-end">
+            {sendMutation.isPending && (
+              <div className="flex items-end gap-2 justify-end opacity-60">
                 <div className="max-w-[75%]">
                   <p className="text-[11px] text-muted-foreground mb-1 text-right">{userName}</p>
-                  <div className="rounded-2xl rounded-br-sm bg-primary/80 px-4 py-2.5">
-                    <p className="text-sm text-primary-foreground">{text}</p>
+                  <div className="rounded-2xl rounded-br-sm bg-primary/70 px-4 py-2.5">
+                    <p className="text-sm text-primary-foreground">...</p>
                   </div>
                   <p className="text-[10px] text-muted-foreground mt-1 text-right">იგზავნება...</p>
                 </div>
@@ -189,7 +188,7 @@ export default function LiveContactPage() {
                   {(user?.firstName?.[0] || "მ").toUpperCase()}
                 </div>
               </div>
-            ))}
+            )}
           </>
         )}
         <div ref={bottomRef} />
