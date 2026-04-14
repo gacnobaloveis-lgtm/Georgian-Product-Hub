@@ -721,31 +721,31 @@ export default function HomePage() {
       )}
 
       <div className="mx-auto hidden max-w-6xl px-4 pb-4 pt-3 sm:px-6 md:block lg:px-8">
-        <nav className="flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200/60 shadow-sm px-5 py-2">
-          <div className="flex items-center gap-1">
+        <nav className="flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200/60 shadow-sm px-5 py-2.5">
+          <div className="flex items-center gap-0.5">
             <button onClick={handleGoHome} data-testid="link-nav-home"
-              className={`flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold transition-all whitespace-nowrap ${!selectedCategory ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-muted hover:text-primary"}`}>
+              className={`flex min-h-[36px] items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-all whitespace-nowrap ${!selectedCategory ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-muted hover:text-primary"}`}>
               <Home className="h-3.5 w-3.5 shrink-0" />
               მთავარი
             </button>
             <button onClick={() => setGuideOpen(true)} data-testid="link-nav-guide"
-              className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap">
+              className="flex min-h-[36px] items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap">
               <BookOpen className="h-3.5 w-3.5 shrink-0" />
               გზამკვლევი
             </button>
             <button onClick={() => setLocation("/terms")} data-testid="link-nav-terms"
-              className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap">
+              className="flex min-h-[36px] items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap">
               <ScrollText className="h-3.5 w-3.5 shrink-0" />
               წესები და პირობები
             </button>
             <button onClick={() => setLocation("/about")} data-testid="link-nav-about"
-              className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap">
+              className="flex min-h-[36px] items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap">
               <Info className="h-3.5 w-3.5 shrink-0" />
               ჩვენს შესახებ
             </button>
             {canInstall && (
               <button onClick={() => setInstallDialogOpen(true)} data-testid="link-nav-install"
-                className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-green-600 hover:bg-green-50 hover:text-green-700 transition-all animate-pulse whitespace-nowrap">
+                className="flex min-h-[36px] items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold text-green-600 hover:bg-green-50 hover:text-green-700 transition-all animate-pulse whitespace-nowrap">
                 <Download className="h-3.5 w-3.5 shrink-0" />
                 ჩამოტვირთვა
               </button>
@@ -754,19 +754,19 @@ export default function HomePage() {
 
           {/* Online visitor counter */}
           {displayOnline !== null && (
-            <div className="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-1" data-testid="badge-online-count">
+            <div className="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1" data-testid="badge-online-count">
               <span className="relative flex h-1.5 w-1.5 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
               </span>
-              <span className="text-[11px] font-semibold text-red-700 whitespace-nowrap">საიტზეა {displayOnline}</span>
+              <span className="text-[12px] font-semibold text-red-700 whitespace-nowrap">საიტზეა {displayOnline}</span>
             </div>
           )}
 
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               onClick={() => setCartDrawerOpen(true)}
-              className="relative flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap"
+              className="relative flex min-h-[36px] items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap"
               data-testid="link-cart-desktop"
             >
               <div className="relative">
@@ -781,7 +781,7 @@ export default function HomePage() {
             </button>
             <button
               onClick={handleProfileClick}
-              className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap"
+              className="flex min-h-[36px] items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap"
               data-testid="link-profile-desktop"
             >
               <UserCircle className="h-3.5 w-3.5 shrink-0" />
@@ -789,7 +789,7 @@ export default function HomePage() {
             </button>
             {hasAdminRole && (
               <Link href="/admin-login">
-                <span className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap" data-testid="link-admin-panel">
+                <span className="flex min-h-[36px] items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap" data-testid="link-admin-panel">
                   <Settings className="h-3.5 w-3.5 shrink-0" />
                   ადმინ
                 </span>
