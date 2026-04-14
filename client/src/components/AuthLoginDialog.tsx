@@ -9,11 +9,35 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, UserPlus, LogIn, Eye, EyeOff, ScrollText, KeyRound, ArrowLeft, Mail } from "lucide-react";
+import { Loader2, UserPlus, LogIn, Eye, EyeOff, ScrollText, KeyRound, ArrowLeft, Mail, Bell } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import type { TermsSection } from "@shared/schema";
+
+async function attemptPushSubscription() {
+  try {
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") return;
+    const keyRes = await fetch("/api/push/vapid-key");
+    const { publicKey } = await keyRes.json();
+    if (!publicKey) return;
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      const pad = "=".repeat((4 - (publicKey.length % 4)) % 4);
+      const b64 = (publicKey + pad).replace(/-/g, "+").replace(/_/g, "/");
+      const key = Uint8Array.from([...atob(b64)].map((c) => c.charCodeAt(0)));
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+    }
+    await fetch("/api/push/subscribe", {
+      method: "POST", credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(sub.toJSON()),
+    });
+  } catch (_) {}
+}
 
 const GEORGIAN_CITIES = [
   "თბილისი", "ქუთაისი", "ბათუმი", "რუსთავი", "ფოთი", "ზუგდიდი",
@@ -40,6 +64,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
   const [loginForm, setLoginForm] = useState({ phone: "", password: "", remember: false });
   const [regForm, setRegForm] = useState({ fullName: "", email: "", city: "", address: "", phone: "", password: "" });
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [wantsPush, setWantsPush] = useState(true);
   const [termsViewOpen, setTermsViewOpen] = useState(false);
 
   const [showEmailWarning, setShowEmailWarning] = useState(false);
@@ -220,6 +245,10 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
         toast({ title: "რეგისტრაცია წარმატებით დასრულდა!" });
         onOpenChange(false);
         onRegistered?.();
+        // Request push permission if user opted in — triggers native browser dialog
+        if (wantsPush) {
+          setTimeout(() => attemptPushSubscription(), 500);
+        }
       } else {
         const data = await res.json().catch(() => ({}));
         toast({ variant: "destructive", title: "შეცდომა", description: data.message || "რეგისტრაცია ვერ მოხერხდა" });
@@ -533,6 +562,20 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                     <ScrollText className="h-3 w-3" />
                     წესებს და პირობებს
                   </button>
+                </span>
+              </label>
+
+              <label className="flex items-start gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={wantsPush}
+                  onChange={e => setWantsPush(e.target.checked)}
+                  className="h-4 w-4 mt-0.5 rounded border-border accent-primary flex-shrink-0"
+                  data-testid="checkbox-push-notif"
+                />
+                <span className="text-xs text-muted-foreground leading-tight flex items-center gap-1 flex-wrap">
+                  <Bell className="h-3 w-3 text-emerald-600 shrink-0" />
+                  მინდა მივიღო შეტყობინება ახალ პროდუქციასა და სიახლეებზე
                 </span>
               </label>
             </div>
