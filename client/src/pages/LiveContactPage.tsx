@@ -35,7 +35,7 @@ export default function LiveContactPage() {
   const sendMutation = useMutation({
     mutationFn: async (message: string) => {
       const res = await apiRequest("POST", "/api/chat/messages", { message });
-      return res as ChatMessage;
+      return res.json() as Promise<ChatMessage>;
     },
     onSuccess: (newMsg) => {
       queryClient.setQueryData<ChatMessage[]>(["/api/chat/messages"], (old = []) => {
