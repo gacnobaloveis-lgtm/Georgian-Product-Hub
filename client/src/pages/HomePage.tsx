@@ -126,7 +126,7 @@ function SiteFooter({ canInstall, onInstall }: { canInstall?: boolean; onInstall
             <p className="text-sm text-gray-600">{c.workHours}</p>
             <p className="text-sm text-gray-600">{c.dayOff}</p>
           </div>
-          <div>
+          <div className="hidden sm:block">
             <h3 className="mb-3 text-sm font-bold text-gray-800">ბმულები</h3>
             <ul className="space-y-2.5">
               <li>
