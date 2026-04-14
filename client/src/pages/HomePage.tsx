@@ -271,6 +271,7 @@ function MobileBottomNav({
   onProfileClick,
   hasAdminRole,
   cartCount,
+  chatUnreadCount,
 }: {
   onCategoriesOpen: () => void;
   onGuideOpen: () => void;
@@ -280,6 +281,7 @@ function MobileBottomNav({
   onProfileClick: () => void;
   hasAdminRole: boolean;
   cartCount: number;
+  chatUnreadCount: number;
 }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-border bg-card/95 backdrop-blur-md md:hidden" style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom)" }} data-testid="mobile-bottom-nav">
@@ -324,11 +326,18 @@ function MobileBottomNav({
       </button>
       <button
         onClick={onProfileClick}
-        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
+        className="relative flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
         data-testid="nav-profile"
       >
-        <UserCircle className="h-4 w-4" />
-        <span>პროფილი</span>
+        <div className="relative">
+          <UserCircle className="h-4 w-4" />
+          {chatUnreadCount > 0 && (
+            <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+              {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
+            </span>
+          )}
+        </div>
+        <span className={chatUnreadCount > 0 ? "text-red-500 font-bold" : ""}>პროფილი</span>
       </button>
       {hasAdminRole && (
         <Link href="/admin-login">
@@ -822,6 +831,7 @@ export default function HomePage() {
         onProfileClick={handleProfileClick}
         hasAdminRole={hasAdminRole}
         cartCount={cartCount}
+        chatUnreadCount={chatUnreadCount}
       />
 
       <CartDrawer open={cartDrawerOpen} onOpenChange={setCartDrawerOpen} />
