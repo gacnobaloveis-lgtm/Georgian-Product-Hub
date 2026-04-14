@@ -1,4 +1,4 @@
-const CACHE_NAME = "spiningebi-v3";
+const CACHE_NAME = "spiningebi-v4";
 const STATIC_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".svg", ".ico", ".woff", ".woff2", ".ttf"];
 
 self.addEventListener("install", () => {
@@ -43,7 +43,7 @@ self.addEventListener("fetch", (event) => {
 
 // Push notification handler — fires even when tab is closed
 self.addEventListener("push", (event) => {
-  let data = { title: "spiningebi.ge", body: "ახალი შეტყობინება", url: "/", tag: "" };
+  let data = { title: "spiningebi.ge", body: "ახალი შეტყობინება", url: "/", tag: "", image: "", icon: "" };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch (_) {}
@@ -51,15 +51,20 @@ self.addEventListener("push", (event) => {
   // Use unique tag per message so notifications stack (not replace each other)
   const notifTag = data.tag || ("push-" + Date.now());
 
+  const options = {
+    body: data.body,
+    icon: data.icon || "/pwa-icon.png",
+    badge: "/favicon.png",
+    tag: notifTag,
+    renotify: true,
+    data: { url: data.url },
+  };
+
+  // image field shows a large product photo in the notification on Android/Chrome
+  if (data.image) options.image = data.image;
+
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: "/pwa-icon.png",
-      badge: "/favicon.png",
-      tag: notifTag,
-      renotify: true,
-      data: { url: data.url },
-    })
+    self.registration.showNotification(data.title, options)
   );
 });
 

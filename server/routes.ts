@@ -1384,13 +1384,26 @@ export async function registerRoutes(
       // Send push notifications to all subscribers
       try {
         const allSubs = await storage.getAllPushSubscriptions();
+
+        // Build absolute image URL so Android/Chrome can fetch it for the rich notification
+        const siteOrigin = process.env.SITE_URL ||
+          `${req.protocol}://${req.get("host")}`;
+        const absoluteImage = imageUrl
+          ? (imageUrl.startsWith("http") ? imageUrl : `${siteOrigin}${imageUrl}`)
+          : undefined;
+
+        // Also build absolute icon using the site's PWA icon
+        const absoluteIcon = `${siteOrigin}/pwa-icon.png`;
+
         const payload = JSON.stringify({
-          title,
-          body: body.substring(0, 120),
+          title: title.trim(),
+          body: body.trim().substring(0, 120),
           url: url || "/",
-          image: imageUrl || undefined,
+          image: absoluteImage,
+          icon: absoluteIcon,
           tag: `broadcast-${broadcast.id}`,
         });
+        console.log(`[broadcast] pushing to ${allSubs.length} subs, image: ${absoluteImage}`);
         for (const sub of allSubs) {
           webpush.sendNotification(
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
