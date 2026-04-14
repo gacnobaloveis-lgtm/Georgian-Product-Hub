@@ -37,8 +37,8 @@ export default function LiveContactPage() {
     mutationFn: async (message: string) => {
       return await apiRequest("POST", "/api/chat/messages", { message });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
       setOptimistic([]);
     },
     onError: () => {
