@@ -270,27 +270,28 @@ function MobileBottomNav({
   hasAdminRole: boolean;
   cartCount: number;
 }) {
+  const [, setLocation] = useLocation();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-border bg-card/95 backdrop-blur-md md:hidden" style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom)" }} data-testid="mobile-bottom-nav">
       <button
         onClick={onGoHome}
-        className={`flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-xs font-bold transition-colors ${!selectedCategory ? "text-primary" : "text-muted-foreground"}`}
+        className={`flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-bold transition-colors ${!selectedCategory ? "text-primary" : "text-muted-foreground"}`}
         data-testid="nav-home"
       >
-        <Home className="h-5 w-5" />
+        <Home className="h-4 w-4" />
         <span>მთავარი</span>
       </button>
       <button
         onClick={onCategoriesOpen}
-        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
+        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors"
         data-testid="nav-categories"
       >
         <LayoutGrid className="h-4 w-4" />
-        <span>კატეგორიები</span>
+        <span>კატეგ.</span>
       </button>
       <button
         onClick={onCartOpen}
-        className="relative flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
+        className="relative flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors"
         data-testid="nav-cart"
       >
         <div className="relative">
@@ -304,16 +305,32 @@ function MobileBottomNav({
         <span>კალათა</span>
       </button>
       <button
+        onClick={() => setLocation("/terms")}
+        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors"
+        data-testid="nav-terms"
+      >
+        <ScrollText className="h-4 w-4" />
+        <span>წესები</span>
+      </button>
+      <button
+        onClick={() => setLocation("/live-contact")}
+        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-emerald-600 transition-colors"
+        data-testid="nav-live-contact"
+      >
+        <MessageCircle className="h-4 w-4" />
+        <span className="font-bold"><span className="text-red-500">LIVE</span></span>
+      </button>
+      <button
         onClick={onGuideOpen}
-        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
+        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors"
         data-testid="nav-guide"
       >
         <BookOpen className="h-4 w-4" />
-        <span>გზამკვლევი</span>
+        <span>გზამკვ.</span>
       </button>
       <button
         onClick={onProfileClick}
-        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
+        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors"
         data-testid="nav-profile"
       >
         <UserCircle className="h-4 w-4" />
@@ -321,7 +338,7 @@ function MobileBottomNav({
       </button>
       {hasAdminRole && (
         <Link href="/admin-login">
-          <div className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors" data-testid="nav-admin">
+          <div className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors" data-testid="nav-admin">
             <Settings className="h-4 w-4" />
             <span>ადმინი</span>
           </div>
