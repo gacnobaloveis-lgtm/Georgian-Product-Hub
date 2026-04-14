@@ -70,7 +70,7 @@ function SiteFooter({ canInstall, onInstall }: { canInstall?: boolean; onInstall
             data-testid="footer-live-contact-mobile"
           >
             <MessageCircle className="h-4 w-4" />
-            ლივე კონტაქტი
+            <span className="text-red-500 font-bold">LIVE</span> კონტაქტი
           </button>
           {canInstall && onInstall && (
             <button
@@ -144,7 +144,7 @@ function SiteFooter({ canInstall, onInstall }: { canInstall?: boolean; onInstall
                   data-testid="footer-live-contact-link"
                 >
                   <MessageCircle className="h-4 w-4 text-emerald-500" />
-                  ლივე კონტაქტი
+                  <span className="text-red-500 font-bold">LIVE</span> კონტაქტი
                 </button>
               </li>
             </ul>
@@ -731,7 +731,7 @@ export default function HomePage() {
             <button onClick={() => setLocation("/live-contact")} data-testid="link-nav-live-contact"
               className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all">
               <MessageCircle className="h-4 w-4" />
-              ლივე კონტაქტი
+              <span className="text-red-500 font-bold">LIVE</span> კონტაქტი
             </button>
             {canInstall && (
               <button onClick={() => setInstallDialogOpen(true)} data-testid="link-nav-install"

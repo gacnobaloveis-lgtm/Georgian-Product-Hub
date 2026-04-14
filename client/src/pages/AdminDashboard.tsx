@@ -2455,7 +2455,7 @@ export default function AdminDashboard() {
         <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
           <AnimatedShell className="space-y-6">
             <div className="flex items-center justify-between">
-              <TopBar title="ადმინ პანელი" subtitle="ლივე კონტაქტი — შეტყობინებები" />
+              <TopBar title="ადმინ პანელი" subtitle="LIVE კონტაქტი — შეტყობინებები" />
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => setActiveSection(null)} data-testid="button-back">
                   უკან
@@ -2642,7 +2642,7 @@ export default function AdminDashboard() {
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
                   <MessageCircle className="h-7 w-7 text-emerald-600" />
                 </div>
-                <h3 className="text-lg font-semibold">ლივე კონტაქტი</h3>
+                <h3 className="text-lg font-semibold"><span className="text-red-500">LIVE</span> კონტაქტი</h3>
                 <p className="text-sm text-muted-foreground">მომხმარებელთა შეტყობინებები და პასუხები</p>
               </CardContent>
             </Card>
