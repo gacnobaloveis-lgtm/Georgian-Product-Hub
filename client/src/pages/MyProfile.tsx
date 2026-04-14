@@ -275,43 +275,12 @@ export default function MyProfile() {
                   </div>
                 </div>
               ) : pushStatus === "denied" ? (
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3">
-                    <BellOff className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-red-800" data-testid="text-push-status">შეტყობინებები დაბლოკილია</p>
-                      <p className="text-xs text-red-600 mt-0.5">ბრაუზერმა დაბლოკა — ქვემოთ მოცემული ინსტრუქციით განბლოკე</p>
-                    </div>
+                <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3">
+                  <BellOff className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800" data-testid="text-push-status">შეტყობინებები დაბლოკილია</p>
+                    <p className="text-xs text-red-600 mt-0.5">ბრაუზერმა დაბლოკა</p>
                   </div>
-                  <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-2.5">
-                    <p className="text-xs font-semibold text-foreground">📱 Android Chrome-ზე განბლოკვა:</p>
-                    <ol className="space-y-2 text-xs text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <span className="shrink-0 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold mt-0.5">1</span>
-                        <span>მისამართის ზოლში დააჭირე <strong className="text-foreground">🔒 ბოქლომს</strong> (ან ⓘ ბლოკს)</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="shrink-0 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold mt-0.5">2</span>
-                        <span>შეარჩიე <strong className="text-foreground">"საიტის პარამეტრები"</strong></span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="shrink-0 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold mt-0.5">3</span>
-                        <span>იპოვე <strong className="text-foreground">"შეტყობინებები"</strong> → შეცვალე <strong className="text-foreground">"Allow"</strong>-ზე</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="shrink-0 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-white text-[10px] font-bold mt-0.5">4</span>
-                        <span>გვერდი <strong className="text-foreground">განაახლე</strong> (გადატვირთე)</span>
-                      </li>
-                    </ol>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="w-full text-xs gap-2"
-                    onClick={() => window.location.reload()}
-                    data-testid="button-reload-after-unblock"
-                  >
-                    ↻ გვერდის განახლება
-                  </Button>
                 </div>
               ) : (
                 <div className="space-y-3">
