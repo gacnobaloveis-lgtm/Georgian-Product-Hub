@@ -63,11 +63,11 @@ export default function AboutPage() {
               </div>
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4 text-primary shrink-0" />
-                <span>საქართველო, ბათუმი</span>
+                <span>საქართველო, ქუთაისი</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 text-primary shrink-0" />
-                <span>ორშაბათი – შაბათი: 10:00 – 19:00</span>
+                <span>კვირის ყველა დღე: 00:00 – 24:00</span>
               </div>
             </div>
           </div>
