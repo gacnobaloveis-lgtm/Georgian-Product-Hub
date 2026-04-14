@@ -1173,12 +1173,10 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       const headers: Record<string, string> = {
         "Content-Type": "application/json",
         "Accept": "application/json",
+        "apikey": process.env.TBC_API_KEY || "",
       };
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
-        headers["apikey"] = process.env.TBC_API_KEY || "";
-      } else {
-        headers["Authorization"] = `Basic ${Buffer.from(`${process.env.TBC_API_KEY}:${process.env.TBC_CLIENT_SECRET}`).toString("base64")}`;
       }
       if (bodyStr) headers["Content-Length"] = Buffer.byteLength(bodyStr).toString();
 
@@ -1190,10 +1188,12 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         headers,
       };
 
+      console.log(`[TBC request] ${method} ${path}`);
       const req = https.request(options, (resp) => {
         let data = "";
         resp.on("data", (chunk) => (data += chunk));
         resp.on("end", () => {
+          console.log(`[TBC response] ${resp.statusCode}:`, data.substring(0, 300));
           try { resolve(JSON.parse(data)); } catch { resolve(data); }
         });
       });
@@ -1204,11 +1204,12 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
   }
 
   async function tbcGetToken(): Promise<string> {
-    const body = "grant_type=client_credentials";
+    const apiKey = process.env.TBC_API_KEY || "";
+    const clientSecret = process.env.TBC_CLIENT_SECRET || "";
+    const body = `grant_type=client_credentials&client_id=${encodeURIComponent(apiKey)}&client_secret=${encodeURIComponent(clientSecret)}`;
     return new Promise((resolve, reject) => {
       const headers: Record<string, string> = {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": `Basic ${Buffer.from(`${process.env.TBC_API_KEY}:${process.env.TBC_CLIENT_SECRET}`).toString("base64")}`,
         "Content-Length": Buffer.byteLength(body).toString(),
       };
       const url = new URL(TBC_BASE_URL + "/v1/tbc/protocol/openid-connect/token");
@@ -1216,11 +1217,12 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         let data = "";
         resp.on("data", (c) => (data += c));
         resp.on("end", () => {
+          console.log("[TBC token] status:", resp.statusCode, "body:", data);
           try {
             const parsed = JSON.parse(data);
             if (parsed.access_token) resolve(parsed.access_token);
-            else reject(new Error(`TBC token error: ${data}`));
-          } catch { reject(new Error("TBC token parse error")); }
+            else reject(new Error(`TBC token error (${resp.statusCode}): ${data}`));
+          } catch { reject(new Error(`TBC token parse error: ${data}`)); }
         });
       });
       req.on("error", reject);
