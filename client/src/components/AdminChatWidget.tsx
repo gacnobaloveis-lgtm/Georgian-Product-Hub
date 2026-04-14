@@ -168,7 +168,7 @@ export function AdminChatWidget() {
       showNotification(
         "💬 ახალი შეტყობინება",
         newest ? `${newest.firstName || "მომხმარებელი"}: ${newest.lastMessage.substring(0, 80)}` : "ახალი შეტყობინება",
-        { tag: "admin-chat" }
+        { tag: "admin-chat", url: "/" }
       );
     }
     prevUnreadRef.current = total;
