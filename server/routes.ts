@@ -1128,14 +1128,27 @@ export async function registerRoutes(
     next();
   }
 
-  // Get current user's chat messages
+  // Get current user's chat messages (also marks admin/bot msgs as read)
   app.get("/api/chat/messages", requireAuth, async (req, res) => {
     try {
       const userId = req.session!.userId as string;
+      await storage.markAdminMessagesRead(userId);
       const messages = await storage.getChatMessages(userId);
       res.json(messages);
     } catch (err) {
       console.error("Chat get error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // Get unread count for current user (admin/bot messages not yet seen)
+  app.get("/api/chat/unread-count", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session!.userId as string;
+      const count = await storage.getUnreadCountForUser(userId);
+      res.json({ count });
+    } catch (err) {
+      console.error("Chat unread count error:", err);
       res.status(500).json({ message: "სერვერის შეცდომა" });
     }
   });
@@ -1164,7 +1177,7 @@ export async function registerRoutes(
           userId,
           message: "გმადლობთ შეკითხვისთვის! spiningebi.ge ადმინისტრატორი 24 საათში გიპასუხებთ.",
           senderType: "bot",
-          isRead: 1,
+          isRead: 0,
         });
       }
 
@@ -1211,7 +1224,7 @@ export async function registerRoutes(
         userId,
         message: message.trim().substring(0, 1000),
         senderType: "admin",
-        isRead: 1,
+        isRead: 0,
       });
       res.json(msg);
     } catch (err) {

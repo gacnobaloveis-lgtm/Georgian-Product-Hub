@@ -50,6 +50,8 @@ export interface IStorage {
   createChatMessage(msg: InsertChatMessage): Promise<ChatMessage>;
   getAllChatConversations(): Promise<{ userId: string; firstName: string | null; lastName: string | null; lastMessage: string; lastAt: Date | null; unread: number }[]>;
   markChatRead(userId: string): Promise<void>;
+  getUnreadCountForUser(userId: string): Promise<number>;
+  markAdminMessagesRead(userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -316,6 +318,18 @@ export class DatabaseStorage implements IStorage {
 
   async markChatRead(userId: string): Promise<void> {
     await db.execute(sql`UPDATE chat_messages SET is_read = 1 WHERE user_id = ${userId} AND sender_type = 'user'`);
+  }
+
+  async getUnreadCountForUser(userId: string): Promise<number> {
+    const result = await db.execute(sql`
+      SELECT COUNT(*) AS cnt FROM chat_messages
+      WHERE user_id = ${userId} AND sender_type IN ('admin', 'bot') AND is_read = 0
+    `);
+    return Number((result.rows[0] as any)?.cnt ?? 0);
+  }
+
+  async markAdminMessagesRead(userId: string): Promise<void> {
+    await db.execute(sql`UPDATE chat_messages SET is_read = 1 WHERE user_id = ${userId} AND sender_type IN ('admin', 'bot')`);
   }
 }
 

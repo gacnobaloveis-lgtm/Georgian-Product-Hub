@@ -36,9 +36,16 @@ import { BUILTIN_LOGOS } from "@/components/VisualSection";
 
 function SiteFooter({ canInstall, onInstall }: { canInstall?: boolean; onInstall?: () => void }) {
   const [, setLocation] = useLocation();
+  const { isAuthenticated } = useAuth();
   const { data: contact } = useQuery<{ phone: string; email: string; whatsapp: string; address: string; workHours: string; dayOff: string }>({
     queryKey: ["/api/contact-info"],
   });
+  const { data: footerUnreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/chat/unread-count"],
+    enabled: isAuthenticated,
+    refetchInterval: 10000,
+  });
+  const footerUnreadCount = footerUnreadData?.count ?? 0;
   const c = contact || { phone: "+995 599 52 33 51", email: "spiningebi@gmail.com", whatsapp: "+995 599 52 33 51", address: "საქართველო, ბათუმი", workHours: "ორშაბათი - შაბათი: 10:00 - 19:00", dayOff: "კვირა: დასვენება" };
   const waNumber = c.whatsapp.replace(/[\s+()-]/g, "");
   return (
@@ -66,11 +73,16 @@ function SiteFooter({ canInstall, onInstall }: { canInstall?: boolean; onInstall
           <button
             type="button"
             onClick={() => setLocation("/live-contact")}
-            className="flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-800"
+            className="relative flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-800"
             data-testid="footer-live-contact-mobile"
           >
             <MessageCircle className="h-4 w-4" />
             <span className="text-red-500 font-bold">LIVE</span> კონტაქტი
+            {footerUnreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+                {footerUnreadCount > 9 ? "9+" : footerUnreadCount}
+              </span>
+            )}
           </button>
           {canInstall && onInstall && (
             <button
@@ -591,6 +603,13 @@ export default function HomePage() {
   });
   const referralCode = profileData?.referralCode || null;
 
+  const { data: chatUnreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/chat/unread-count"],
+    enabled: isAuthenticated,
+    refetchInterval: 10000,
+  });
+  const chatUnreadCount = chatUnreadData?.count ?? 0;
+
   const { data: categoryProducts, isLoading: isCategoryLoading } = useQuery<Product[]>({
     queryKey: ["/api/products/category", selectedCategory?.id],
     queryFn: async () => {
@@ -729,9 +748,14 @@ export default function HomePage() {
               ჩვენს შესახებ
             </button>
             <button onClick={() => setLocation("/live-contact")} data-testid="link-nav-live-contact"
-              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all">
+              className="relative flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all">
               <MessageCircle className="h-4 w-4" />
               <span className="text-red-500 font-bold">LIVE</span> კონტაქტი
+              {chatUnreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
+                  {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+                </span>
+              )}
             </button>
             {canInstall && (
               <button onClick={() => setInstallDialogOpen(true)} data-testid="link-nav-install"
