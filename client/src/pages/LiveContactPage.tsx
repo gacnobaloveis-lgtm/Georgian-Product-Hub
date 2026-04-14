@@ -18,6 +18,7 @@ export default function LiveContactPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
+  const [optimistic, setOptimistic] = useState<string[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -35,17 +36,22 @@ export default function LiveContactPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
-      setInput("");
+      setOptimistic([]);
+    },
+    onError: () => {
+      setOptimistic([]);
     },
   });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, optimistic]);
 
   function handleSend() {
     const text = input.trim();
     if (!text || sendMutation.isPending) return;
+    setOptimistic((prev) => [...prev, text]);
+    setInput("");
     sendMutation.mutate(text);
   }
 
@@ -114,7 +120,6 @@ export default function LiveContactPage() {
             {messages.map((msg) => {
               const isUser = msg.senderType === "user";
               const isAdmin = msg.senderType === "admin";
-              const isBot = msg.senderType === "bot";
 
               if (isUser) {
                 return (
@@ -140,14 +145,29 @@ export default function LiveContactPage() {
                   </div>
                   <div className="max-w-[75%]">
                     <p className="text-[11px] text-muted-foreground mb-1">{isAdmin ? "spiningebi.ge" : "spiningebi.ge 🤖"}</p>
-                    <div className={`rounded-2xl rounded-bl-sm px-4 py-2.5 ${isAdmin ? "bg-emerald-50 border border-emerald-100" : "bg-muted"}`}>
-                      <p className="text-sm">{msg.message}</p>
+                    <div className={`rounded-2xl rounded-bl-sm px-4 py-2.5 ${isAdmin ? "bg-emerald-50 border border-emerald-100" : "bg-white border border-purple-100 shadow-sm"}`}>
+                      <p className="text-sm text-purple-700">{msg.message}</p>
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-1">{formatTime(msg.createdAt)}</p>
                   </div>
                 </div>
               );
             })}
+
+            {optimistic.map((text, i) => (
+              <div key={`optimistic-${i}`} className="flex items-end gap-2 justify-end">
+                <div className="max-w-[75%]">
+                  <p className="text-[11px] text-muted-foreground mb-1 text-right">{userName}</p>
+                  <div className="rounded-2xl rounded-br-sm bg-primary/80 px-4 py-2.5">
+                    <p className="text-sm text-primary-foreground">{text}</p>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1 text-right">იგზავნება...</p>
+                </div>
+                <div className="h-7 w-7 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
+                  {(user?.firstName?.[0] || "მ").toUpperCase()}
+                </div>
+              </div>
+            ))}
           </>
         )}
         <div ref={bottomRef} />
@@ -165,7 +185,7 @@ export default function LiveContactPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="შეტყობინება..."
                 rows={1}
-                className="flex-1 resize-none rounded-xl border border-border bg-muted px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors min-h-[44px] max-h-[120px]"
+                className="flex-1 resize-none rounded-xl border border-border bg-white px-4 py-2.5 text-sm outline-none focus:border-primary transition-colors min-h-[44px] max-h-[120px]"
                 data-testid="input-chat-message"
                 style={{ height: "auto", overflowY: "auto" }}
               />
