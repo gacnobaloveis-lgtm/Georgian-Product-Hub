@@ -19,7 +19,6 @@ import NotFound from "@/pages/not-found";
 import { CartContext, useCartProvider } from "@/hooks/use-cart";
 import { AdminChatWidget } from "@/components/AdminChatWidget";
 import { BroadcastNotification } from "@/components/BroadcastNotification";
-import { PushTopBanner } from "@/components/PushTopBanner";
 
 function Router() {
   return (
@@ -50,7 +49,6 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <CartContext.Provider value={cart}>
         <TooltipProvider>
-          <PushTopBanner />
           <Router />
           <AdminChatWidget />
           <BroadcastNotification />

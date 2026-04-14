@@ -14,7 +14,6 @@ import { User, MapPin, Phone, Mail, ShoppingBag, ChevronDown, ChevronUp, ArrowLe
 import { Link } from "wouter";
 import type { Order } from "@shared/models/auth";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
-import { PushSettingsCard } from "@/components/PushSettingsCard";
 
 function CreditRateInfo() {
   const { data } = useQuery<{ credit_to_gel: string }>({
@@ -224,8 +223,6 @@ export default function MyProfile() {
 
             </div>
           </GlassPanel>
-
-          <PushSettingsCard />
 
           <GlassPanel className="p-5 sm:p-7">
             <div className="flex items-center justify-between mb-4">
