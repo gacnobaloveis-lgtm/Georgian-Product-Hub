@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { MessageCircle, X, Send, ArrowLeft, ChevronRight } from "lucide-react";
+import { MessageCircle, X, Send, ArrowLeft, ChevronRight, Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminStatus } from "@/hooks/use-admin";
 import { queryClient } from "@/lib/queryClient";
@@ -20,6 +20,85 @@ function fmtTime(d: string | null) {
       dt.toLocaleTimeString("ka-GE", { hour: "2-digit", minute: "2-digit" });
 }
 
+async function getVapidKey(): Promise<string> {
+  const res = await fetch("/api/push/vapid-key");
+  const data = await res.json();
+  return data.publicKey;
+}
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+function usePushSubscription(isAdmin: boolean | undefined) {
+  const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin || !("Notification" in window) || !("serviceWorker" in navigator)) return;
+    (async () => {
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        setSubscribed(!!sub);
+      } catch (_) {}
+    })();
+  }, [isAdmin]);
+
+  async function subscribe() {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
+    setLoading(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") { setLoading(false); return; }
+
+      const vapidKey = await getVapidKey();
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+
+      await fetch("/api/push/subscribe", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub.toJSON()),
+      });
+      setSubscribed(true);
+    } catch (e) {
+      console.error("Push subscribe failed:", e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function unsubscribe() {
+    setLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch("/api/push/unsubscribe", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe();
+      }
+      setSubscribed(false);
+    } catch (_) {} finally {
+      setLoading(false);
+    }
+  }
+
+  return { subscribed, loading, subscribe, unsubscribe };
+}
+
 export function AdminChatWidget() {
   const { data: adminStatus } = useAdminStatus();
   const isAdmin = adminStatus?.isAdmin;
@@ -28,6 +107,8 @@ export function AdminChatWidget() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const { subscribed, loading: pushLoading, subscribe, unsubscribe } = usePushSubscription(isAdmin);
 
   const { data: conversations = [] } = useQuery<Conv[]>({
     queryKey: ["/api/chat/conversations"],
@@ -108,6 +189,7 @@ export function AdminChatWidget() {
 
   const totalUnread = conversations.reduce((s, c) => s + (c.unread || 0), 0);
   const selectedConv = conversations.find((c) => c.userId === selectedUserId);
+  const pushSupported = "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
 
   return (
     <>
@@ -169,9 +251,25 @@ export function AdminChatWidget() {
                 {totalUnread}
               </span>
             )}
+            {/* Push notification toggle */}
+            {pushSupported && (
+              <button
+                onClick={subscribed ? unsubscribe : subscribe}
+                disabled={pushLoading}
+                title={subscribed ? "Push ნოტიფიკაცია გამორთული" : "Push ნოტიფიკაცია ჩართე"}
+                className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
+                  subscribed
+                    ? "bg-white/20 hover:bg-white/30 text-white"
+                    : "bg-white/10 hover:bg-white/20 text-white/60"
+                }`}
+                data-testid="button-push-toggle"
+              >
+                {subscribed ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
+              </button>
+            )}
             <button
               onClick={handleClose}
-              className="ml-1 flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+              className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-white/20 transition-colors"
               data-testid="button-widget-close"
             >
               <X className="h-4 w-4" />
@@ -186,7 +284,7 @@ export function AdminChatWidget() {
                 <div className="flex-1 overflow-y-auto space-y-3 p-4 min-h-0">
                   {messages.map((msg) => {
                     const isUser = msg.senderType === "user";
-                    const isAdmin = msg.senderType === "admin";
+                    const isAdminMsg = msg.senderType === "admin";
                     return (
                       <div key={msg.id} className={`flex items-end gap-2 ${isUser ? "" : "justify-end"}`}>
                         {isUser && (
@@ -198,7 +296,7 @@ export function AdminChatWidget() {
                           <div className={`rounded-2xl px-3.5 py-2.5 text-sm ${
                             isUser
                               ? "bg-gray-100 rounded-bl-sm text-gray-800"
-                              : isAdmin
+                              : isAdminMsg
                                 ? "bg-emerald-600 text-white rounded-br-sm"
                                 : "bg-blue-50 border border-blue-100 rounded-bl-sm text-blue-800"
                           }`}>
@@ -251,53 +349,78 @@ export function AdminChatWidget() {
               </>
             ) : (
               /* Conversations list */
-              <div className="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-0">
-                {conversations.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
-                    <MessageCircle className="h-8 w-8 opacity-30" />
-                    <p className="text-sm">შეტყობინებები არ არის</p>
+              <div className="flex flex-col flex-1 min-h-0">
+                {/* Push notification hint if not subscribed */}
+                {pushSupported && !subscribed && (
+                  <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 flex items-center gap-2">
+                    <BellOff className="h-4 w-4 text-amber-500 shrink-0" />
+                    <p className="text-xs text-amber-700 flex-1">
+                      ზარის ხმა ჩახ. ჩართვისთვის დააჭირე{" "}
+                      <button
+                        onClick={subscribe}
+                        disabled={pushLoading}
+                        className="font-semibold underline hover:text-amber-900"
+                      >
+                        Bell
+                      </button>
+                      {" "}ზემოთ
+                    </p>
                   </div>
-                ) : (
-                  conversations.map((conv) => (
-                    <button
-                      key={conv.userId}
-                      onClick={() => setSelectedUserId(conv.userId)}
-                      className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:shadow-sm ${
-                        conv.unread > 0
-                          ? "bg-red-50 border border-red-100 hover:border-red-200"
-                          : "bg-gray-50 border border-transparent hover:border-gray-200"
-                      }`}
-                      data-testid={`button-widget-conv-${conv.userId}`}
-                    >
-                      <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-bold ${
-                        conv.unread > 0 ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-700"
-                      }`}>
-                        {(conv.firstName?.[0] || "მ").toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="font-semibold text-sm text-foreground truncate">
-                            {conv.firstName || ""} {conv.lastName || ""}
-                          </span>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {conv.lastAt && (
-                              <span className="text-[10px] text-muted-foreground">{fmtTime(conv.lastAt)}</span>
-                            )}
-                            {conv.unread > 0 && (
-                              <span className="flex h-5 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                                {conv.unread}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <p className={`text-xs truncate mt-0.5 ${conv.unread > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
-                          {conv.lastMessage}
-                        </p>
-                      </div>
-                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    </button>
-                  ))
                 )}
+                {pushSupported && subscribed && (
+                  <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <p className="text-xs text-emerald-700">ზარი ჩართულია — ჩახ. ჩანართზეც გაისმება</p>
+                  </div>
+                )}
+                <div className="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-0">
+                  {conversations.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+                      <MessageCircle className="h-8 w-8 opacity-30" />
+                      <p className="text-sm">შეტყობინებები არ არის</p>
+                    </div>
+                  ) : (
+                    conversations.map((conv) => (
+                      <button
+                        key={conv.userId}
+                        onClick={() => setSelectedUserId(conv.userId)}
+                        className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:shadow-sm ${
+                          conv.unread > 0
+                            ? "bg-red-50 border border-red-100 hover:border-red-200"
+                            : "bg-gray-50 border border-transparent hover:border-gray-200"
+                        }`}
+                        data-testid={`button-widget-conv-${conv.userId}`}
+                      >
+                        <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-bold ${
+                          conv.unread > 0 ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-700"
+                        }`}>
+                          {(conv.firstName?.[0] || "მ").toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="font-semibold text-sm text-foreground truncate">
+                              {conv.firstName || ""} {conv.lastName || ""}
+                            </span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {conv.lastAt && (
+                                <span className="text-[10px] text-muted-foreground">{fmtTime(conv.lastAt)}</span>
+                              )}
+                              {conv.unread > 0 && (
+                                <span className="flex h-5 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                                  {conv.unread}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <p className={`text-xs truncate mt-0.5 ${conv.unread > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                            {conv.lastMessage}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             )}
           </div>

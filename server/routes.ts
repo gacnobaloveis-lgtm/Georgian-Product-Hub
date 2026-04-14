@@ -12,6 +12,16 @@ import express from "express";
 import cookieParser from "cookie-parser";
 import https from "https";
 import { pool } from "./db";
+import webpush from "web-push";
+
+// Initialize web-push with VAPID keys
+if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    process.env.VAPID_EMAIL || "mailto:spiningebi@gmail.com",
+    process.env.VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 const uploadsDir = path.join(process.cwd(), "public", "uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -1182,6 +1192,22 @@ export async function registerRoutes(
         });
       }
 
+      // Send push notification to admin subscribers
+      try {
+        const adminSubs = await storage.getAdminPushSubscriptions();
+        const payload = JSON.stringify({
+          title: "💬 ახალი შეტყობინება",
+          body: message.trim().substring(0, 100),
+          url: "/admin/chat",
+        });
+        for (const sub of adminSubs) {
+          webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+            payload
+          ).catch(() => storage.removePushSubscription(sub.endpoint));
+        }
+      } catch (_) {}
+
       res.json(userMsg);
     } catch (err) {
       console.error("Chat send error:", err);
@@ -1230,6 +1256,38 @@ export async function registerRoutes(
       res.json(msg);
     } catch (err) {
       console.error("Chat reply error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // Push notification: get VAPID public key
+  app.get("/api/push/vapid-key", (_req, res) => {
+    res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || "" });
+  });
+
+  // Push notification: subscribe (admin only)
+  app.post("/api/push/subscribe", requireAdmin, async (req, res) => {
+    try {
+      const userId = (req as any).user?.claims?.sub as string;
+      const { endpoint, keys } = req.body;
+      if (!endpoint || !keys?.p256dh || !keys?.auth) {
+        return res.status(400).json({ message: "არასრული subscription" });
+      }
+      await storage.savePushSubscription(userId, endpoint, keys.p256dh, keys.auth);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("Push subscribe error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // Push notification: unsubscribe
+  app.post("/api/push/unsubscribe", requireAuth, async (req, res) => {
+    try {
+      const { endpoint } = req.body;
+      if (endpoint) await storage.removePushSubscription(endpoint);
+      res.json({ ok: true });
+    } catch (err) {
       res.status(500).json({ message: "სერვერის შეცდომა" });
     }
   });

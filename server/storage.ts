@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { products, media, categories, termsSections, chatMessages, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage } from "@shared/schema";
+import { products, media, categories, termsSections, chatMessages, pushSubscriptions, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription } from "@shared/schema";
 import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
 import { eq, desc, sql, lt, asc } from "drizzle-orm";
 
@@ -52,6 +52,9 @@ export interface IStorage {
   markChatRead(userId: string): Promise<void>;
   getUnreadCountForUser(userId: string): Promise<number>;
   markAdminMessagesRead(userId: string): Promise<void>;
+  savePushSubscription(userId: string, endpoint: string, p256dh: string, auth: string): Promise<void>;
+  removePushSubscription(endpoint: string): Promise<void>;
+  getAdminPushSubscriptions(): Promise<PushSubscription[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -330,6 +333,34 @@ export class DatabaseStorage implements IStorage {
 
   async markAdminMessagesRead(userId: string): Promise<void> {
     await db.execute(sql`UPDATE chat_messages SET is_read = 1 WHERE user_id = ${userId} AND sender_type IN ('admin', 'bot')`);
+  }
+
+  async savePushSubscription(userId: string, endpoint: string, p256dh: string, auth: string): Promise<void> {
+    await db.execute(sql`
+      INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)
+      VALUES (${userId}, ${endpoint}, ${p256dh}, ${auth})
+      ON CONFLICT (endpoint) DO UPDATE SET user_id = ${userId}, p256dh = ${p256dh}, auth = ${auth}
+    `);
+  }
+
+  async removePushSubscription(endpoint: string): Promise<void> {
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint));
+  }
+
+  async getAdminPushSubscriptions(): Promise<PushSubscription[]> {
+    const result = await db.execute(sql`
+      SELECT ps.* FROM push_subscriptions ps
+      JOIN users u ON u.id = ps.user_id
+      WHERE u.role = 'admin'
+    `);
+    return (result.rows as any[]).map(r => ({
+      id: r.id,
+      userId: r.user_id,
+      endpoint: r.endpoint,
+      p256dh: r.p256dh,
+      auth: r.auth,
+      createdAt: r.created_at,
+    }));
   }
 }
 
