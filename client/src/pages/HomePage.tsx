@@ -511,6 +511,19 @@ export default function HomePage() {
     queryKey: ["/api/online-count"],
     refetchInterval: 30_000,
   });
+
+  // Fluctuating display count: always shows 25-30 minimum, changes every ~2 min
+  const [fakeBase, setFakeBase] = useState(() => 25 + Math.floor(Math.random() * 6));
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setFakeBase(25 + Math.floor(Math.random() * 6));
+    }, 90_000 + Math.random() * 60_000); // every 90-150 seconds
+    return () => clearInterval(iv);
+  }, []);
+  const displayOnline = onlineData
+    ? (onlineData.count > 30 ? onlineData.count : Math.max(onlineData.count, fakeBase))
+    : null;
+
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
 
   interface VisualPublic {
@@ -705,14 +718,14 @@ export default function HomePage() {
       </div>
 
       {/* Mobile-only online counter */}
-      {onlineData && onlineData.count > 0 && (
+      {displayOnline !== null && (
         <div className="md:hidden flex justify-center py-2" data-testid="badge-online-count-mobile">
           <div className="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
             </span>
-            <span className="text-xs font-semibold text-red-700">ახლა საიტზეა {onlineData.count} ვიზიტორი</span>
+            <span className="text-xs font-semibold text-red-700">ახლა საიტზეა {displayOnline} ვიზიტორი</span>
           </div>
         </div>
       )}
@@ -750,13 +763,13 @@ export default function HomePage() {
           </div>
 
           {/* Online visitor counter */}
-          {onlineData && onlineData.count > 0 && (
+          {displayOnline !== null && (
             <div className="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-1" data-testid="badge-online-count">
               <span className="relative flex h-1.5 w-1.5 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
               </span>
-              <span className="text-[11px] font-semibold text-red-700 whitespace-nowrap">საიტზეა {onlineData.count}</span>
+              <span className="text-[11px] font-semibold text-red-700 whitespace-nowrap">საიტზეა {displayOnline}</span>
             </div>
           )}
 
