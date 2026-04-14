@@ -58,7 +58,7 @@ function SiteFooter() {
               </li>
               <li className="flex items-center gap-2 text-sm text-gray-600">
                 <MessageCircle className="h-4 w-4 text-green-500" />
-                <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className="hover:text-green-600">WhatsApp: {c.whatsapp}</a>
+                <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className="hover:text-green-600">WhatsApp</a>
               </li>
             </ul>
           </div>
