@@ -163,7 +163,7 @@ export function BroadcastNotification() {
   return (
     <div className="float-above-nav fixed right-4 md:right-6 z-50 w-[calc(100vw-2rem)] max-w-sm space-y-2">
       {/* ── Push permission banner ── */}
-      {showBanner && !visible && (
+      {showBanner && (
         <div className="animate-in slide-in-from-bottom-4 duration-300 rounded-2xl border border-border bg-white shadow-xl overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-100">
@@ -224,18 +224,6 @@ export function BroadcastNotification() {
           {/* Body */}
           <div className="px-4 py-3 space-y-3">
             <p className="text-sm text-foreground leading-relaxed">{visible.body}</p>
-
-            {/* Push prompt inline if permission not yet granted */}
-            {showBanner && (
-              <button
-                onClick={handleEnablePush}
-                className="w-full flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 hover:bg-emerald-100 transition-colors"
-                data-testid="button-push-allow-inline"
-              >
-                <Bell className="h-3.5 w-3.5 shrink-0" />
-                <span>შეტყობინებები ჩართე — app-ის გარეშეც მიიღე</span>
-              </button>
-            )}
 
             <div className="flex items-center gap-2">
               {visible.url && (

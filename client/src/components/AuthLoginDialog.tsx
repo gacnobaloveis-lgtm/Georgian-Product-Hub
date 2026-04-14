@@ -263,10 +263,6 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
       });
 
       if (res.ok) {
-        // Fire push permission request immediately — must stay in user-gesture context
-        if (wantsPush) attemptPushSubscription((ok, msg) => {
-          if (msg) toast({ title: msg, variant: ok ? "default" : "destructive" });
-        });
         await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
         await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
         toast({ title: "რეგისტრაცია წარმატებით დასრულდა!" });
