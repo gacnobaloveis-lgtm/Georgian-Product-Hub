@@ -747,16 +747,6 @@ export default function HomePage() {
               <Info className="h-4 w-4" />
               ჩვენს შესახებ
             </button>
-            <button onClick={() => setLocation("/live-contact")} data-testid="link-nav-live-contact"
-              className="relative flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all">
-              <MessageCircle className="h-4 w-4" />
-              <span className="text-red-500 font-bold">LIVE</span> კონტაქტი
-              {chatUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
-                  {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
-                </span>
-              )}
-            </button>
             {canInstall && (
               <button onClick={() => setInstallDialogOpen(true)} data-testid="link-nav-install"
                 className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-green-600 hover:bg-green-50 hover:text-green-700 transition-all animate-pulse">
