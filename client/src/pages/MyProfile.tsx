@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { User, MapPin, Phone, Mail, ShoppingBag, ChevronDown, ChevronUp, ArrowLeft, Package, Save, Pencil, Wallet, LogOut, Truck } from "lucide-react";
+import { User, MapPin, Phone, Mail, ShoppingBag, ChevronDown, ChevronUp, ArrowLeft, Package, Save, Pencil, Wallet, LogOut, Truck, Bell, BellOff, CheckCircle2 } from "lucide-react";
 import { Link } from "wouter";
 import type { Order } from "@shared/models/auth";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
@@ -42,6 +42,40 @@ export default function MyProfile() {
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [pushStatus, setPushStatus] = useState<"checking" | "unsupported" | "denied" | "default" | "granted" | "saving">("checking");
+
+  useEffect(() => {
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      setPushStatus("unsupported");
+      return;
+    }
+    setPushStatus(Notification.permission as "default" | "granted" | "denied");
+  }, []);
+
+  async function handleEnablePush() {
+    if (!("Notification" in window) || !("PushManager" in window)) return;
+    setPushStatus("saving");
+    const perm = await Notification.requestPermission();
+    if (perm !== "granted") { setPushStatus(perm as "denied" | "default"); return; }
+    try {
+      const keyRes = await fetch("/api/push/vapid-key");
+      const { publicKey } = await keyRes.json();
+      if (!publicKey) { setPushStatus("granted"); return; }
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        const pad = "=".repeat((4 - (publicKey.length % 4)) % 4);
+        const b64 = (publicKey + pad).replace(/-/g, "+").replace(/_/g, "/");
+        const key = Uint8Array.from([...atob(b64)].map((c) => c.charCodeAt(0)));
+        sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+      }
+      await fetch("/api/push/subscribe", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(sub.toJSON()) });
+      setPushStatus("granted");
+      toast({ title: "🔔 შეტყობინებები ჩართულია!" });
+    } catch {
+      setPushStatus("granted");
+    }
+  }
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -223,6 +257,47 @@ export default function MyProfile() {
 
             </div>
           </GlassPanel>
+
+          {/* Push notification settings */}
+          {pushStatus !== "unsupported" && (
+            <GlassPanel className="p-5 sm:p-7">
+              <h2 className="text-base font-semibold flex items-center gap-2 mb-4">
+                <Bell className="h-4 w-4 text-primary" />
+                შეტყობინებები
+              </h2>
+
+              {pushStatus === "checking" ? null : pushStatus === "granted" ? (
+                <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3">
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+                  <div>
+                    <p className="text-sm font-medium text-green-800" data-testid="text-push-status">შეტყობინებები ჩართულია</p>
+                    <p className="text-xs text-green-600">მიიღებ push შეტყობინებებს აქციებსა და სიახლეებზე</p>
+                  </div>
+                </div>
+              ) : pushStatus === "denied" ? (
+                <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3">
+                  <BellOff className="h-5 w-5 shrink-0 text-red-500 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-800" data-testid="text-push-status">შეტყობინებები დაბლოკილია</p>
+                    <p className="text-xs text-red-600">ბრაუზერის პარამეტრებში განბლოკე spiningebi.ge შეტყობინებები</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-muted-foreground">ჩართე push შეტყობინებები — მიიღე სიახლეები და აქციები app-ის გარეშეც</p>
+                  <Button
+                    onClick={handleEnablePush}
+                    disabled={pushStatus === "saving"}
+                    className="w-full gap-2"
+                    data-testid="button-enable-push-profile"
+                  >
+                    <Bell className="h-4 w-4" />
+                    {pushStatus === "saving" ? "ვრთავ..." : "შეტყობინებების ჩართვა"}
+                  </Button>
+                </div>
+              )}
+            </GlassPanel>
+          )}
 
           <GlassPanel className="p-5 sm:p-7">
             <div className="flex items-center justify-between mb-4">
