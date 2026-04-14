@@ -10,6 +10,7 @@ import fs from "fs";
 import { randomUUID } from "crypto";
 import express from "express";
 import cookieParser from "cookie-parser";
+import https from "https";
 import { pool } from "./db";
 
 const uploadsDir = path.join(process.cwd(), "public", "uploads");
@@ -1161,6 +1162,140 @@ Disallow: /api/
 
 Sitemap: https://spiningebi.ge/sitemap.xml`
     );
+  });
+
+  // TBC Bank Payment
+  const TBC_BASE_URL = "https://api.tbcbank.ge";
+
+  async function tbcRequest(method: string, path: string, body?: object, token?: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const bodyStr = body ? JSON.stringify(body) : undefined;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+        headers["apikey"] = process.env.TBC_API_KEY || "";
+      } else {
+        headers["Authorization"] = `Basic ${Buffer.from(`${process.env.TBC_API_KEY}:${process.env.TBC_CLIENT_SECRET}`).toString("base64")}`;
+      }
+      if (bodyStr) headers["Content-Length"] = Buffer.byteLength(bodyStr).toString();
+
+      const url = new URL(TBC_BASE_URL + path);
+      const options = {
+        hostname: url.hostname,
+        path: url.pathname + url.search,
+        method,
+        headers,
+      };
+
+      const req = https.request(options, (resp) => {
+        let data = "";
+        resp.on("data", (chunk) => (data += chunk));
+        resp.on("end", () => {
+          try { resolve(JSON.parse(data)); } catch { resolve(data); }
+        });
+      });
+      req.on("error", reject);
+      if (bodyStr) req.write(bodyStr);
+      req.end();
+    });
+  }
+
+  async function tbcGetToken(): Promise<string> {
+    const body = "grant_type=client_credentials";
+    return new Promise((resolve, reject) => {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": `Basic ${Buffer.from(`${process.env.TBC_API_KEY}:${process.env.TBC_CLIENT_SECRET}`).toString("base64")}`,
+        "Content-Length": Buffer.byteLength(body).toString(),
+      };
+      const url = new URL(TBC_BASE_URL + "/v1/tbc/protocol/openid-connect/token");
+      const req = https.request({ hostname: url.hostname, path: url.pathname, method: "POST", headers }, (resp) => {
+        let data = "";
+        resp.on("data", (c) => (data += c));
+        resp.on("end", () => {
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.access_token) resolve(parsed.access_token);
+            else reject(new Error(`TBC token error: ${data}`));
+          } catch { reject(new Error("TBC token parse error")); }
+        });
+      });
+      req.on("error", reject);
+      req.write(body);
+      req.end();
+    });
+  }
+
+  app.post("/api/pay", async (req: any, res) => {
+    try {
+      const { amount, description, orderId, returnUrl } = req.body;
+
+      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+        return res.status(400).json({ message: "თანხა აუცილებელია" });
+      }
+
+      const appUrl = process.env.APP_URL || "https://spiningebi.ge";
+      const successUrl = returnUrl || `${appUrl}/payment/success`;
+      const failUrl = `${appUrl}/payment/fail`;
+
+      const token = await tbcGetToken();
+
+      const payload = {
+        amount: {
+          currency: "GEL",
+          total: Math.round(Number(amount) * 100),
+          subTotal: Math.round(Number(amount) * 100),
+          tax: 0,
+          shipping: 0,
+        },
+        returnUrl: successUrl,
+        extra: description || "spiningebi.ge შეკვეთა",
+        expirationMinutes: 10,
+        methods: [0],
+        installmentProducts: [],
+        callbackUrl: `${appUrl}/api/pay/callback`,
+        preAuth: false,
+        language: "KA",
+        merchantPaymentId: orderId ? String(orderId) : randomUUID(),
+        skipInfoMessage: false,
+        saveCard: false,
+        saveCardToDate: null,
+      };
+
+      const result = await tbcRequest("POST", "/v1/tbc/checkout/payments", payload, token);
+
+      if (result.payId && result.links) {
+        const payLink = result.links.find((l: any) => l.rel === "approval_url" || l.rel === "pay");
+        const href = payLink?.href || result.links[0]?.href;
+        return res.json({ payId: result.payId, payUrl: href });
+      }
+
+      console.error("TBC pay response:", JSON.stringify(result));
+      return res.status(502).json({ message: "გადახდის ბმულის მიღება ვერ მოხერხდა", detail: result });
+    } catch (err: any) {
+      console.error("TBC pay error:", err);
+      return res.status(500).json({ message: "გადახდის შეცდომა", detail: err.message });
+    }
+  });
+
+  app.get("/api/pay/status/:payId", async (req, res) => {
+    try {
+      const { payId } = req.params;
+      const token = await tbcGetToken();
+      const result = await tbcRequest("GET", `/v1/tbc/checkout/payments/${payId}`, undefined, token);
+      return res.json(result);
+    } catch (err: any) {
+      console.error("TBC status error:", err);
+      return res.status(500).json({ message: "სტატუსის შეცდომა", detail: err.message });
+    }
+  });
+
+  app.post("/api/pay/callback", express.json(), (req, res) => {
+    console.log("TBC callback:", JSON.stringify(req.body));
+    res.sendStatus(200);
   });
 
   return httpServer;

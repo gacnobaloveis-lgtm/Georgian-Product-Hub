@@ -10,6 +10,8 @@ import AdminLogin from "@/pages/AdminLogin";
 import HomePage from "@/pages/HomePage";
 import ProductDetail from "@/pages/ProductDetail";
 import MyProfile from "@/pages/MyProfile";
+import PaymentSuccess from "@/pages/PaymentSuccess";
+import PaymentFail from "@/pages/PaymentFail";
 import NotFound from "@/pages/not-found";
 import { CartContext, useCartProvider } from "@/hooks/use-cart";
 
@@ -19,6 +21,8 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/product/:id" component={ProductDetail} />
       <Route path="/profile" component={MyProfile} />
+      <Route path="/payment/success" component={PaymentSuccess} />
+      <Route path="/payment/fail" component={PaymentFail} />
       <Route path="/admin-login" component={AdminLogin} />
       <Route path="/admin-dashboard">
         <AdminRoute component={AdminDashboard} />
