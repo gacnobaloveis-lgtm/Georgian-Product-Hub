@@ -199,6 +199,34 @@ async function ensurePushSubscriptionsTable() {
   }
 }
 
+async function ensureBroadcastTables() {
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS broadcasts (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        url TEXT,
+        image_url TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS broadcast_reads (
+        id SERIAL PRIMARY KEY,
+        broadcast_id INTEGER NOT NULL,
+        user_id VARCHAR NOT NULL,
+        read_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(broadcast_id, user_id)
+      )
+    `);
+    console.log("[migrate] broadcasts tables ensured");
+  } catch (err) {
+    console.error("[migrate] Error ensuring broadcasts tables:", err);
+  }
+}
+
 async function migrateFilesToDb() {
   try {
     const { pool } = await import("./db");
@@ -360,6 +388,7 @@ async function initializeApp() {
     await ensureChatMessagesTable();
     await ensureMediaDataColumns();
     await ensurePushSubscriptionsTable();
+    await ensureBroadcastTables();
     await migrateFilesToDb();
     log("All migrations completed successfully");
   } catch (err: any) {

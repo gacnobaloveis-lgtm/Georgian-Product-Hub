@@ -1292,6 +1292,85 @@ export async function registerRoutes(
     }
   });
 
+  // ─── Broadcasts ───────────────────────────────────────────────────────────
+  // Admin: send broadcast to all users
+  app.post("/api/admin/broadcast", requireAdmin, async (req, res) => {
+    try {
+      const { title, body, url, imageUrl } = req.body;
+      if (!title?.trim() || !body?.trim()) {
+        return res.status(400).json({ message: "სათაური და ტექსტი სავალდებულოა" });
+      }
+      const broadcast = await storage.createBroadcast({
+        title: title.trim(),
+        body: body.trim(),
+        url: url?.trim() || undefined,
+        imageUrl: imageUrl?.trim() || undefined,
+      });
+
+      // Send push notifications to all subscribers
+      try {
+        const allSubs = await storage.getAllPushSubscriptions();
+        const payload = JSON.stringify({
+          title,
+          body: body.substring(0, 120),
+          url: url || "/",
+          image: imageUrl || undefined,
+        });
+        for (const sub of allSubs) {
+          webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+            payload
+          ).catch(() => storage.removePushSubscription(sub.endpoint));
+        }
+      } catch (_) {}
+
+      res.json(broadcast);
+    } catch (err) {
+      console.error("Broadcast error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // Admin: list all broadcasts
+  app.get("/api/admin/broadcasts", requireAdmin, async (_req, res) => {
+    try {
+      res.json(await storage.getBroadcasts());
+    } catch (err) {
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // Admin: delete broadcast
+  app.delete("/api/admin/broadcast/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteBroadcast(Number(req.params.id));
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // User: get unread broadcasts
+  app.get("/api/notifications/unread", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).user?.claims?.sub as string;
+      res.json(await storage.getUnreadBroadcastsForUser(userId));
+    } catch (err) {
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // User: mark broadcast read
+  app.post("/api/notifications/read/:id", requireAuth, async (req, res) => {
+    try {
+      const userId = (req as any).user?.claims?.sub as string;
+      await storage.markBroadcastRead(Number(req.params.id), userId);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
   app.get("/sitemap.xml", async (_req, res) => {
     try {
       const allProducts = await storage.getProducts();

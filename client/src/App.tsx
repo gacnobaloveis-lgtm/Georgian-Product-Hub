@@ -18,6 +18,7 @@ import LiveContactPage from "@/pages/LiveContactPage";
 import NotFound from "@/pages/not-found";
 import { CartContext, useCartProvider } from "@/hooks/use-cart";
 import { AdminChatWidget } from "@/components/AdminChatWidget";
+import { BroadcastNotification } from "@/components/BroadcastNotification";
 
 function Router() {
   return (
@@ -50,6 +51,7 @@ function App() {
         <TooltipProvider>
           <Router />
           <AdminChatWidget />
+          <BroadcastNotification />
           <Toaster />
         </TooltipProvider>
       </CartContext.Provider>

@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { products, media, categories, termsSections, chatMessages, pushSubscriptions, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription } from "@shared/schema";
+import { products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast } from "@shared/schema";
 import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
 import { eq, desc, sql, lt, asc } from "drizzle-orm";
 
@@ -55,6 +55,12 @@ export interface IStorage {
   savePushSubscription(userId: string, endpoint: string, p256dh: string, auth: string): Promise<void>;
   removePushSubscription(endpoint: string): Promise<void>;
   getAdminPushSubscriptions(): Promise<PushSubscription[]>;
+  getAllPushSubscriptions(): Promise<PushSubscription[]>;
+  createBroadcast(data: { title: string; body: string; url?: string; imageUrl?: string }): Promise<Broadcast>;
+  getBroadcasts(): Promise<Broadcast[]>;
+  deleteBroadcast(id: number): Promise<void>;
+  getUnreadBroadcastsForUser(userId: string): Promise<Broadcast[]>;
+  markBroadcastRead(broadcastId: number, userId: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -354,13 +360,59 @@ export class DatabaseStorage implements IStorage {
       WHERE u.role = 'admin'
     `);
     return (result.rows as any[]).map(r => ({
-      id: r.id,
-      userId: r.user_id,
-      endpoint: r.endpoint,
-      p256dh: r.p256dh,
-      auth: r.auth,
-      createdAt: r.created_at,
+      id: r.id, userId: r.user_id, endpoint: r.endpoint,
+      p256dh: r.p256dh, auth: r.auth, createdAt: r.created_at,
     }));
+  }
+
+  async getAllPushSubscriptions(): Promise<PushSubscription[]> {
+    const result = await db.execute(sql`SELECT * FROM push_subscriptions`);
+    return (result.rows as any[]).map(r => ({
+      id: r.id, userId: r.user_id, endpoint: r.endpoint,
+      p256dh: r.p256dh, auth: r.auth, createdAt: r.created_at,
+    }));
+  }
+
+  async createBroadcast(data: { title: string; body: string; url?: string; imageUrl?: string }): Promise<Broadcast> {
+    const [row] = await db.insert(broadcasts).values({
+      title: data.title,
+      body: data.body,
+      url: data.url ?? null,
+      imageUrl: data.imageUrl ?? null,
+    }).returning();
+    return row;
+  }
+
+  async getBroadcasts(): Promise<Broadcast[]> {
+    return await db.select().from(broadcasts).orderBy(desc(broadcasts.createdAt));
+  }
+
+  async deleteBroadcast(id: number): Promise<void> {
+    await db.delete(broadcastReads).where(eq(broadcastReads.broadcastId, id));
+    await db.delete(broadcasts).where(eq(broadcasts.id, id));
+  }
+
+  async getUnreadBroadcastsForUser(userId: string): Promise<Broadcast[]> {
+    const result = await db.execute(sql`
+      SELECT b.* FROM broadcasts b
+      WHERE b.id NOT IN (
+        SELECT broadcast_id FROM broadcast_reads WHERE user_id = ${userId}
+      )
+      ORDER BY b.created_at DESC
+      LIMIT 5
+    `);
+    return (result.rows as any[]).map(r => ({
+      id: r.id, title: r.title, body: r.body,
+      url: r.url, imageUrl: r.image_url, createdAt: r.created_at,
+    }));
+  }
+
+  async markBroadcastRead(broadcastId: number, userId: string): Promise<void> {
+    await db.execute(sql`
+      INSERT INTO broadcast_reads (broadcast_id, user_id)
+      VALUES (${broadcastId}, ${userId})
+      ON CONFLICT DO NOTHING
+    `);
   }
 }
 
