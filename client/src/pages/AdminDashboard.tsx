@@ -2065,23 +2065,26 @@ function TermsSectionsManager() {
   );
 }
 
+type ConvMsg = { id: number; userId: string; message: string; senderType: string; createdAt: string | null };
+type Conv = { userId: string; firstName: string | null; lastName: string | null; lastMessage: string; lastAt: string | null; unread: number };
+
 function AdminChatSection() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const { data: conversations = [], isLoading: loadingConvs } = useQuery<{
-    userId: string; firstName: string | null; lastName: string | null;
-    lastMessage: string; lastAt: string | null; unread: number;
-  }[]>({
+  const { data: conversations = [], isLoading: loadingConvs } = useQuery<Conv[]>({
     queryKey: ["/api/chat/conversations"],
     refetchInterval: 5000,
   });
 
-  const { data: messages = [] } = useQuery<{
-    id: number; userId: string; message: string; senderType: string; createdAt: string | null;
-  }[]>({
+  const { data: messages = [] } = useQuery<ConvMsg[]>({
     queryKey: ["/api/chat/messages", selectedUserId],
+    queryFn: async () => {
+      const res = await fetch(`/api/chat/messages/${selectedUserId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
     enabled: !!selectedUserId,
     refetchInterval: 4000,
   });
@@ -2089,14 +2092,18 @@ function AdminChatSection() {
   const replyMutation = useMutation({
     mutationFn: async ({ userId, message }: { userId: string; message: string }) => {
       const res = await fetch(`/api/chat/reply/${userId}`, {
-        method: "POST",
+        method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
       });
       if (!res.ok) throw new Error("Reply failed");
-      return res.json();
+      return res.json() as Promise<ConvMsg>;
     },
-    onSuccess: () => {
+    onSuccess: (newMsg) => {
+      queryClient.setQueryData<ConvMsg[]>(["/api/chat/messages", selectedUserId], (old = []) => {
+        if (old.some(m => m.id === newMsg.id)) return old;
+        return [...old, newMsg];
+      });
       queryClient.invalidateQueries({ queryKey: ["/api/chat/messages", selectedUserId] });
       queryClient.invalidateQueries({ queryKey: ["/api/chat/conversations"] });
       setReplyText("");
@@ -2113,71 +2120,106 @@ function AdminChatSection() {
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   }
 
-  function formatTime(d: string | null) {
+  function fmtTime(d: string | null) {
     if (!d) return "";
-    return new Date(d).toLocaleString("ka-GE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    const dt = new Date(d);
+    const now = new Date();
+    const isToday = dt.toDateString() === now.toDateString();
+    return isToday
+      ? dt.toLocaleTimeString("ka-GE", { hour: "2-digit", minute: "2-digit" })
+      : dt.toLocaleDateString("ka-GE", { day: "2-digit", month: "2-digit" }) + " " + dt.toLocaleTimeString("ka-GE", { hour: "2-digit", minute: "2-digit" });
   }
 
+  const totalUnread = conversations.reduce((s, c) => s + (c.unread || 0), 0);
   const selectedConv = conversations.find(c => c.userId === selectedUserId);
 
+  /* ── THREAD VIEW ── */
   if (selectedUserId) {
     return (
-      <div className="flex flex-col h-[70vh]">
-        <div className="flex items-center gap-3 pb-4 border-b border-border mb-4">
-          <button onClick={() => setSelectedUserId(null)} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+      <div className="flex flex-col" style={{ height: "72vh" }}>
+        {/* Thread header */}
+        <div className="flex items-center gap-3 pb-3 border-b border-border mb-3 shrink-0">
+          <button
+            onClick={() => setSelectedUserId(null)}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            data-testid="button-back-conv"
+          >
             <ArrowLeftIcon className="h-4 w-4" /> უკან
           </button>
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-              {(selectedConv?.firstName?.[0] || "მ").toUpperCase()}
-            </div>
-            <span className="font-semibold text-sm">{selectedConv?.firstName || ""} {selectedConv?.lastName || ""}</span>
+          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+            {(selectedConv?.firstName?.[0] || "მ").toUpperCase()}
+          </div>
+          <div>
+            <p className="font-semibold text-sm leading-tight">{selectedConv?.firstName || ""} {selectedConv?.lastName || ""}</p>
+            <p className="text-[11px] text-muted-foreground">მომხმარებელი</p>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-0">
           {messages.map(msg => {
             const isUser = msg.senderType === "user";
             const isAdmin = msg.senderType === "admin";
             return (
               <div key={msg.id} className={`flex items-end gap-2 ${isUser ? "" : "justify-end"}`}>
                 {isUser && (
-                  <div className="h-6 w-6 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                  <div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
                     {(selectedConv?.firstName?.[0] || "მ").toUpperCase()}
                   </div>
                 )}
-                <div className="max-w-[70%]">
-                  <div className={`rounded-xl px-3 py-2 text-sm ${isUser ? "bg-muted" : isAdmin ? "bg-emerald-50 border border-emerald-100" : "bg-blue-50 border border-blue-100"}`}>
+                <div className="max-w-[72%]">
+                  <div className={`rounded-2xl px-3.5 py-2.5 text-sm ${
+                    isUser
+                      ? "bg-white border border-purple-100 shadow-sm rounded-bl-sm text-purple-800"
+                      : isAdmin
+                        ? "bg-primary text-primary-foreground rounded-br-sm"
+                        : "bg-blue-50 border border-blue-100 rounded-bl-sm text-blue-800"
+                  }`}>
                     {msg.message}
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{formatTime(msg.createdAt)}</p>
+                  <p className={`text-[10px] text-muted-foreground mt-0.5 ${isUser ? "" : "text-right"}`}>{fmtTime(msg.createdAt)}</p>
                 </div>
                 {!isUser && (
-                  <div className="h-6 w-6 shrink-0 rounded-full bg-emerald-100 flex items-center justify-center text-[10px] font-bold text-emerald-700">
+                  <div className="h-7 w-7 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
                     SP
                   </div>
                 )}
               </div>
             );
           })}
+          {replyMutation.isPending && (
+            <div className="flex items-end gap-2 justify-end opacity-60">
+              <div className="max-w-[72%]">
+                <div className="rounded-2xl rounded-br-sm bg-primary/70 px-3.5 py-2.5 text-sm text-primary-foreground">...</div>
+                <p className="text-[10px] text-muted-foreground mt-0.5 text-right">იგზავნება...</p>
+              </div>
+              <div className="h-7 w-7 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">SP</div>
+            </div>
+          )}
           <div ref={bottomRef} />
         </div>
-        <div className="flex items-end gap-2 pt-4 border-t border-border mt-4">
+
+        {/* Reply box */}
+        <div className="flex items-end gap-2 pt-3 border-t border-border mt-3 shrink-0">
           <textarea
             value={replyText}
             onChange={e => setReplyText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="პასუხი..."
+            placeholder="პასუხი... (Enter — გაგზავნა)"
             rows={2}
-            className="flex-1 resize-none rounded-xl border border-border bg-muted px-3 py-2 text-sm outline-none focus:border-primary"
+            className="flex-1 resize-none rounded-xl border border-border bg-white px-3 py-2.5 text-sm outline-none focus:border-primary transition-colors"
             data-testid="input-admin-reply"
           />
-          <Button onClick={handleSend} disabled={!replyText.trim() || replyMutation.isPending} size="icon" className="rounded-xl h-10 w-10 shrink-0">
+          <Button
+            onClick={handleSend}
+            disabled={!replyText.trim() || replyMutation.isPending}
+            size="icon"
+            className="rounded-xl h-11 w-11 shrink-0"
+            data-testid="button-admin-send-reply"
+          >
             <Send className="h-4 w-4" />
           </Button>
         </div>
@@ -2185,14 +2227,26 @@ function AdminChatSection() {
     );
   }
 
+  /* ── CONVERSATIONS LIST ── */
   return (
     <div>
-      <h3 className="text-base font-bold mb-4">მომხმარებელთა შეტყობინებები</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-base font-bold">მომხმარებელთა შეტყობინებები</h3>
+        {totalUnread > 0 && (
+          <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-red-500 px-2 text-[11px] font-bold text-white">
+            {totalUnread} წაუკითხავი
+          </span>
+        )}
+      </div>
+
       {loadingConvs ? (
-        <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-16 animate-pulse rounded-xl bg-muted" />)}</div>
+        <div className="space-y-2">
+          {[1,2,3].map(i => <div key={i} className="h-16 animate-pulse rounded-xl bg-muted" />)}
+        </div>
       ) : conversations.length === 0 ? (
-        <div className="rounded-xl border border-border bg-muted/30 p-8 text-center text-muted-foreground text-sm">
-          შეტყობინებები არ არის
+        <div className="rounded-xl border border-border bg-muted/30 p-10 text-center">
+          <MessageCircle className="h-8 w-8 mx-auto text-muted-foreground/40 mb-2" />
+          <p className="text-sm text-muted-foreground">შეტყობინებები არ არის</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -2200,23 +2254,39 @@ function AdminChatSection() {
             <button
               key={conv.userId}
               onClick={() => setSelectedUserId(conv.userId)}
-              className="w-full flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-primary/40 hover:shadow-sm transition-all text-left"
+              className={`w-full flex items-center gap-3 rounded-xl border px-4 py-3.5 hover:shadow-md transition-all text-left ${
+                conv.unread > 0
+                  ? "border-red-200 bg-red-50/60 hover:border-red-300"
+                  : "border-border bg-card hover:border-primary/40"
+              }`}
               data-testid={`button-conv-${conv.userId}`}
             >
-              <div className="h-10 w-10 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
+              <div className={`h-11 w-11 shrink-0 rounded-full flex items-center justify-center text-sm font-bold ${
+                conv.unread > 0 ? "bg-red-100 text-red-600" : "bg-primary/10 text-primary"
+              }`}>
                 {(conv.firstName?.[0] || "მ").toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-sm">{conv.firstName || ""} {conv.lastName || ""}</span>
-                  {conv.unread > 0 && (
-                    <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
-                      {conv.unread}
-                    </span>
-                  )}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-sm">
+                    {conv.firstName || ""} {conv.lastName || ""}
+                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {conv.lastAt && (
+                      <span className="text-[10px] text-muted-foreground">{fmtTime(conv.lastAt)}</span>
+                    )}
+                    {conv.unread > 0 && (
+                      <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                        {conv.unread}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground truncate">{conv.lastMessage}</p>
+                <p className={`text-xs truncate mt-0.5 ${conv.unread > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                  {conv.lastMessage}
+                </p>
               </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
             </button>
           ))}
         </div>
@@ -2236,6 +2306,12 @@ export default function AdminDashboard() {
   const isFullAdmin = currentRole === "admin";
   const isSalesAdmin = currentRole === "sales_admin";
   const isModerator = currentRole === "moderator";
+
+  const { data: adminConvs = [] } = useQuery<{ unread: number }[]>({
+    queryKey: ["/api/chat/conversations"],
+    refetchInterval: 10000,
+  });
+  const totalChatUnread = adminConvs.reduce((sum, c) => sum + (c.unread || 0), 0);
 
   async function handleLogout() {
     await logout();
@@ -2634,10 +2710,15 @@ export default function AdminDashboard() {
             )}
 
             <Card
-              className="cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-emerald-400/60"
+              className="relative cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-emerald-400/60"
               onClick={() => setActiveSection("chat")}
               data-testid="card-section-chat"
             >
+              {totalChatUnread > 0 && (
+                <span className="absolute -top-2 -right-2 z-10 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white shadow">
+                  {totalChatUnread > 99 ? "99+" : totalChatUnread}
+                </span>
+              )}
               <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
                   <MessageCircle className="h-7 w-7 text-emerald-600" />
