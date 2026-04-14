@@ -15,7 +15,7 @@ function formatTime(date: Date | string | null) {
 
 export default function LiveContactPage() {
   const [, setLocation] = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -93,13 +93,13 @@ export default function LiveContactPage() {
           </div>
           <div className="max-w-[75%]">
             <p className="text-[11px] text-muted-foreground mb-1">spiningebi.ge</p>
-            <div className="rounded-2xl rounded-bl-sm bg-muted px-4 py-2.5">
-              <p className="text-sm">გამარჯობა! მოგესალმებათ spiningebi.ge ადმინისტრატორი. დასვით თქვენი შეკითხვა, სიამოვნებით დაგეხმარებით! 🎣</p>
+            <div className="rounded-2xl rounded-bl-sm bg-white border border-purple-100 px-4 py-2.5 shadow-sm">
+              <p className="text-sm text-purple-700">გამარჯობა! მოგესალმებათ spiningebi.ge ადმინისტრატორი. დასვით თქვენი შეკითხვა, სიამოვნებით დაგეხმარებით! 🎣</p>
             </div>
           </div>
         </div>
 
-        {!isAuthenticated ? (
+        {!authLoading && !isAuthenticated ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <div className="rounded-full bg-muted p-4">
               <Lock className="h-6 w-6 text-muted-foreground" />
