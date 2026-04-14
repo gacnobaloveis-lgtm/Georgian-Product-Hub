@@ -721,7 +721,7 @@ export default function HomePage() {
       )}
 
       <div className="mx-auto hidden max-w-6xl px-4 pb-4 pt-3 sm:px-6 md:block lg:px-8">
-        <nav className="flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200/60 shadow-sm px-5 py-3">
+        <nav className="flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200/60 shadow-sm px-5 py-3 overflow-hidden">
           <div className="flex items-center gap-0.5">
             <button onClick={handleGoHome} data-testid="link-nav-home"
               className={`flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold transition-all whitespace-nowrap ${!selectedCategory ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-muted hover:text-primary"}`}>
