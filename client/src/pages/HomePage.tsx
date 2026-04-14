@@ -34,68 +34,16 @@ import fishermanLogo from "@assets/fisherman_transparent.png";
 import eyeIconPath from "@assets/image_1771961384457.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 
-function SiteFooter({ canInstall, onInstall }: { canInstall?: boolean; onInstall?: () => void }) {
+function SiteFooter() {
   const [, setLocation] = useLocation();
-  const { isAuthenticated } = useAuth();
   const { data: contact } = useQuery<{ phone: string; email: string; whatsapp: string; address: string; workHours: string; dayOff: string }>({
     queryKey: ["/api/contact-info"],
   });
-  const { data: footerUnreadData } = useQuery<{ count: number }>({
-    queryKey: ["/api/chat/unread-count"],
-    enabled: isAuthenticated,
-    refetchInterval: 10000,
-  });
-  const footerUnreadCount = footerUnreadData?.count ?? 0;
   const c = contact || { phone: "+995 599 52 33 51", email: "spiningebi@gmail.com", whatsapp: "+995 599 52 33 51", address: "საქართველო, ბათუმი", workHours: "ორშაბათი - შაბათი: 10:00 - 19:00", dayOff: "კვირა: დასვენება" };
   const waNumber = c.whatsapp.replace(/[\s+()-]/g, "");
   return (
     <footer className="mt-8 bg-gradient-to-r from-purple-100 via-purple-50 to-pink-50 border-t border-purple-200/50" data-testid="footer">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="sm:hidden mb-4 flex flex-col gap-3">
-          <button
-            type="button"
-            onClick={() => setLocation("/terms")}
-            className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900"
-            data-testid="footer-terms-mobile"
-          >
-            <ScrollText className="h-4 w-4" />
-            წესები და პირობები
-          </button>
-          <button
-            type="button"
-            onClick={() => setLocation("/about")}
-            className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900"
-            data-testid="footer-about-mobile"
-          >
-            <Info className="h-4 w-4" />
-            ჩვენს შესახებ
-          </button>
-          <button
-            type="button"
-            onClick={() => setLocation("/live-contact")}
-            className="relative flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-800"
-            data-testid="footer-live-contact-mobile"
-          >
-            <MessageCircle className="h-4 w-4" />
-            <span className="text-red-500 font-bold">LIVE</span> კონტაქტი
-            {footerUnreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white leading-none">
-                {footerUnreadCount > 9 ? "9+" : footerUnreadCount}
-              </span>
-            )}
-          </button>
-          {canInstall && onInstall && (
-            <button
-              type="button"
-              onClick={onInstall}
-              className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900"
-              data-testid="footer-install-app"
-            >
-              <Download className="h-4 w-4" />
-              აპლიკაციის ჩამოტვირთვა
-            </button>
-          )}
-        </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <h3 className="mb-3 text-sm font-bold text-gray-800">საკონტაქტო ინფორმაცია</h3>
@@ -862,7 +810,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <SiteFooter canInstall={canInstall} onInstall={installPwa} />
+      <SiteFooter />
 
       <MobileBottomNav
         onCategoriesOpen={() => setCategoryDrawerOpen(true)}
