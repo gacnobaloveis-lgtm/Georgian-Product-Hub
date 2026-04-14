@@ -82,6 +82,7 @@ export function getSession() {
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
+    rolling: true, // reset cookie expiry on every request so users stay logged in
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -603,10 +604,22 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   }
 
   const sub = String(user.claims.sub);
-  if (sub.startsWith("fb_") || sub.startsWith("g_")) {
+
+  // Phone/password users (guest_) and social users (fb_, g_) have a simple
+  // long-lived session — just check the cookie hasn't expired via express-session.
+  // We set expires_at = now + 7 days at login, but we don't want them kicked
+  // out unexpectedly.  Treat them as always valid while passport session is alive.
+  if (sub.startsWith("guest_") || sub.startsWith("fb_") || sub.startsWith("g_")) {
+    // Extend expires_at so the user stays logged in as long as they use the app.
+    // This means as long as the DB session is alive they stay authenticated.
     const now = Math.floor(Date.now() / 1000);
-    if (user.expires_at && now > user.expires_at) {
-      return res.status(401).json({ message: "Unauthorized" });
+    if (user.expires_at) {
+      // If less than 1 day remaining, roll forward to 30 days from now
+      if (user.expires_at - now < 86400) {
+        user.expires_at = now + 30 * 24 * 3600;
+      }
+    } else {
+      user.expires_at = now + 30 * 24 * 3600;
     }
     return next();
   }
