@@ -36,7 +36,7 @@ export default function AboutPage() {
             <div className="rounded-xl border border-border bg-card p-5 text-center">
               <ShieldCheck className="mx-auto mb-3 h-8 w-8 text-emerald-500" />
               <h3 className="font-bold text-foreground mb-1">ხარისხი</h3>
-              <p className="text-sm text-muted-foreground">მხოლოდ სერტიფიცირებული და გამოცდილი ბრენდები</p>
+              <p className="text-sm text-muted-foreground">მაღალი უკვე გამოცდილი სპინინგისტებისგან</p>
             </div>
             <div className="rounded-xl border border-border bg-card p-5 text-center">
               <Truck className="mx-auto mb-3 h-8 w-8 text-blue-500" />
