@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { showNotification, requestNotificationPermission } from "@/lib/web-notification";
 import { useQuery } from "@tanstack/react-query";
 import { useProducts } from "@/hooks/use-products";
 import { useAuth } from "@/hooks/use-auth";
@@ -567,6 +568,23 @@ export default function HomePage() {
     refetchInterval: 10000,
   });
   const chatUnreadCount = chatUnreadData?.count ?? 0;
+
+  // Request notification permission once user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) requestNotificationPermission();
+  }, [isAuthenticated]);
+
+  // Show browser pop-up notification when admin/bot sends a new message
+  const prevChatUnreadRef = useRef(0);
+  useEffect(() => {
+    if (chatUnreadCount > prevChatUnreadRef.current) {
+      showNotification("💬 ახალი შეტყობინება", "spiningebi.ge ადმინი გიპასუხა — გახსენი LIVE კონტაქტი", {
+        tag: "chat-reply",
+        onClick: () => { window.location.href = "/live-contact"; },
+      });
+    }
+    prevChatUnreadRef.current = chatUnreadCount;
+  }, [chatUnreadCount]);
 
   const { data: categoryProducts, isLoading: isCategoryLoading } = useQuery<Product[]>({
     queryKey: ["/api/products/category", selectedCategory?.id],

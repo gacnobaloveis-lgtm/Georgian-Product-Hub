@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@shared/schema";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
-import { playMessageSound } from "@/lib/notification-sound";
+import { showNotification, requestNotificationPermission } from "@/lib/web-notification";
 
 function formatTime(date: Date | string | null) {
   if (!date) return "";
@@ -77,13 +77,21 @@ export default function LiveContactPage() {
     }
   }
 
+  // Ask for notification permission when chat opens
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
+
   const prevBotCountRef = useRef(0);
   useEffect(() => {
-    const botMsgs = messages.filter((m) => m.senderType !== "user").length;
-    if (botMsgs > prevBotCountRef.current && prevBotCountRef.current > 0) {
-      playMessageSound();
+    const botMsgs = messages.filter((m) => m.senderType !== "user");
+    if (botMsgs.length > prevBotCountRef.current && prevBotCountRef.current > 0) {
+      const last = botMsgs[botMsgs.length - 1];
+      showNotification("💬 spiningebi.ge", last?.message?.substring(0, 100) ?? "ახალი შეტყობინება", {
+        tag: "live-chat",
+      });
     }
-    prevBotCountRef.current = botMsgs;
+    prevBotCountRef.current = botMsgs.length;
   }, [messages]);
 
   return (

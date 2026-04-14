@@ -4,7 +4,7 @@ import { MessageCircle, X, Send, ArrowLeft, ChevronRight, Bell, BellOff } from "
 import { Button } from "@/components/ui/button";
 import { useAdminStatus } from "@/hooks/use-admin";
 import { queryClient } from "@/lib/queryClient";
-import { playMessageSound } from "@/lib/notification-sound";
+import { showNotification, requestNotificationPermission } from "@/lib/web-notification";
 
 type ConvMsg = { id: number; userId: string; message: string; senderType: string; createdAt: string | null };
 type Conv = { userId: string; firstName: string | null; lastName: string | null; lastMessage: string; lastAt: string | null; unread: number };
@@ -153,11 +153,23 @@ export function AdminChatWidget() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Request notification permission as soon as admin is detected
+  useEffect(() => {
+    if (isAdmin) requestNotificationPermission();
+  }, [isAdmin]);
+
   const prevUnreadRef = useRef(0);
   useEffect(() => {
     const total = conversations.reduce((s, c) => s + (c.unread || 0), 0);
     if (total > prevUnreadRef.current) {
-      playMessageSound();
+      const newest = [...conversations].sort((a, b) =>
+        new Date(b.lastAt ?? 0).getTime() - new Date(a.lastAt ?? 0).getTime()
+      )[0];
+      showNotification(
+        "💬 ახალი შეტყობინება",
+        newest ? `${newest.firstName || "მომხმარებელი"}: ${newest.lastMessage.substring(0, 80)}` : "ახალი შეტყობინება",
+        { tag: "admin-chat" }
+      );
     }
     prevUnreadRef.current = total;
   }, [conversations]);
