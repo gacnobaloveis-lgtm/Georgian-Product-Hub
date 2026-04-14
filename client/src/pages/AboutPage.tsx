@@ -28,7 +28,7 @@ export default function AboutPage() {
           <div className="rounded-xl border border-border bg-card p-6">
             <h2 className="mb-3 text-base font-bold text-foreground">ვინ ვართ</h2>
             <p className="text-[15px] leading-7 text-muted-foreground">
-              spiningebi.ge ონლაინ მაღაზია. ჩვენ სთავაზობთ მეთევზეებს საუკეთესო სპინინგის ჯოხებს, კოჭებს, წნულებს, ვობლერებს და სხვა სათევზაო აქსესუარებს საუკეთესო ფასებად.
+              spiningebi.ge ონლაინ მაღაზია. ჩვენ ვთავაზობთ მეთევზეებს საუკეთესო სპინინგის ჯოხებს, კოჭებს, წნულებს, ვობლერებს და სხვა სათევზაო აქსესუარებს საუკეთესო ფასებად.
             </p>
           </div>
 
