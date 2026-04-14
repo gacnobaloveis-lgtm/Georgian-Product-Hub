@@ -14,6 +14,17 @@ import https from "https";
 import { pool } from "./db";
 import webpush from "web-push";
 
+// ── Real-time online visitors tracker (in-memory) ──────────────────────────
+const activeSessions = new Map<string, number>(); // sessionId -> lastSeen ms
+const SESSION_TTL_MS = 90_000; // 90 seconds
+
+function pruneOldSessions() {
+  const cutoff = Date.now() - SESSION_TTL_MS;
+  for (const [id, ts] of activeSessions) {
+    if (ts < cutoff) activeSessions.delete(id);
+  }
+}
+
 // Initialize web-push with VAPID keys
 if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
@@ -859,6 +870,22 @@ export async function registerRoutes(
       console.error("Credit info error:", err);
       res.status(500).json({ message: "შეცდომა" });
     }
+  });
+
+  // Public ping — client calls every 30s to register as "online"
+  app.post("/api/ping", (req, res) => {
+    const sid = (req.query.sid as string) || "";
+    if (sid && sid.length < 64) {
+      activeSessions.set(sid, Date.now());
+      pruneOldSessions();
+    }
+    res.json({ ok: true });
+  });
+
+  // Admin: current online count
+  app.get("/api/admin/online-count", requireAdmin, (_req, res) => {
+    pruneOldSessions();
+    res.json({ count: activeSessions.size });
   });
 
   app.get("/api/admin/analytics", requireAdmin, async (req, res) => {

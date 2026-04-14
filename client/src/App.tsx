@@ -19,6 +19,21 @@ import NotFound from "@/pages/not-found";
 import { CartContext, useCartProvider } from "@/hooks/use-cart";
 import { AdminChatWidget } from "@/components/AdminChatWidget";
 import { BroadcastNotification } from "@/components/BroadcastNotification";
+import { useEffect } from "react";
+
+function useOnlinePing() {
+  useEffect(() => {
+    let sid = sessionStorage.getItem("_sid");
+    if (!sid) {
+      sid = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+      sessionStorage.setItem("_sid", sid);
+    }
+    const ping = () => fetch(`/api/ping?sid=${sid}`, { method: "POST" }).catch(() => {});
+    ping();
+    const iv = setInterval(ping, 30_000);
+    return () => clearInterval(iv);
+  }, []);
+}
 
 function Router() {
   return (
@@ -45,6 +60,7 @@ function Router() {
 
 function App() {
   const cart = useCartProvider();
+  useOnlinePing();
   return (
     <QueryClientProvider client={queryClient}>
       <CartContext.Provider value={cart}>

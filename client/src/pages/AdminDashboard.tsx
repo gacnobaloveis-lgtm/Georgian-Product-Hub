@@ -663,6 +663,10 @@ function AnalyticsSection() {
   const { data, isLoading } = useQuery<{ sources: { domain: string; count: number }[]; total: number; days: number }>({
     queryKey: [`/api/admin/analytics?days=${days}`],
   });
+  const { data: onlineData } = useQuery<{ count: number }>({
+    queryKey: ["/api/admin/online-count"],
+    refetchInterval: 15_000,
+  });
 
   const maxCount = data?.sources?.[0]?.count || 1;
 
@@ -689,10 +693,26 @@ function AnalyticsSection() {
         </div>
       </div>
 
-      <div className="mb-5 rounded-lg border border-primary/20 bg-primary/5 p-4 text-center">
-        <p className="text-xs text-muted-foreground mb-1">სულ ვიზიტები</p>
-        <p className="text-3xl font-bold text-primary" data-testid="text-total-visits">{data?.total ?? "—"}</p>
-        <p className="text-xs text-muted-foreground mt-1">ბოლო {days === 1 ? "24 საათი" : `${days} დღე`}</p>
+      {/* Live + total stats row */}
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center">
+          <div className="flex items-center justify-center gap-1.5 mb-1">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <p className="text-xs text-emerald-700 font-medium">ახლა საიტზეა</p>
+          </div>
+          <p className="text-3xl font-bold text-emerald-600" data-testid="text-online-count">
+            {onlineData?.count ?? "—"}
+          </p>
+          <p className="text-xs text-emerald-600 mt-1">ვიზიტორი</p>
+        </div>
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-center">
+          <p className="text-xs text-muted-foreground mb-1">სულ ვიზიტები</p>
+          <p className="text-3xl font-bold text-primary" data-testid="text-total-visits">{data?.total ?? "—"}</p>
+          <p className="text-xs text-muted-foreground mt-1">ბოლო {days === 1 ? "24 საათი" : `${days} დღე`}</p>
+        </div>
       </div>
 
       {isLoading ? (
