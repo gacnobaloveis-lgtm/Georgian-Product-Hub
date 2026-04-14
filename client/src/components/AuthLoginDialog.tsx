@@ -15,14 +15,26 @@ import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import type { TermsSection } from "@shared/schema";
 
-async function attemptPushSubscription() {
+async function attemptPushSubscription(
+  onResult?: (ok: boolean, msg: string) => void
+) {
   try {
-    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      onResult?.(false, "ბრაუზერი push შეტყობინებებს არ უჭერს მხარს");
+      return;
+    }
     const perm = await Notification.requestPermission();
-    if (perm !== "granted") return;
+    if (perm === "denied") {
+      onResult?.(false, "შეტყობინებები დაბლოკილია ბრაუზერის პარამეტრებში");
+      return;
+    }
+    if (perm !== "granted") {
+      onResult?.(false, "");
+      return;
+    }
     const keyRes = await fetch("/api/push/vapid-key");
     const { publicKey } = await keyRes.json();
-    if (!publicKey) return;
+    if (!publicKey) { onResult?.(false, "Push კონფიგურაცია ვერ მოიძებნა"); return; }
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
@@ -31,12 +43,19 @@ async function attemptPushSubscription() {
       const key = Uint8Array.from([...atob(b64)].map((c) => c.charCodeAt(0)));
       sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
     }
-    await fetch("/api/push/subscribe", {
+    const saveRes = await fetch("/api/push/subscribe", {
       method: "POST", credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(sub.toJSON()),
     });
-  } catch (_) {}
+    if (saveRes.ok) {
+      onResult?.(true, "🔔 შეტყობინებები ჩართულია!");
+    } else {
+      onResult?.(false, "შეტყობინებების გააქტიურება ვერ მოხერხდა");
+    }
+  } catch (e: unknown) {
+    onResult?.(false, String(e));
+  }
 }
 
 const GEORGIAN_CITIES = [
@@ -240,15 +259,15 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
       });
 
       if (res.ok) {
+        // Fire push permission request immediately — must stay in user-gesture context
+        if (wantsPush) attemptPushSubscription((ok, msg) => {
+          if (msg) toast({ title: msg, variant: ok ? "default" : "destructive" });
+        });
         await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
         await queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
         toast({ title: "რეგისტრაცია წარმატებით დასრულდა!" });
         onOpenChange(false);
         onRegistered?.();
-        // Request push permission if user opted in — triggers native browser dialog
-        if (wantsPush) {
-          setTimeout(() => attemptPushSubscription(), 500);
-        }
       } else {
         const data = await res.json().catch(() => ({}));
         toast({ variant: "destructive", title: "შეცდომა", description: data.message || "რეგისტრაცია ვერ მოხერხდა" });
