@@ -4,18 +4,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -60,16 +50,13 @@ interface EditForm {
 export function PurchaseDialog({ open, onOpenChange, productId, productName, productPrice, quantity, selectedColor }: PurchaseDialogProps) {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const [submitting, setSubmitting] = useState(false);
   const [creditSubmitting, setCreditSubmitting] = useState(false);
   const [tbcSubmitting, setTbcSubmitting] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const [editForm, setEditForm] = useState<EditForm>({ fullName: "", city: "", address: "", phone: "" });
-  const [hasPendingOrders, setHasPendingOrders] = useState(false);
   const [userCredit, setUserCredit] = useState(0);
   const [creditToGel, setCreditToGel] = useState(1);
 
@@ -82,19 +69,15 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
     if (open && isAuthenticated && user) {
       setProfileLoading(true);
       setEditing(false);
-      setHasPendingOrders(false);
       Promise.all([
         fetch("/api/profile", { credentials: "include" }).then(res => res.ok ? res.json() : null),
-        fetch("/api/orders/my", { credentials: "include" }).then(res => res.ok ? res.json() : []),
         fetch("/api/credit-info", { credentials: "include" }).then(res => res.ok ? res.json() : { credit_to_gel: "1" }),
       ])
-        .then(([profileData, orders, creditInfo]) => {
+        .then(([profileData, creditInfo]) => {
           setProfile(profileData);
           if (profileData && !isProfileComplete(profileData)) {
             startEditing(profileData);
           }
-          const pending = Array.isArray(orders) && orders.some((o: any) => o.status === "pending");
-          setHasPendingOrders(pending);
           setUserCredit(Number(profileData?.myCredit || 0));
           setCreditToGel(Number(creditInfo?.credit_to_gel || 1));
         })
@@ -212,42 +195,6 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
       toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
     } finally {
       setCreditSubmitting(false);
-    }
-  }
-
-  async function handleSubmit() {
-    if (!isAuthenticated || !profile || !profileComplete) return;
-
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          productId,
-          productName,
-          productPrice: String(total),
-          quantity,
-          selectedColor,
-          fullName: fullName.trim(),
-          city: profile.city,
-          address: profile.address!.trim(),
-          phone: profile.phone!.trim(),
-        }),
-      });
-
-      if (res.ok) {
-        toast({ title: "შეკვეთა მიღებულია!", description: `"${productName}" (${quantity} ც.) წარმატებით შეუკვეთეთ.` });
-        onOpenChange(false);
-      } else {
-        const data = await res.json();
-        toast({ variant: "destructive", title: "შეცდომა", description: data.message || "შეკვეთა ვერ მოხერხდა" });
-      }
-    } catch {
-      toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
-    } finally {
-      setSubmitting(false);
     }
   }
 
@@ -448,21 +395,8 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
             </div>
 
             <Button
-              onClick={() => hasPendingOrders ? handleSubmit() : setConfirmOpen(true)}
-              disabled={submitting || creditSubmitting || tbcSubmitting || authLoading}
-              className="min-h-[44px] w-full"
-              data-testid="button-order-submit"
-            >
-              {submitting ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> იგზავნება...</>
-              ) : (
-                `შეკვეთა — ₾${total.toFixed(2)}`
-              )}
-            </Button>
-
-            <Button
               onClick={handleTbcPay}
-              disabled={submitting || creditSubmitting || tbcSubmitting || authLoading}
+              disabled={creditSubmitting || tbcSubmitting || authLoading}
               className="min-h-[44px] w-full bg-[#00AEEF] hover:bg-[#0099d4] text-white font-semibold gap-2"
               data-testid="button-tbc-pay"
             >
@@ -482,7 +416,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
                     toast({ variant: "destructive", title: "კრედიტი არასაკმარისია", description: "როგორ დავაგროვო კრედიტი — ნახეთ გზამკვლევში" });
                   }
                 }}
-                disabled={creditSubmitting || submitting || authLoading}
+                disabled={creditSubmitting || tbcSubmitting || authLoading}
                 variant="outline"
                 className="min-h-[44px] w-full border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-900"
                 data-testid="button-order-credit"
@@ -498,30 +432,6 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
           </div>
         )}
       </DialogContent>
-
-      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-base" data-testid="text-confirm-title">შეკვეთის დადასტურება</AlertDialogTitle>
-            <AlertDialogDescription className="text-sm leading-relaxed" data-testid="text-confirm-message">
-              {profile?.city?.trim().toLowerCase() === "ქუთაისი" ? (
-                "ქუთაისში მიტანა უფასოა! სანამ თქვენი ამანათი საწყობიდან გამოვა, გაქვთ შანსი დაამატოთ სხვა ნივთებიც. ისარგებლეთ ამ შესაძლებლობით, სანამ ნივთი დამუშავების პროცესშია!"
-              ) : (
-                "შეგახსენებთ, რომ ტრანსპორტირების საფასური (11.50 ლარი) ანაზღაურდება კურიერთან. სანამ თქვენი ამანათი საწყობიდან გამოვა, გაქვთ შანსი ამავე საკურიერო ფასში დაამატოთ სხვა ნივთებიც. ისარგებლეთ ამ შესაძლებლობით, სანამ ნივთი დამუშავების პროცესშია!"
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel data-testid="button-confirm-no">არა</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => { setConfirmOpen(false); handleSubmit(); }}
-              data-testid="button-confirm-yes"
-            >
-              კი
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Dialog>
   );
 }
