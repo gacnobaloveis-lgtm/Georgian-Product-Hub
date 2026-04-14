@@ -70,18 +70,13 @@ function SiteFooter() {
             </div>
           </div>
           <div>
-            <h3 className="mb-3 text-sm font-bold text-gray-800">სამუშაო საათები</h3>
-            <p className="text-sm text-gray-600">{c.workHours}</p>
-            <p className="text-sm text-gray-600">{c.dayOff}</p>
-          </div>
-          <div className="hidden sm:block">
             <h3 className="mb-3 text-sm font-bold text-gray-800">ბმულები</h3>
             <ul className="space-y-2.5">
               <li>
                 <button
                   onClick={() => setLocation("/terms")}
                   className="flex items-center gap-2 text-sm text-gray-600 hover:text-purple-700 transition-colors"
-                  data-testid="footer-terms-link"
+                  data-testid="footer-terms-link2"
                 >
                   <ScrollText className="h-4 w-4 text-purple-500" />
                   წესები და პირობები
@@ -89,15 +84,31 @@ function SiteFooter() {
               </li>
               <li>
                 <button
-                  onClick={() => setLocation("/live-contact")}
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-emerald-600 transition-colors"
-                  data-testid="footer-live-contact-link"
+                  onClick={() => setLocation("/about")}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-purple-700 transition-colors"
+                  data-testid="footer-about-link2"
                 >
-                  <MessageCircle className="h-4 w-4 text-emerald-500" />
-                  <span className="text-red-500 font-bold">LIVE</span> კონტაქტი
+                  <Info className="h-4 w-4 text-purple-500" />
+                  ჩვენს შესახებ
                 </button>
               </li>
             </ul>
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-bold text-gray-800">სამუშაო საათები</h3>
+            <p className="text-sm text-gray-600">{c.workHours}</p>
+            <p className="text-sm text-gray-600">{c.dayOff}</p>
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-bold text-gray-800">LIVE კონტაქტი</h3>
+            <button
+              onClick={() => setLocation("/live-contact")}
+              className="flex items-center gap-2 text-sm text-emerald-700 hover:text-emerald-900 transition-colors font-semibold"
+              data-testid="footer-live-contact2"
+            >
+              <MessageCircle className="h-4 w-4 text-emerald-500" />
+              <span className="text-red-500 font-bold">LIVE</span>&nbsp;კონტაქტი
+            </button>
           </div>
         </div>
         <div className="mt-6 border-t border-purple-200/50 pt-4 text-center">
@@ -270,28 +281,27 @@ function MobileBottomNav({
   hasAdminRole: boolean;
   cartCount: number;
 }) {
-  const [, setLocation] = useLocation();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-border bg-card/95 backdrop-blur-md md:hidden" style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom)" }} data-testid="mobile-bottom-nav">
       <button
         onClick={onGoHome}
-        className={`flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-bold transition-colors ${!selectedCategory ? "text-primary" : "text-muted-foreground"}`}
+        className={`flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-xs font-bold transition-colors ${!selectedCategory ? "text-primary" : "text-muted-foreground"}`}
         data-testid="nav-home"
       >
-        <Home className="h-4 w-4" />
+        <Home className="h-5 w-5" />
         <span>მთავარი</span>
       </button>
       <button
         onClick={onCategoriesOpen}
-        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors"
+        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
         data-testid="nav-categories"
       >
         <LayoutGrid className="h-4 w-4" />
-        <span>კატეგ.</span>
+        <span>კატეგორიები</span>
       </button>
       <button
         onClick={onCartOpen}
-        className="relative flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors"
+        className="relative flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
         data-testid="nav-cart"
       >
         <div className="relative">
@@ -305,32 +315,16 @@ function MobileBottomNav({
         <span>კალათა</span>
       </button>
       <button
-        onClick={() => setLocation("/terms")}
-        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors"
-        data-testid="nav-terms"
-      >
-        <ScrollText className="h-4 w-4" />
-        <span>წესები</span>
-      </button>
-      <button
-        onClick={() => setLocation("/live-contact")}
-        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-emerald-600 transition-colors"
-        data-testid="nav-live-contact"
-      >
-        <MessageCircle className="h-4 w-4" />
-        <span className="font-bold"><span className="text-red-500">LIVE</span></span>
-      </button>
-      <button
         onClick={onGuideOpen}
-        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors"
+        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
         data-testid="nav-guide"
       >
         <BookOpen className="h-4 w-4" />
-        <span>გზამკვ.</span>
+        <span>გზამკვლევი</span>
       </button>
       <button
         onClick={onProfileClick}
-        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors"
+        className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors"
         data-testid="nav-profile"
       >
         <UserCircle className="h-4 w-4" />
@@ -338,7 +332,7 @@ function MobileBottomNav({
       </button>
       {hasAdminRole && (
         <Link href="/admin-login">
-          <div className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[9px] font-medium text-muted-foreground transition-colors" data-testid="nav-admin">
+          <div className="flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium text-muted-foreground transition-colors" data-testid="nav-admin">
             <Settings className="h-4 w-4" />
             <span>ადმინი</span>
           </div>
