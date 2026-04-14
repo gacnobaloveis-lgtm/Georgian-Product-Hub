@@ -1253,6 +1253,26 @@ export async function registerRoutes(
         senderType: "admin",
         isRead: 0,
       });
+
+      // Send push notification to the user so they get it even when app is closed
+      try {
+        const userSubs = await storage.getUserPushSubscriptions(userId);
+        if (userSubs.length > 0) {
+          const payload = JSON.stringify({
+            title: "📩 spiningebi.ge — პასუხი",
+            body: message.trim().substring(0, 120),
+            url: "/live-contact",
+            tag: `chat-reply-${Date.now()}`,
+          });
+          for (const sub of userSubs) {
+            webpush.sendNotification(
+              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+              payload
+            ).catch(() => storage.removePushSubscription(sub.endpoint));
+          }
+        }
+      } catch (_) {}
+
       res.json(msg);
     } catch (err) {
       console.error("Chat reply error:", err);

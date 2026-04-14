@@ -56,6 +56,7 @@ export interface IStorage {
   removePushSubscription(endpoint: string): Promise<void>;
   getAdminPushSubscriptions(): Promise<PushSubscription[]>;
   getAllPushSubscriptions(): Promise<PushSubscription[]>;
+  getUserPushSubscriptions(userId: string): Promise<PushSubscription[]>;
   createBroadcast(data: { title: string; body: string; url?: string; imageUrl?: string }): Promise<Broadcast>;
   getBroadcasts(): Promise<Broadcast[]>;
   deleteBroadcast(id: number): Promise<void>;
@@ -367,6 +368,16 @@ export class DatabaseStorage implements IStorage {
 
   async getAllPushSubscriptions(): Promise<PushSubscription[]> {
     const result = await db.execute(sql`SELECT * FROM push_subscriptions`);
+    return (result.rows as any[]).map(r => ({
+      id: r.id, userId: r.user_id, endpoint: r.endpoint,
+      p256dh: r.p256dh, auth: r.auth, createdAt: r.created_at,
+    }));
+  }
+
+  async getUserPushSubscriptions(userId: string): Promise<PushSubscription[]> {
+    const result = await db.execute(sql`
+      SELECT * FROM push_subscriptions WHERE user_id = ${userId}
+    `);
     return (result.rows as any[]).map(r => ({
       id: r.id, userId: r.user_id, endpoint: r.endpoint,
       p256dh: r.p256dh, auth: r.auth, createdAt: r.created_at,
