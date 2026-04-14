@@ -734,29 +734,29 @@ export default function HomePage() {
         <nav className="flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200/60 shadow-sm px-5 py-2">
           <div className="flex items-center gap-1">
             <button onClick={handleGoHome} data-testid="link-nav-home"
-              className={`flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold transition-all ${!selectedCategory ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-muted hover:text-primary"}`}>
-              <Home className="h-4 w-4" />
+              className={`flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold transition-all whitespace-nowrap ${!selectedCategory ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-muted hover:text-primary"}`}>
+              <Home className="h-3.5 w-3.5 shrink-0" />
               მთავარი
             </button>
             <button onClick={() => setGuideOpen(true)} data-testid="link-nav-guide"
-              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all">
-              <BookOpen className="h-4 w-4" />
+              className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap">
+              <BookOpen className="h-3.5 w-3.5 shrink-0" />
               გზამკვლევი
             </button>
             <button onClick={() => setLocation("/terms")} data-testid="link-nav-terms"
-              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all">
-              <ScrollText className="h-4 w-4" />
+              className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap">
+              <ScrollText className="h-3.5 w-3.5 shrink-0" />
               წესები და პირობები
             </button>
             <button onClick={() => setLocation("/about")} data-testid="link-nav-about"
-              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all">
-              <Info className="h-4 w-4" />
+              className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap">
+              <Info className="h-3.5 w-3.5 shrink-0" />
               ჩვენს შესახებ
             </button>
             {canInstall && (
               <button onClick={() => setInstallDialogOpen(true)} data-testid="link-nav-install"
-                className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-green-600 hover:bg-green-50 hover:text-green-700 transition-all animate-pulse">
-                <Download className="h-4 w-4" />
+                className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-green-600 hover:bg-green-50 hover:text-green-700 transition-all animate-pulse whitespace-nowrap">
+                <Download className="h-3.5 w-3.5 shrink-0" />
                 ჩამოტვირთვა
               </button>
             )}
@@ -776,11 +776,11 @@ export default function HomePage() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setCartDrawerOpen(true)}
-              className="relative flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all"
+              className="relative flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap"
               data-testid="link-cart-desktop"
             >
               <div className="relative">
-                <ShoppingCart className="h-4 w-4" />
+                <ShoppingCart className="h-3.5 w-3.5 shrink-0" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
                     {cartCount > 99 ? "99+" : cartCount}
@@ -791,16 +791,16 @@ export default function HomePage() {
             </button>
             <button
               onClick={handleProfileClick}
-              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all"
+              className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap"
               data-testid="link-profile-desktop"
             >
-              <UserCircle className="h-4 w-4" />
+              <UserCircle className="h-3.5 w-3.5 shrink-0" />
               პროფილი
             </button>
             {hasAdminRole && (
               <Link href="/admin-login">
-                <span className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all" data-testid="link-admin-panel">
-                  <Settings className="h-4 w-4" />
+                <span className="flex min-h-[32px] items-center gap-1.5 rounded-xl px-2 py-1.5 text-[12px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap" data-testid="link-admin-panel">
+                  <Settings className="h-3.5 w-3.5 shrink-0" />
                   ადმინ
                 </span>
               </Link>
