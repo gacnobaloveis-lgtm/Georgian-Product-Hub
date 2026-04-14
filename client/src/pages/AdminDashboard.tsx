@@ -2295,7 +2295,7 @@ function AdminChatSection() {
   );
 }
 
-type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms" | "chat";
+type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>(null);
@@ -2525,30 +2525,6 @@ export default function AdminDashboard() {
     );
   }
 
-  if (activeSection === "chat") {
-    return (
-      <div className="min-h-screen bg-mesh">
-        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
-          <AnimatedShell className="space-y-6">
-            <div className="flex items-center justify-between">
-              <TopBar title="ადმინ პანელი" subtitle="LIVE კონტაქტი — შეტყობინებები" />
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => setActiveSection(null)} data-testid="button-back">
-                  უკან
-                </Button>
-                <Link href="/">
-                  <Button variant="ghost" size="sm" data-testid="link-homepage">მთავარი</Button>
-                </Link>
-              </div>
-            </div>
-            <GlassPanel>
-              <AdminChatSection />
-            </GlassPanel>
-          </AnimatedShell>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-mesh">
@@ -2709,26 +2685,29 @@ export default function AdminDashboard() {
               </Card>
             )}
 
-            <Card
-              className="relative cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-emerald-400/60"
-              onClick={() => setActiveSection("chat")}
-              data-testid="card-section-chat"
-            >
+          </div>
+
+          {/* LIVE Chat — embedded directly on main dashboard */}
+          <GlassPanel>
+            <div className="flex items-center gap-3 mb-5 pb-4 border-b border-border">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
+                <MessageCircle className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-base font-bold leading-tight">
+                  <span className="text-red-500">LIVE</span> კონტაქტი
+                </h2>
+                <p className="text-xs text-muted-foreground">მომხმარებელთა შეტყობინებები</p>
+              </div>
               {totalChatUnread > 0 && (
-                <span className="absolute -top-2 -right-2 z-10 flex h-6 min-w-[24px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-bold text-white shadow">
-                  {totalChatUnread > 99 ? "99+" : totalChatUnread}
+                <span className="flex h-6 min-w-[24px] items-center justify-center rounded-full bg-red-500 px-2 text-[11px] font-bold text-white">
+                  {totalChatUnread > 99 ? "99+" : totalChatUnread} წაუკითხავი
                 </span>
               )}
-              <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100">
-                  <MessageCircle className="h-7 w-7 text-emerald-600" />
-                </div>
-                <h3 className="text-lg font-semibold"><span className="text-red-500">LIVE</span> კონტაქტი</h3>
-                <p className="text-sm text-muted-foreground">მომხმარებელთა შეტყობინებები და პასუხები</p>
-              </CardContent>
-            </Card>
+            </div>
+            <AdminChatSection />
+          </GlassPanel>
 
-          </div>
         </AnimatedShell>
       </div>
     </div>
