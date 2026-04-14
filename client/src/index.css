@@ -381,3 +381,19 @@
     inset: -1px;
   }
 }
+
+
+/* Safe-area utilities for mobile (iOS home indicator, Android nav) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Floating elements above mobile bottom nav (56px) + safe area */
+.float-above-nav {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem);
+}
+@media (min-width: 768px) {
+  .float-above-nav {
+    bottom: 1.5rem;
+  }
+}

@@ -69,7 +69,7 @@ export function BroadcastNotification() {
   if (!isAuthenticated || !visible) return null;
 
   return (
-    <div className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-50 w-[calc(100vw-2rem)] max-w-sm animate-in slide-in-from-bottom-4 duration-300">
+    <div className="float-above-nav fixed right-4 md:right-6 z-50 w-[calc(100vw-2rem)] max-w-sm animate-in slide-in-from-bottom-4 duration-300">
       <div className="rounded-2xl border border-border bg-white shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white">

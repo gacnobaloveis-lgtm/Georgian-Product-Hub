@@ -251,7 +251,7 @@ export function AdminChatWidget() {
       {/* Floating trigger button */}
       <button
         onClick={handleOpen}
-        className="fixed bottom-20 left-4 md:bottom-6 md:left-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-all hover:scale-105 active:scale-95"
+        className="float-above-nav fixed left-4 md:left-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg hover:bg-emerald-700 transition-all hover:scale-105 active:scale-95"
         data-testid="button-admin-chat-widget"
         title="LIVE კონტაქტი — ადმინი"
       >
