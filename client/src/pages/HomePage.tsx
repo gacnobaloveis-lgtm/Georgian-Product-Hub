@@ -16,11 +16,11 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText, Download } from "lucide-react";
+import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText, Download, Info } from "lucide-react";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { LucideIcon } from "@/components/IconPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useCategories } from "@/hooks/use-categories";
 import type { Product, Category, TermsSection } from "@shared/schema";
 import wobblerIcon from "@assets/image_1771887558144.png";
@@ -34,7 +34,8 @@ import fishermanLogo from "@assets/fisherman_transparent.png";
 import eyeIconPath from "@assets/image_1771961384457.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 
-function SiteFooter({ onOpenTerms, canInstall, onInstall }: { onOpenTerms?: () => void; canInstall?: boolean; onInstall?: () => void }) {
+function SiteFooter({ canInstall, onInstall }: { canInstall?: boolean; onInstall?: () => void }) {
+  const [, setLocation] = useLocation();
   const { data: contact } = useQuery<{ phone: string; email: string; whatsapp: string; address: string; workHours: string; dayOff: string }>({
     queryKey: ["/api/contact-info"],
   });
@@ -44,17 +45,24 @@ function SiteFooter({ onOpenTerms, canInstall, onInstall }: { onOpenTerms?: () =
     <footer className="mt-8 bg-gradient-to-r from-purple-100 via-purple-50 to-pink-50 border-t border-purple-200/50" data-testid="footer">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="sm:hidden mb-4 flex flex-col gap-3">
-          {onOpenTerms && (
-            <button
-              type="button"
-              onClick={onOpenTerms}
-              className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900"
-              data-testid="footer-terms-mobile"
-            >
-              <ScrollText className="h-4 w-4" />
-              წესები და პირობები
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => setLocation("/terms")}
+            className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900"
+            data-testid="footer-terms-mobile"
+          >
+            <ScrollText className="h-4 w-4" />
+            წესები და პირობები
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocation("/about")}
+            className="flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900"
+            data-testid="footer-about-mobile"
+          >
+            <Info className="h-4 w-4" />
+            ჩვენს შესახებ
+          </button>
           {canInstall && onInstall && (
             <button
               type="button"
@@ -67,7 +75,7 @@ function SiteFooter({ onOpenTerms, canInstall, onInstall }: { onOpenTerms?: () =
             </button>
           )}
         </div>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <h3 className="mb-3 text-sm font-bold text-gray-800">საკონტაქტო ინფორმაცია</h3>
             <ul className="space-y-2.5">
@@ -96,6 +104,31 @@ function SiteFooter({ onOpenTerms, canInstall, onInstall }: { onOpenTerms?: () =
             <h3 className="mb-3 text-sm font-bold text-gray-800">სამუშაო საათები</h3>
             <p className="text-sm text-gray-600">{c.workHours}</p>
             <p className="text-sm text-gray-600">{c.dayOff}</p>
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-bold text-gray-800">ბმულები</h3>
+            <ul className="space-y-2.5">
+              <li>
+                <button
+                  onClick={() => setLocation("/terms")}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-purple-700 transition-colors"
+                  data-testid="footer-terms-link"
+                >
+                  <ScrollText className="h-4 w-4 text-purple-500" />
+                  წესები და პირობები
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => setLocation("/about")}
+                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-purple-700 transition-colors"
+                  data-testid="footer-about-link"
+                >
+                  <Info className="h-4 w-4 text-purple-500" />
+                  ჩვენს შესახებ
+                </button>
+              </li>
+            </ul>
           </div>
         </div>
         <div className="mt-6 border-t border-purple-200/50 pt-4 text-center">
@@ -468,6 +501,7 @@ function SearchDrawer({
 }
 
 export default function HomePage() {
+  const [, setLocation] = useLocation();
   const { data: products, isLoading } = useProducts();
   const { data: categories } = useCategories();
   const { user, isAuthenticated } = useAuth();
@@ -667,10 +701,16 @@ export default function HomePage() {
                 გზამკვლევი
               </span>
             </button>
-            <button onClick={() => setTermsDialogOpen(true)} data-testid="link-nav-terms">
+            <button onClick={() => setLocation("/terms")} data-testid="link-nav-terms">
               <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-muted-foreground hover:text-primary transition-colors">
                 <ScrollText className="h-5 w-5" />
                 წესები და პირობები
+              </span>
+            </button>
+            <button onClick={() => setLocation("/about")} data-testid="link-nav-about">
+              <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-muted-foreground hover:text-primary transition-colors">
+                <Info className="h-5 w-5" />
+                ჩვენს შესახებ
               </span>
             </button>
             {canInstall && (
@@ -790,7 +830,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <SiteFooter onOpenTerms={() => setTermsDialogOpen(true)} canInstall={canInstall} onInstall={installPwa} />
+      <SiteFooter canInstall={canInstall} onInstall={installPwa} />
 
       <MobileBottomNav
         onCategoriesOpen={() => setCategoryDrawerOpen(true)}

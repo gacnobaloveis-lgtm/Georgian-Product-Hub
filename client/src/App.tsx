@@ -12,6 +12,8 @@ import ProductDetail from "@/pages/ProductDetail";
 import MyProfile from "@/pages/MyProfile";
 import PaymentSuccess from "@/pages/PaymentSuccess";
 import PaymentFail from "@/pages/PaymentFail";
+import TermsPage from "@/pages/TermsPage";
+import AboutPage from "@/pages/AboutPage";
 import NotFound from "@/pages/not-found";
 import { CartContext, useCartProvider } from "@/hooks/use-cart";
 
@@ -23,6 +25,8 @@ function Router() {
       <Route path="/profile" component={MyProfile} />
       <Route path="/payment/success" component={PaymentSuccess} />
       <Route path="/payment/fail" component={PaymentFail} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/about" component={AboutPage} />
       <Route path="/admin-login" component={AdminLogin} />
       <Route path="/admin-dashboard">
         <AdminRoute component={AdminDashboard} />
