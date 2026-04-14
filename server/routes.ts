@@ -921,7 +921,7 @@ export async function registerRoutes(
       const phone = await storage.getSetting("contact_phone") || "+995 599 52 33 51";
       const email = await storage.getSetting("contact_email") || "spiningebi@gmail.com";
       const whatsapp = await storage.getSetting("contact_whatsapp") || "+995 599 52 33 51";
-      const address = await storage.getSetting("contact_address") || "საქართველო, ბათუმი";
+      const address = await storage.getSetting("contact_address") || "საქართველო, ქუთაისი, მელიქიშვილის 2";
       const workHours = await storage.getSetting("contact_work_hours") || "ორშაბათი - შაბათი: 10:00 - 19:00";
       const dayOff = await storage.getSetting("contact_day_off") || "კვირა: დასვენება";
       res.json({ phone, email, whatsapp, address, workHours, dayOff });
