@@ -512,17 +512,7 @@ export default function HomePage() {
     refetchInterval: 30_000,
   });
 
-  // Fluctuating display count: always shows 25-30 minimum, changes every ~2 min
-  const [fakeBase, setFakeBase] = useState(() => 25 + Math.floor(Math.random() * 6));
-  useEffect(() => {
-    const iv = setInterval(() => {
-      setFakeBase(25 + Math.floor(Math.random() * 6));
-    }, 90_000 + Math.random() * 60_000); // every 90-150 seconds
-    return () => clearInterval(iv);
-  }, []);
-  const displayOnline = onlineData
-    ? (onlineData.count > 30 ? onlineData.count : Math.max(onlineData.count, fakeBase))
-    : null;
+  const displayOnline = onlineData ? onlineData.count : null;
 
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
 
