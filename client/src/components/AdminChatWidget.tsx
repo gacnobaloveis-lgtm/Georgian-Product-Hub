@@ -4,6 +4,7 @@ import { MessageCircle, X, Send, ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAdminStatus } from "@/hooks/use-admin";
 import { queryClient } from "@/lib/queryClient";
+import { playMessageSound } from "@/lib/notification-sound";
 
 type ConvMsg = { id: number; userId: string; message: string; senderType: string; createdAt: string | null };
 type Conv = { userId: string; firstName: string | null; lastName: string | null; lastMessage: string; lastAt: string | null; unread: number };
@@ -70,6 +71,15 @@ export function AdminChatWidget() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const prevUnreadRef = useRef(0);
+  useEffect(() => {
+    const total = conversations.reduce((s, c) => s + (c.unread || 0), 0);
+    if (total > prevUnreadRef.current) {
+      playMessageSound();
+    }
+    prevUnreadRef.current = total;
+  }, [conversations]);
 
   function handleSend() {
     if (!replyText.trim() || !selectedUserId || replyMutation.isPending) return;

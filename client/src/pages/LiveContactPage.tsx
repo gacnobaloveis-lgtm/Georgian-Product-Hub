@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@shared/schema";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
+import { playMessageSound } from "@/lib/notification-sound";
 
 function formatTime(date: Date | string | null) {
   if (!date) return "";
@@ -63,6 +64,15 @@ export default function LiveContactPage() {
       handleSend();
     }
   }
+
+  const prevBotCountRef = useRef(0);
+  useEffect(() => {
+    const botMsgs = messages.filter((m) => m.senderType !== "user").length;
+    if (botMsgs > prevBotCountRef.current && prevBotCountRef.current > 0) {
+      playMessageSound();
+    }
+    prevBotCountRef.current = botMsgs;
+  }, [messages]);
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
