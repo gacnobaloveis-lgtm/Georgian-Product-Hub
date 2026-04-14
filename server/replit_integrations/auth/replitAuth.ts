@@ -301,6 +301,9 @@ export async function setupAuth(app: Express) {
       if (!password || password.length < 4) {
         return res.status(400).json({ message: "პაროლი მინიმუმ 4 სიმბოლო უნდა იყოს" });
       }
+      if (/[\u10D0-\u10FF\u10A0-\u10CF]/.test(password)) {
+        return res.status(400).json({ message: "პაროლი უნდა შეიცავდეს მხოლოდ ინგლისურ სიმბოლოებს" });
+      }
 
       const { db } = await import("../../db");
       const { users } = await import("@shared/models/auth");
@@ -315,7 +318,7 @@ export async function setupAuth(app: Express) {
       if (cleanEmail) {
         const [existingByEmail] = await db.select().from(users).where(eq(users.email, cleanEmail));
         if (existingByEmail) {
-          return res.status(400).json({ message: "ეს ელ.ფოსტის მისამართი უკვე რეგისტრირებულია" });
+          return res.status(400).json({ message: "ეს ელ.ფოსტა უკვე გამოყენებულია" });
         }
       }
 

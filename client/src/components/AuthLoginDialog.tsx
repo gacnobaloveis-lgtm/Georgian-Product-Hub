@@ -229,6 +229,10 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
       toast({ variant: "destructive", title: "შეცდომა", description: "პაროლი მინიმუმ 4 სიმბოლო უნდა იყოს" });
       return;
     }
+    if (/[\u10D0-\u10FF\u10A0-\u10CF]/.test(regForm.password)) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "პაროლი უნდა შეიცავდეს მხოლოდ ინგლისურ სიმბოლოებს" });
+      return;
+    }
     if (!agreedToTerms) {
       toast({ variant: "destructive", title: "შეცდომა", description: "გთხოვთ დაეთანხმოთ წესებს და პირობებს" });
       return;
@@ -559,6 +563,9 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <p className="text-[11px] text-muted-foreground">
+                პაროლი უნდა შეიცავდეს მხოლოდ <span className="font-medium text-foreground/70">ინგლისურ</span> ასოებს, ციფრებს ან სიმბოლოებს
+              </p>
             </div>
 
             <div className="space-y-2">
