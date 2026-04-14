@@ -27,23 +27,34 @@ async function ensurePushSubscribed(): Promise<boolean> {
     // Get VAPID key — if empty, push isn't configured on server
     const keyRes = await fetch("/api/push/vapid-key");
     const { publicKey } = await keyRes.json();
-    if (!publicKey) return false;
+    if (!publicKey) {
+      console.warn("[push] VAPID key not configured on server");
+      return false;
+    }
 
     const reg = await navigator.serviceWorker.ready;
-    const existing = await reg.pushManager.getSubscription();
-    if (existing) return true; // already subscribed
+    let sub = await reg.pushManager.getSubscription();
 
-    // Subscribe
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(publicKey),
-    });
-    await fetch("/api/push/subscribe", {
+    if (!sub) {
+      // Not subscribed yet — create new subscription
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+    }
+
+    // Always save to server — ensures subscription is in DB even after DB reset
+    const saveRes = await fetch("/api/push/subscribe", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(sub.toJSON()),
     });
+    if (!saveRes.ok) {
+      console.warn("[push] server save failed:", saveRes.status);
+      return false;
+    }
+    console.log("[push] subscription confirmed with server ✓");
     return true;
   } catch (e) {
     console.warn("[push] subscribe failed:", e);

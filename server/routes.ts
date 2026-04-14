@@ -1257,6 +1257,7 @@ export async function registerRoutes(
       // Send push notification to the user so they get it even when app is closed
       try {
         const userSubs = await storage.getUserPushSubscriptions(userId);
+        console.log(`[push] chat reply to ${userId}: ${userSubs.length} subscription(s)`);
         if (userSubs.length > 0) {
           const payload = JSON.stringify({
             title: "📩 spiningebi.ge — პასუხი",
@@ -1268,10 +1269,19 @@ export async function registerRoutes(
             webpush.sendNotification(
               { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
               payload
-            ).catch(() => storage.removePushSubscription(sub.endpoint));
+            ).then(() => {
+              console.log(`[push] ✓ sent to ${userId} endpoint: ${sub.endpoint.slice(0, 50)}...`);
+            }).catch((err: any) => {
+              console.warn(`[push] ✗ failed for ${userId}:`, err?.statusCode, err?.message);
+              storage.removePushSubscription(sub.endpoint);
+            });
           }
+        } else {
+          console.log(`[push] no subscriptions for user ${userId} — push not sent`);
         }
-      } catch (_) {}
+      } catch (e) {
+        console.warn("[push] chat reply push error:", e);
+      }
 
       res.json(msg);
     } catch (err) {
@@ -1283,6 +1293,50 @@ export async function registerRoutes(
   // Push notification: get VAPID public key
   app.get("/api/push/vapid-key", (_req, res) => {
     res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || "" });
+  });
+
+  // Admin: push subscription stats per user
+  app.get("/api/admin/push-stats", requireAdmin, async (_req, res) => {
+    try {
+      const all = await storage.getAllPushSubscriptions();
+      const byUser: Record<string, number> = {};
+      for (const sub of all) {
+        byUser[sub.userId] = (byUser[sub.userId] || 0) + 1;
+      }
+      res.json({ total: all.length, byUser });
+    } catch (err) {
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  // Admin: test push to specific user
+  app.post("/api/admin/push-test/:userId", requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const subs = await storage.getUserPushSubscriptions(userId);
+      if (!subs.length) {
+        return res.json({ sent: 0, message: "ამ მომხმარებელს push subscription არ აქვს" });
+      }
+      const payload = JSON.stringify({
+        title: "🔔 ტესტ შეტყობინება",
+        body: "Push notification მუშაობს!",
+        url: "/live-contact",
+        tag: `test-${Date.now()}`,
+      });
+      let sent = 0;
+      for (const sub of subs) {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          payload
+        ).then(() => { sent++; }).catch(async (err: any) => {
+          console.warn(`[push-test] failed:`, err?.statusCode);
+          if (err?.statusCode === 410) await storage.removePushSubscription(sub.endpoint);
+        });
+      }
+      res.json({ sent, total: subs.length });
+    } catch (err) {
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
   });
 
   // Push notification: subscribe (any logged-in user)

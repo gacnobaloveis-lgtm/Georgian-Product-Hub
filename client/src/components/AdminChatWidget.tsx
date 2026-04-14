@@ -118,6 +118,32 @@ export function AdminChatWidget() {
     refetchInterval: isAdmin ? 5000 : false,
   });
 
+  const { data: pushStats } = useQuery<{ total: number; byUser: Record<string, number> }>({
+    queryKey: ["/api/admin/push-stats"],
+    enabled: !!isAdmin && open,
+    refetchInterval: open ? 30000 : false,
+  });
+
+  const [testPushResult, setTestPushResult] = useState<string | null>(null);
+
+  async function handleTestPush(userId: string) {
+    setTestPushResult(null);
+    try {
+      const res = await fetch(`/api/admin/push-test/${userId}`, {
+        method: "POST", credentials: "include",
+      });
+      const data = await res.json();
+      if (data.sent > 0) {
+        setTestPushResult(`✓ გაგზავნილია ${data.sent} მოწყობილობაზე`);
+      } else {
+        setTestPushResult(data.message || "Subscription ვერ მოიძებნა");
+      }
+    } catch {
+      setTestPushResult("შეცდომა");
+    }
+    setTimeout(() => setTestPushResult(null), 4000);
+  }
+
   const { data: messages = [] } = useQuery<ConvMsg[]>({
     queryKey: ["/api/chat/messages", selectedUserId],
     queryFn: async () => {
@@ -375,6 +401,32 @@ export function AdminChatWidget() {
                     )}
                     <div ref={bottomRef} />
                   </div>
+                  {/* Push status bar for selected user */}
+                  {selectedUserId && (
+                    <div className="px-3 pt-2 pb-0 flex items-center gap-2 shrink-0">
+                      {(() => {
+                        const cnt = pushStats?.byUser?.[selectedUserId] ?? 0;
+                        return cnt > 0 ? (
+                          <button onClick={() => handleTestPush(selectedUserId)}
+                            className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-full px-2 py-0.5 transition-colors"
+                            title="ტესტ push გაგზავნა"
+                            data-testid="button-test-push"
+                          >
+                            <Bell className="h-3 w-3" />
+                            <span>{cnt} მოწყ. — ტესტი</span>
+                          </button>
+                        ) : (
+                          <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                            <BellOff className="h-3 w-3" />
+                            <span>Push subscription არ აქვს</span>
+                          </span>
+                        );
+                      })()}
+                      {testPushResult && (
+                        <span className="text-[10px] text-emerald-700 font-medium">{testPushResult}</span>
+                      )}
+                    </div>
+                  )}
                   <div className="flex items-end gap-2 p-3 border-t border-border shrink-0 bg-white">
                     <textarea
                       value={replyText} onChange={(e) => setReplyText(e.target.value)}
@@ -415,8 +467,10 @@ export function AdminChatWidget() {
                         <MessageCircle className="h-8 w-8 opacity-30" />
                         <p className="text-sm">შეტყობინებები არ არის</p>
                       </div>
-                    ) : conversations.map((conv) => (
-                      <button key={conv.userId} onClick={() => setSelectedUserId(conv.userId)}
+                    ) : conversations.map((conv) => {
+                      const userPushCount = pushStats?.byUser?.[conv.userId] ?? 0;
+                      return (
+                      <button key={conv.userId} onClick={() => { setSelectedUserId(conv.userId); setTestPushResult(null); }}
                         className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:shadow-sm ${
                           conv.unread > 0 ? "bg-red-50 border border-red-100 hover:border-red-200" : "bg-gray-50 border border-transparent hover:border-gray-200"
                         }`}
@@ -431,6 +485,14 @@ export function AdminChatWidget() {
                               {conv.firstName || ""} {conv.lastName || ""}
                             </span>
                             <div className="flex items-center gap-1.5 shrink-0">
+                              {userPushCount > 0 ? (
+                                <span title={`Push: ${userPushCount} მოწყ.`} className="flex items-center gap-0.5 text-emerald-600">
+                                  <Bell className="h-3 w-3" />
+                                  <span className="text-[9px] font-bold">{userPushCount}</span>
+                                </span>
+                              ) : (
+                                <BellOff className="h-3 w-3 text-gray-300" title="Push subscription არ აქვს" />
+                              )}
                               {conv.lastAt && <span className="text-[10px] text-muted-foreground">{fmtTime(conv.lastAt)}</span>}
                               {conv.unread > 0 && (
                                 <span className="flex h-5 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
@@ -445,7 +507,8 @@ export function AdminChatWidget() {
                         </div>
                         <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                       </button>
-                    ))}
+                    );
+                    })}
                   </div>
                 </div>
               )
