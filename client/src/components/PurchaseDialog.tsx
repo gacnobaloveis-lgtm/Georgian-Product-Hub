@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, ShoppingBag, AlertCircle, Pencil, Check, Coins } from "lucide-react";
+import { Loader2, ShoppingBag, AlertCircle, Pencil, Check, Coins, CreditCard } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 
 const GEORGIAN_CITIES = [
@@ -62,6 +62,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [creditSubmitting, setCreditSubmitting] = useState(false);
+  const [tbcSubmitting, setTbcSubmitting] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -250,6 +251,65 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
     }
   }
 
+  async function handleTbcPay() {
+    if (!isAuthenticated || !profile || !profileComplete) return;
+    setTbcSubmitting(true);
+    try {
+      const orderRes = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          productId,
+          productName,
+          productPrice: String(total),
+          quantity,
+          selectedColor,
+          fullName: fullName.trim(),
+          city: profile.city,
+          address: profile.address!.trim(),
+          phone: profile.phone!.trim(),
+        }),
+      });
+
+      if (!orderRes.ok) {
+        const data = await orderRes.json();
+        toast({ variant: "destructive", title: "შეცდომა", description: data.message || "შეკვეთა ვერ შეიქმნა" });
+        return;
+      }
+
+      const order = await orderRes.json();
+
+      const payRes = await fetch("/api/pay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          amount: total,
+          description: `spiningebi.ge — ${productName} (${quantity} ც.)`,
+          orderId: order.id,
+        }),
+      });
+
+      if (!payRes.ok) {
+        const err = await payRes.json();
+        toast({ variant: "destructive", title: "გადახდის შეცდომა", description: err.message || "TBC გადახდა ვერ დაიწყო" });
+        return;
+      }
+
+      const { payUrl } = await payRes.json();
+      if (payUrl) {
+        window.location.href = payUrl;
+      } else {
+        toast({ variant: "destructive", title: "შეცდომა", description: "გადახდის ბმული ვერ მოვიპოვეთ" });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
+    } finally {
+      setTbcSubmitting(false);
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -389,7 +449,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
 
             <Button
               onClick={() => hasPendingOrders ? handleSubmit() : setConfirmOpen(true)}
-              disabled={submitting || creditSubmitting || authLoading}
+              disabled={submitting || creditSubmitting || tbcSubmitting || authLoading}
               className="min-h-[44px] w-full"
               data-testid="button-order-submit"
             >
@@ -397,6 +457,19 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> იგზავნება...</>
               ) : (
                 `შეკვეთა — ₾${total.toFixed(2)}`
+              )}
+            </Button>
+
+            <Button
+              onClick={handleTbcPay}
+              disabled={submitting || creditSubmitting || tbcSubmitting || authLoading}
+              className="min-h-[44px] w-full bg-[#00AEEF] hover:bg-[#0099d4] text-white font-semibold gap-2"
+              data-testid="button-tbc-pay"
+            >
+              {tbcSubmitting ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> მიმდინარეობს...</>
+              ) : (
+                <><CreditCard className="h-4 w-4" /> TBC-ით გადახდა — ₾{total.toFixed(2)}</>
               )}
             </Button>
 
