@@ -1265,8 +1265,8 @@ export async function registerRoutes(
     res.json({ publicKey: process.env.VAPID_PUBLIC_KEY || "" });
   });
 
-  // Push notification: subscribe (admin only)
-  app.post("/api/push/subscribe", requireAdmin, async (req, res) => {
+  // Push notification: subscribe (any logged-in user)
+  app.post("/api/push/subscribe", requireAuth, async (req, res) => {
     try {
       const userId = (req as any).user?.claims?.sub as string;
       const { endpoint, keys } = req.body;
@@ -1315,6 +1315,7 @@ export async function registerRoutes(
           body: body.substring(0, 120),
           url: url || "/",
           image: imageUrl || undefined,
+          tag: `broadcast-${broadcast.id}`,
         });
         for (const sub of allSubs) {
           webpush.sendNotification(

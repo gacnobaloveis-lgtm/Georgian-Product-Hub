@@ -43,17 +43,20 @@ self.addEventListener("fetch", (event) => {
 
 // Push notification handler — fires even when tab is closed
 self.addEventListener("push", (event) => {
-  let data = { title: "spiningebi.ge", body: "ახალი შეტყობინება", url: "/" };
+  let data = { title: "spiningebi.ge", body: "ახალი შეტყობინება", url: "/", tag: "" };
   try {
     if (event.data) data = { ...data, ...event.data.json() };
   } catch (_) {}
+
+  // Use unique tag per message so notifications stack (not replace each other)
+  const notifTag = data.tag || ("push-" + Date.now());
 
   event.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
       icon: "/pwa-icon.png",
       badge: "/favicon.png",
-      tag: "chat-message",
+      tag: notifTag,
       renotify: true,
       data: { url: data.url },
     })
