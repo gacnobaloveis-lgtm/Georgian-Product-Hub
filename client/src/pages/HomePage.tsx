@@ -686,46 +686,41 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="mx-auto hidden max-w-6xl px-4 py-6 sm:px-6 md:block lg:px-8">
-        <div className="flex items-center justify-between pb-4">
-          <div className="flex items-center gap-8">
-            <button onClick={handleGoHome} data-testid="link-nav-home">
-              <span className={`flex min-h-[44px] items-center gap-2 text-[15px] font-semibold ${!selectedCategory ? "text-primary" : "text-foreground hover:text-primary"} transition-colors`}>
-                <Home className="h-5 w-5" />
-                მთავარი
-              </span>
+      <div className="mx-auto hidden max-w-6xl px-4 pb-4 pt-3 sm:px-6 md:block lg:px-8">
+        <nav className="flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200/60 shadow-sm px-5 py-2">
+          <div className="flex items-center gap-1">
+            <button onClick={handleGoHome} data-testid="link-nav-home"
+              className={`flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold transition-all ${!selectedCategory ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-muted hover:text-primary"}`}>
+              <Home className="h-4 w-4" />
+              მთავარი
             </button>
-            <button onClick={() => setGuideOpen(true)} data-testid="link-nav-guide">
-              <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-muted-foreground hover:text-primary transition-colors">
-                <BookOpen className="h-5 w-5" />
-                გზამკვლევი
-              </span>
+            <button onClick={() => setGuideOpen(true)} data-testid="link-nav-guide"
+              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all">
+              <BookOpen className="h-4 w-4" />
+              გზამკვლევი
             </button>
-            <button onClick={() => setLocation("/terms")} data-testid="link-nav-terms">
-              <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-muted-foreground hover:text-primary transition-colors">
-                <ScrollText className="h-5 w-5" />
-                წესები და პირობები
-              </span>
+            <button onClick={() => setLocation("/terms")} data-testid="link-nav-terms"
+              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all">
+              <ScrollText className="h-4 w-4" />
+              წესები და პირობები
             </button>
-            <button onClick={() => setLocation("/about")} data-testid="link-nav-about">
-              <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-muted-foreground hover:text-primary transition-colors">
-                <Info className="h-5 w-5" />
-                ჩვენს შესახებ
-              </span>
+            <button onClick={() => setLocation("/about")} data-testid="link-nav-about"
+              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all">
+              <Info className="h-4 w-4" />
+              ჩვენს შესახებ
             </button>
             {canInstall && (
-            <button onClick={() => setInstallDialogOpen(true)} data-testid="link-nav-install">
-              <span className="flex min-h-[44px] items-center gap-2 text-[15px] font-semibold text-green-600 hover:text-green-700 transition-colors animate-pulse">
-                <Download className="h-5 w-5" />
-                აპლიკაციის ჩამოტვირთვა
-              </span>
-            </button>
+              <button onClick={() => setInstallDialogOpen(true)} data-testid="link-nav-install"
+                className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-green-600 hover:bg-green-50 hover:text-green-700 transition-all animate-pulse">
+                <Download className="h-4 w-4" />
+                ჩამოტვირთვა
+              </button>
             )}
           </div>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-1">
             <button
               onClick={() => setCartDrawerOpen(true)}
-              className="relative flex min-h-[44px] items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="relative flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all"
               data-testid="link-cart-desktop"
             >
               <div className="relative">
@@ -740,7 +735,7 @@ export default function HomePage() {
             </button>
             <button
               onClick={handleProfileClick}
-              className="flex min-h-[44px] items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all"
               data-testid="link-profile-desktop"
             >
               <UserCircle className="h-4 w-4" />
@@ -748,15 +743,14 @@ export default function HomePage() {
             </button>
             {hasAdminRole && (
               <Link href="/admin-login">
-                <span className="flex min-h-[44px] items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground" data-testid="link-admin-panel">
+                <span className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all" data-testid="link-admin-panel">
                   <Settings className="h-4 w-4" />
-                  ადმინ პანელი
+                  ადმინ
                 </span>
               </Link>
             )}
           </div>
-        </div>
-        <hr className="border-t border-muted" />
+        </nav>
       </div>
 
       <div className="mx-auto max-w-6xl px-3 py-3 sm:px-6 sm:py-6 md:mb-10 lg:px-8 lg:pt-0 lg:-mt-4">
