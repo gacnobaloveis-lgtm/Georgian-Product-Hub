@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Trash2, Minus, Plus, ShoppingBag, Check, Loader2, Pencil, AlertCircle, CheckSquare, Square } from "lucide-react";
+import { SiVisa, SiMastercard } from "react-icons/si";
 
 const GEORGIAN_CITIES = [
   "თბილისი", "ქუთაისი", "ბათუმი", "რუსთავი", "ფოთი", "ზუგდიდი",
@@ -62,7 +63,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState<EditForm>({ fullName: "", city: "", address: "", phone: "" });
-  const [submitting, setSubmitting] = useState(false);
+  const [tbcSubmitting, setTbcSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const confirmedItemsRef = useRef<CartItem[]>([]);
   const pendingCheckoutItemsRef = useRef<CartItem[]>([]);
@@ -214,17 +215,17 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
     }
   }
 
-  async function handleSubmitOrders() {
+  async function handleTbcPay() {
     if (!profile || !isProfileComplete(profile)) return;
 
-    setSubmitting(true);
+    setTbcSubmitting(true);
     const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
-    let successCount = 0;
-    let failCount = 0;
     const itemsToOrder = confirmedItemsRef.current;
+    const totalAmount = itemsToOrder.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const createdOrderIds: number[] = [];
 
-    for (const item of itemsToOrder) {
-      try {
+    try {
+      for (const item of itemsToOrder) {
         const total = item.price * item.quantity;
         const res = await fetch("/api/orders", {
           method: "POST",
@@ -242,27 +243,52 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
             phone: profile.phone!.trim(),
           }),
         });
-        if (res.ok) successCount++;
-        else failCount++;
-      } catch {
-        failCount++;
+        if (res.ok) {
+          const order = await res.json();
+          if (order?.id) createdOrderIds.push(order.id);
+        }
       }
-    }
 
-    if (successCount > 0) {
-      clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
-      setSelected(new Set());
-      toast({ title: "შეკვეთა მიღებულია!", description: `${successCount} ნივთი წარმატებით შეუკვეთეთ` });
-      queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
-    }
-    if (failCount > 0) {
-      toast({ variant: "destructive", title: "შეცდომა", description: `${failCount} ნივთის შეკვეთა ვერ მოხერხდა` });
-    }
+      if (createdOrderIds.length === 0) {
+        toast({ variant: "destructive", title: "შეცდომა", description: "შეკვეთა ვერ შეიქმნა" });
+        setTbcSubmitting(false);
+        return;
+      }
 
-    setSubmitting(false);
-    setCheckoutMode(false);
-    if (successCount > 0 && items.length <= successCount) {
-      onOpenChange(false);
+      const description = itemsToOrder.length === 1
+        ? `spiningebi.ge — ${itemsToOrder[0].name} (${itemsToOrder[0].quantity} ც.)`
+        : `spiningebi.ge — ${itemsToOrder.length} ნივთი`;
+
+      const payRes = await fetch("/api/pay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          amount: totalAmount,
+          description,
+          orderId: createdOrderIds[0],
+        }),
+      });
+
+      if (!payRes.ok) {
+        const err = await payRes.json();
+        toast({ variant: "destructive", title: "გადახდის შეცდომა", description: err.message || "TBC გადახდა ვერ დაიწყო" });
+        setTbcSubmitting(false);
+        return;
+      }
+
+      const { payUrl } = await payRes.json();
+      if (payUrl) {
+        clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
+        setSelected(new Set());
+        window.location.href = payUrl;
+      } else {
+        toast({ variant: "destructive", title: "შეცდომა", description: "გადახდის ბმული ვერ მოვიპოვეთ" });
+        setTbcSubmitting(false);
+      }
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
+      setTbcSubmitting(false);
     }
   }
 
@@ -533,18 +559,28 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                     </div>
                   </div>
 
-                  <Button
+                  <button
                     onClick={() => { confirmedItemsRef.current = [...checkoutItems]; setConfirmOpen(true); }}
-                    disabled={submitting}
-                    className="min-h-[44px] w-full"
+                    disabled={tbcSubmitting}
+                    className="min-h-[44px] w-full rounded-md border-2 border-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2"
                     data-testid="button-cart-submit"
                   >
-                    {submitting ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> იგზავნება...</>
+                    {tbcSubmitting ? (
+                      <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+                        <Loader2 className="h-4 w-4 animate-spin" /> მიმდინარეობს...
+                      </div>
                     ) : (
-                      `შეკვეთა — ₾${selectedTotal.toFixed(2)}`
+                      <div className="flex flex-col items-center gap-1.5">
+                        <div className="flex items-center gap-3">
+                          <SiVisa className="h-6 w-auto text-[#1A1F71]" style={{ fontSize: 38 }} />
+                          <SiMastercard className="h-6 w-auto" style={{ fontSize: 34, color: "#EB001B" }} />
+                        </div>
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          ბარათით გადახდა — ₾{selectedTotal.toFixed(2)}
+                        </span>
+                      </div>
                     )}
-                  </Button>
+                  </button>
                 </div>
               )}
             </div>
@@ -567,7 +603,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="button-cart-confirm-no">არა</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => { setConfirmOpen(false); handleSubmitOrders(); }}
+              onClick={() => { setConfirmOpen(false); handleTbcPay(); }}
               data-testid="button-cart-confirm-yes"
             >
               კი
