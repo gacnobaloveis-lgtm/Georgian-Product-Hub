@@ -1122,7 +1122,8 @@ export async function registerRoutes(
 
   // ===== CHAT ROUTES =====
   function requireAuth(req: Request, res: Response, next: NextFunction) {
-    if (!req.session?.userId) {
+    const userId = (req as any).user?.claims?.sub;
+    if (!userId) {
       return res.status(401).json({ message: "გთხოვთ გაიაროთ ავტორიზაცია" });
     }
     next();
@@ -1131,7 +1132,7 @@ export async function registerRoutes(
   // Get current user's chat messages (also marks admin/bot msgs as read)
   app.get("/api/chat/messages", requireAuth, async (req, res) => {
     try {
-      const userId = req.session!.userId as string;
+      const userId = (req as any).user?.claims?.sub as string;
       await storage.markAdminMessagesRead(userId);
       const messages = await storage.getChatMessages(userId);
       res.json(messages);
@@ -1144,7 +1145,7 @@ export async function registerRoutes(
   // Get unread count for current user (admin/bot messages not yet seen)
   app.get("/api/chat/unread-count", requireAuth, async (req, res) => {
     try {
-      const userId = req.session!.userId as string;
+      const userId = (req as any).user?.claims?.sub as string;
       const count = await storage.getUnreadCountForUser(userId);
       res.json({ count });
     } catch (err) {
@@ -1156,7 +1157,7 @@ export async function registerRoutes(
   // Send message (user)
   app.post("/api/chat/messages", requireAuth, async (req, res) => {
     try {
-      const userId = req.session!.userId as string;
+      const userId = (req as any).user?.claims?.sub as string;
       const { message } = req.body;
       if (!message || typeof message !== "string" || !message.trim()) {
         return res.status(400).json({ message: "შეტყობინება სავალდებულოა" });
