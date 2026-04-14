@@ -235,6 +235,40 @@ export async function registerRoutes(
         categoryId: input.categoryId ? Number(input.categoryId) : null,
       });
       res.status(201).json(product);
+
+      // Auto-push to all subscribers when new product is added
+      (async () => {
+        try {
+          const allSubs = await storage.getAllPushSubscriptions();
+          if (allSubs.length === 0) return;
+          const siteOrigin = process.env.SITE_URL || `${req.protocol}://${req.get("host")}`;
+          const absoluteImage = imageUrl
+            ? (imageUrl.startsWith("http") ? imageUrl : `${siteOrigin}${imageUrl}`)
+            : undefined;
+          const price = input.discountPrice || input.originalPrice;
+          const payload = JSON.stringify({
+            title: "🆕 ახალი პროდუქტი — spiningebi.ge",
+            body: `${sanitizeString(input.name)} — ₾${price}`,
+            url: `/product/${product.id}`,
+            image: absoluteImage,
+            icon: `${siteOrigin}/pwa-icon.png`,
+            tag: `new-product-${product.id}`,
+          });
+          console.log(`[new-product] push to ${allSubs.length} subs for "${product.name}"`);
+          for (const sub of allSubs) {
+            await webpush.sendNotification(
+              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+              payload
+            ).catch(async (err: any) => {
+              if (err?.statusCode === 410 || err?.statusCode === 404) {
+                await storage.removePushSubscription(sub.endpoint);
+              }
+            });
+          }
+        } catch (e) {
+          console.warn("[new-product] push error:", e);
+        }
+      })();
     } catch (err) {
       if (err instanceof z.ZodError) {
         return res.status(400).json({
