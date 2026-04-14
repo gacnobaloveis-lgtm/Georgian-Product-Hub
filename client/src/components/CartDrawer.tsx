@@ -65,6 +65,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   const [submitting, setSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const confirmedItemsRef = useRef<CartItem[]>([]);
+  const pendingCheckoutItemsRef = useRef<CartItem[]>([]);
 
   useEffect(() => {
     const validKeys = new Set(items.map(i => cartKey(i)));
@@ -97,7 +98,10 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   }
 
   const selectedItems = items.filter(i => activeSelected.has(cartKey(i)));
-  const selectedTotal = selectedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const checkoutItems = checkoutMode && pendingCheckoutItemsRef.current.length > 0
+    ? pendingCheckoutItemsRef.current
+    : selectedItems;
+  const selectedTotal = checkoutItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   function isProfileComplete(p: ProfileData | null): boolean {
     return !!(p?.firstName?.trim() && p?.lastName?.trim() && p?.city?.trim() && p?.address?.trim() && p?.phone?.trim());
@@ -118,6 +122,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
       toast({ variant: "destructive", title: "აირჩიეთ ნივთები", description: "მონიშნეთ ნივთები შესაძენად" });
       return;
     }
+    pendingCheckoutItemsRef.current = selectedItems;
     if (!isRealUser) {
       setAuthDialogOpen(true);
       return;
@@ -125,12 +130,21 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
     enterCheckout();
   }
 
-  function handleRegistered() {
+  async function handleRegistered() {
     setAuthDialogOpen(false);
+    await new Promise(r => setTimeout(r, 150));
+    await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
     enterCheckout();
   }
 
   function enterCheckout() {
+    const itemsToCheckout = pendingCheckoutItemsRef.current.length > 0
+      ? pendingCheckoutItemsRef.current
+      : selectedItems;
+    if (itemsToCheckout.length === 0) {
+      toast({ variant: "destructive", title: "კალათა ცარიელია", description: "დაბრუნდით და მონიშნეთ ნივთები" });
+      return;
+    }
     setCheckoutMode(true);
     setProfileLoading(true);
     setEditing(false);
@@ -395,7 +409,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
             <div className="flex-1 overflow-y-auto px-5 pb-5 space-y-4">
               <div className="rounded-lg border border-muted bg-muted/30 p-3 space-y-2">
                 <p className="text-xs font-medium text-muted-foreground mb-2">შეკვეთის შემადგენლობა</p>
-                {selectedItems.map(item => (
+                {checkoutItems.map(item => (
                   <div key={cartKey(item)} className="flex justify-between text-sm">
                     <span className="truncate flex-1 mr-2">
                       {item.name}
@@ -520,7 +534,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                   </div>
 
                   <Button
-                    onClick={() => { confirmedItemsRef.current = [...selectedItems]; setConfirmOpen(true); }}
+                    onClick={() => { confirmedItemsRef.current = [...checkoutItems]; setConfirmOpen(true); }}
                     disabled={submitting}
                     className="min-h-[44px] w-full"
                     data-testid="button-cart-submit"
@@ -544,9 +558,9 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
             <AlertDialogTitle className="text-base" data-testid="text-cart-confirm-title">შეკვეთის დადასტურება</AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-relaxed" data-testid="text-cart-confirm-message">
               {profile?.city?.trim().toLowerCase() === "ქუთაისი" ? (
-                `ქუთაისში მიტანა უფასოა! ${selectedItems.length} ნივთის შეკვეთა — ₾${selectedTotal.toFixed(2)}. გსურთ გაგრძელება?`
+                `ქუთაისში მიტანა უფასოა! ${checkoutItems.length} ნივთის შეკვეთა — ₾${selectedTotal.toFixed(2)}. გსურთ გაგრძელება?`
               ) : (
-                `შეგახსენებთ, რომ ტრანსპორტირების საფასური (11.50 ლარი) ანაზღაურდება კურიერთან. ${selectedItems.length} ნივთის შეკვეთა — ₾${selectedTotal.toFixed(2)}. გსურთ გაგრძელება?`
+                `შეგახსენებთ, რომ ტრანსპორტირების საფასური (11.50 ლარი) ანაზღაურდება კურიერთან. ${checkoutItems.length} ნივთის შეკვეთა — ₾${selectedTotal.toFixed(2)}. გსურთ გაგრძელება?`
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
