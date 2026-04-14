@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2, ShoppingBag, AlertCircle, Pencil, Check, Coins, CreditCard } from "lucide-react";
+import { Loader2, ShoppingBag, AlertCircle, Pencil, Check, Coins } from "lucide-react";
+import { SiVisa, SiMastercard } from "react-icons/si";
 import { queryClient } from "@/lib/queryClient";
 
 const GEORGIAN_CITIES = [
@@ -394,18 +395,28 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
               </div>
             </div>
 
-            <Button
+            <button
               onClick={handleTbcPay}
               disabled={creditSubmitting || tbcSubmitting || authLoading}
-              className="min-h-[44px] w-full bg-[#00AEEF] hover:bg-[#0099d4] text-white font-semibold gap-2"
+              className="min-h-[44px] w-full rounded-md border-2 border-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2"
               data-testid="button-tbc-pay"
             >
               {tbcSubmitting ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> მიმდინარეობს...</>
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  <Loader2 className="h-4 w-4 animate-spin" /> მიმდინარეობს...
+                </div>
               ) : (
-                <><CreditCard className="h-4 w-4" /> TBC-ით გადახდა — ₾{total.toFixed(2)}</>
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex items-center gap-3">
+                    <SiVisa className="h-6 w-auto text-[#1A1F71]" style={{ fontSize: 38 }} />
+                    <SiMastercard className="h-6 w-auto" style={{ fontSize: 34, color: "#EB001B" }} />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    ბარათით გადახდა — ₾{total.toFixed(2)}
+                  </span>
+                </div>
               )}
-            </Button>
+            </button>
 
             <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 space-y-2">
               <Button
