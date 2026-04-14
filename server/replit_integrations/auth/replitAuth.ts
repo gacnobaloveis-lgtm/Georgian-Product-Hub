@@ -312,6 +312,12 @@ export async function setupAuth(app: Express) {
       if (existingByPhone) {
         return res.status(400).json({ message: "ეს ტელეფონის ნომერი უკვე რეგისტრირებულია" });
       }
+      if (cleanEmail) {
+        const [existingByEmail] = await db.select().from(users).where(eq(users.email, cleanEmail));
+        if (existingByEmail) {
+          return res.status(400).json({ message: "ეს ელ.ფოსტის მისამართი უკვე რეგისტრირებულია" });
+        }
+      }
 
       const passwordHash = await hashPassword(password);
       const userId = `guest_${crypto.randomUUID()}`;
@@ -343,13 +349,20 @@ export async function setupAuth(app: Express) {
       req.login(sessionUser, (err: any) => {
         if (err) {
           console.error("[auth] register login error:", err);
-          return res.status(500).json({ message: "რეგისტრაცია ვერ მოხერხდა" });
+          return res.status(500).json({ message: `ავტორიზაცია ვერ მოხერხდა: ${err?.message || "უცნობი შეცდომა"}` });
         }
         res.json({ id: userId, firstName: firstName.trim(), lastName: lastName.trim(), email: cleanEmail, city: city.trim(), address: address.trim(), phone: cleanPhone });
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error("[auth] register error:", err);
-      res.status(500).json({ message: "რეგისტრაცია ვერ მოხერხდა" });
+      // Postgres unique-violation (23505) means phone or email already exists
+      if (err?.code === "23505") {
+        if (err?.constraint?.includes("email") || err?.detail?.includes("email")) {
+          return res.status(400).json({ message: "ეს ელ.ფოსტა უკვე რეგისტრირებულია" });
+        }
+        return res.status(400).json({ message: "ეს ტელეფონის ნომერი უკვე რეგისტრირებულია" });
+      }
+      res.status(500).json({ message: `რეგისტრაცია ვერ მოხერხდა: ${err?.message || "უცნობი შეცდომა"}` });
     }
   });
 
