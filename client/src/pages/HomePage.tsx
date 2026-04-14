@@ -507,6 +507,10 @@ export default function HomePage() {
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const { totalCount: cartCount } = useCart();
   const { canInstall, install: installPwa } = usePwaInstall();
+  const { data: onlineData } = useQuery<{ count: number }>({
+    queryKey: ["/api/online-count"],
+    refetchInterval: 30_000,
+  });
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
 
   interface VisualPublic {
@@ -700,6 +704,19 @@ export default function HomePage() {
         </div>
       </div>
 
+      {/* Mobile-only online counter */}
+      {onlineData && onlineData.count > 0 && (
+        <div className="md:hidden flex justify-center py-2" data-testid="badge-online-count-mobile">
+          <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-xs font-semibold text-emerald-700">ახლა საიტზეა {onlineData.count} ვიზიტორი</span>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto hidden max-w-6xl px-4 pb-4 pt-3 sm:px-6 md:block lg:px-8">
         <nav className="flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200/60 shadow-sm px-5 py-2">
           <div className="flex items-center gap-1">
@@ -731,6 +748,18 @@ export default function HomePage() {
               </button>
             )}
           </div>
+
+          {/* Online visitor counter */}
+          {onlineData && onlineData.count > 0 && (
+            <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5" data-testid="badge-online-count">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-semibold text-emerald-700">საიტზეა {onlineData.count}</span>
+            </div>
+          )}
+
           <div className="flex items-center gap-1">
             <button
               onClick={() => setCartDrawerOpen(true)}

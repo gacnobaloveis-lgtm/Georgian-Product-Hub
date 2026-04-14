@@ -872,6 +872,12 @@ export async function registerRoutes(
     }
   });
 
+  // Public: current online count (visible to all visitors)
+  app.get("/api/online-count", (_req, res) => {
+    pruneOldSessions();
+    res.json({ count: activeSessions.size });
+  });
+
   // Public ping — client calls every 30s to register as "online"
   app.post("/api/ping", (req, res) => {
     const sid = (req.query.sid as string) || "";
