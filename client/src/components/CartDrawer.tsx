@@ -50,7 +50,7 @@ function cartKey(item: { productId: number; selectedColor: string | null }) {
 
 export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const { items, removeItem, updateQuantity, clearItems } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { isRealUser } = useAuth();
   const { toast } = useToast();
 
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -118,7 +118,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
       toast({ variant: "destructive", title: "აირჩიეთ ნივთები", description: "მონიშნეთ ნივთები შესაძენად" });
       return;
     }
-    if (!isAuthenticated) {
+    if (!isRealUser) {
       setAuthDialogOpen(true);
       return;
     }

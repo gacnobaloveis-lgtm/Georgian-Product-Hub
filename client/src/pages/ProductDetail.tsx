@@ -196,7 +196,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [creditSubmitting, setCreditSubmitting] = useState(false);
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isRealUser } = useAuth();
   const { toast } = useToast();
   const { addItem, items: cartItems } = useCart();
 
@@ -630,7 +630,7 @@ export default function ProductDetail() {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                 return;
               }
-              if (!isAuthenticated) {
+              if (!isRealUser) {
                 sessionStorage.setItem("returnToProduct", String(product.id));
                 setAuthDialogOpen(true);
                 return;

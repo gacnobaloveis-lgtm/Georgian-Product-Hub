@@ -41,6 +41,7 @@ export function useAuth() {
     user,
     isLoading,
     isAuthenticated: !!user,
+    isRealUser: !!user && !!(user.phone || user.email),
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
   };
