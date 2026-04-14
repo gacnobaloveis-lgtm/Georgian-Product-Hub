@@ -16,7 +16,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText, Download, Info } from "lucide-react";
+import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText, Download } from "lucide-react";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { LucideIcon } from "@/components/IconPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -85,16 +85,6 @@ function SiteFooter() {
                 >
                   <ScrollText className="h-4 w-4 text-purple-500" />
                   წესები და პირობები
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setLocation("/about")}
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-purple-700 transition-colors"
-                  data-testid="footer-about-link"
-                >
-                  <Info className="h-4 w-4 text-purple-500" />
-                  ჩვენს შესახებ
                 </button>
               </li>
               <li>
@@ -689,11 +679,6 @@ export default function HomePage() {
               className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all">
               <ScrollText className="h-4 w-4" />
               წესები და პირობები
-            </button>
-            <button onClick={() => setLocation("/about")} data-testid="link-nav-about"
-              className="flex min-h-[40px] items-center gap-2 rounded-xl px-3 py-2 text-[14px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all">
-              <Info className="h-4 w-4" />
-              ჩვენს შესახებ
             </button>
             {canInstall && (
               <button onClick={() => setInstallDialogOpen(true)} data-testid="link-nav-install"
