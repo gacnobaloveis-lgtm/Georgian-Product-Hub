@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Send, ArrowLeft, MessageCircle, Lock } from "lucide-react";
+import { Send, ArrowLeft, MessageCircle, Lock, LogIn, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import type { ChatMessage } from "@shared/schema";
+import { AuthLoginDialog } from "@/components/AuthLoginDialog";
 
 function formatTime(date: Date | string | null) {
   if (!date) return "";
@@ -19,6 +20,8 @@ export default function LiveContactPage() {
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
   const [optimistic, setOptimistic] = useState<string[]>([]);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<"login" | "register">("login");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -106,14 +109,33 @@ export default function LiveContactPage() {
         </div>
 
         {!authLoading && !isAuthenticated ? (
-          <div className="flex flex-col items-center gap-3 py-10 text-center">
-            <div className="rounded-full bg-muted p-4">
-              <Lock className="h-6 w-6 text-muted-foreground" />
+          <div className="flex flex-col items-center gap-4 py-12 text-center">
+            <div className="rounded-full bg-white border border-purple-100 shadow-sm p-4">
+              <Lock className="h-6 w-6 text-purple-400" />
             </div>
             <p className="text-sm text-muted-foreground">მიწერა შეუძლიათ მხოლოდ რეგისტრირებულ მომხმარებლებს</p>
-            <Button onClick={() => setLocation("/")} variant="default" size="sm">
-              შესვლა / რეგისტრაცია
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => { setAuthTab("login"); setAuthOpen(true); }}
+                variant="default"
+                size="sm"
+                className="flex items-center gap-2"
+                data-testid="button-chat-login"
+              >
+                <LogIn className="h-4 w-4" />
+                შესვლა
+              </Button>
+              <Button
+                onClick={() => { setAuthTab("register"); setAuthOpen(true); }}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-purple-300 text-purple-700 hover:bg-purple-50"
+                data-testid="button-chat-register"
+              >
+                <UserPlus className="h-4 w-4" />
+                რეგისტრაცია
+              </Button>
+            </div>
           </div>
         ) : (
           <>
@@ -202,6 +224,12 @@ export default function LiveContactPage() {
           </div>
         </div>
       )}
+
+      <AuthLoginDialog
+        open={authOpen}
+        onOpenChange={setAuthOpen}
+        defaultTab={authTab}
+      />
     </div>
   );
 }

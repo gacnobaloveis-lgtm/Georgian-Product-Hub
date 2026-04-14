@@ -28,11 +28,12 @@ interface AuthLoginDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onRegistered?: () => void;
+  defaultTab?: "login" | "register";
 }
 
-export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginDialogProps) {
+export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab = "login" }: AuthLoginDialogProps) {
   const { toast } = useToast();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register">(defaultTab);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -54,13 +55,13 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered }: AuthLoginD
 
   useEffect(() => {
     if (open) {
+      setMode(defaultTab);
       const saved = localStorage.getItem(REMEMBER_KEY);
-      if (saved) {
+      if (saved && defaultTab === "login") {
         setLoginForm(prev => ({ ...prev, phone: saved, remember: true }));
-        setMode("login");
       }
     }
-  }, [open]);
+  }, [open, defaultTab]);
 
   async function handleLogin() {
     if (!loginForm.phone.trim()) {
