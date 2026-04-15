@@ -268,6 +268,11 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
         toast({ title: "რეგისტრაცია წარმატებით დასრულდა!" });
         onOpenChange(false);
         onRegistered?.();
+        if (wantsPush) {
+          attemptPushSubscription((ok, msg) => {
+            if (ok) toast({ title: "🔔 შეტყობინებები ჩართულია!" });
+          });
+        }
       } else {
         const data = await res.json().catch(() => ({}));
         toast({ variant: "destructive", title: "შეცდომა", description: data.message || "რეგისტრაცია ვერ მოხერხდა" });
