@@ -1,18 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { X, ExternalLink, Megaphone, Bell, Share } from "lucide-react";
+import { X, ExternalLink, Megaphone, Bell } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
 import { showNotification } from "@/lib/web-notification";
 
-function detectEnv() {
-  const ua = navigator.userAgent;
-  const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
-  const isPWA =
-    window.matchMedia("(display-mode: standalone)").matches ||
-    (window.navigator as any).standalone === true;
-  return { isIOS, isPWA };
-}
 
 type Broadcast = {
   id: number;
@@ -77,12 +69,8 @@ export function BroadcastNotification() {
   const [dismissed, setDismissed] = useState<Set<number>>(new Set());
   const [visible, setVisible] = useState<Broadcast | null>(null);
   const [pushState, setPushState] = useState<"idle" | "asking" | "granted" | "denied">("idle");
-  const [iosBannerDismissed, setIosBannerDismissed] = useState(
-    () => localStorage.getItem("ios-pwa-banner-dismissed") === "1"
-  );
   const prevIdsRef = useRef<Set<number>>(new Set());
   const subscribeAttemptedRef = useRef(false);
-  const { isIOS, isPWA } = detectEnv();
 
   const { data: unread = [] } = useQuery<Broadcast[]>({
     queryKey: ["/api/notifications/unread"],
@@ -168,58 +156,14 @@ export function BroadcastNotification() {
   if (!isAuthenticated) return null;
 
   const pushSupported = "Notification" in window && "PushManager" in window;
-  // iOS Safari (not PWA) — push cannot work, show "Add to Home Screen" guide
-  const showIOSBanner = isIOS && !isPWA && !iosBannerDismissed && pushState === "asking";
-  // Regular browsers — show standard permission banner
-  const showBanner = pushSupported && pushState === "asking" && !showIOSBanner;
+  const showBanner = pushSupported && pushState === "asking";
 
   // Nothing to show
-  if (!visible && !showBanner && !showIOSBanner) return null;
+  if (!visible && !showBanner) return null;
 
   return (
     <div className="float-above-nav fixed right-4 md:right-6 z-50 w-[calc(100vw-2rem)] max-w-sm space-y-2">
-      {/* ── iOS "Add to Home Screen" instruction banner ── */}
-      {showIOSBanner && (
-        <div className="animate-in slide-in-from-bottom-4 duration-300 rounded-2xl border border-blue-200 bg-blue-50 shadow-xl overflow-hidden">
-          <div className="flex items-start gap-3 px-4 py-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100">
-              <Bell className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-blue-900">Push შეტყობინებები — iPhone</p>
-              <p className="text-xs text-blue-700 mt-0.5 leading-relaxed">
-                iPhone-ზე push-ისთვის გჭირდება App-ი Home Screen-ზე:
-              </p>
-              <ol className="text-xs text-blue-700 mt-1.5 space-y-0.5 list-none">
-                <li className="flex items-center gap-1.5">
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-200 text-[9px] font-bold text-blue-800">1</span>
-                  Safari-ში დააჭირე <Share className="h-3 w-3 inline-block mx-0.5" /> (ქვედა ზოლი)
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-200 text-[9px] font-bold text-blue-800">2</span>
-                  <span>აირჩიე <strong>"Add to Home Screen"</strong></span>
-                </li>
-                <li className="flex items-center gap-1.5">
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-200 text-[9px] font-bold text-blue-800">3</span>
-                  <span>App-იდან ჩართე შეტყობინებები</span>
-                </li>
-              </ol>
-            </div>
-            <button
-              onClick={() => {
-                localStorage.setItem("ios-pwa-banner-dismissed", "1");
-                setIosBannerDismissed(true);
-              }}
-              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full hover:bg-blue-100 text-blue-400 hover:text-blue-600 transition-colors"
-              data-testid="button-ios-banner-close"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── Push permission banner (Android / Desktop) ── */}
+      {/* ── Push permission banner ── */}
       {showBanner && (
         <div className="animate-in slide-in-from-bottom-4 duration-300 rounded-2xl border border-border bg-white shadow-xl overflow-hidden">
           <div className="flex items-center gap-3 px-4 py-3">
