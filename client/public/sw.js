@@ -1,4 +1,4 @@
-const CACHE_NAME = "spiningebi-v5";
+const CACHE_NAME = "spiningebi-v6";
 const STATIC_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".svg", ".ico", ".woff", ".woff2", ".ttf"];
 
 self.addEventListener("install", () => {
@@ -57,6 +57,9 @@ self.addEventListener("push", (event) => {
     badge: "/favicon.png",
     tag: notifTag,
     renotify: true,
+    requireInteraction: false,
+    vibrate: [200, 100, 200],
+    silent: false,
     data: { url: data.url, broadcastId: data.broadcastId || null },
   };
 

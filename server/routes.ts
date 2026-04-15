@@ -269,7 +269,8 @@ export async function registerRoutes(
           for (const sub of allSubs) {
             await webpush.sendNotification(
               { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-              payload
+              payload,
+              { urgency: "high", TTL: 60 }
             ).catch(async (err: any) => {
               if (err?.statusCode === 410 || err?.statusCode === 404) {
                 await storage.removePushSubscription(sub.endpoint);
@@ -1270,7 +1271,8 @@ export async function registerRoutes(
         for (const sub of adminSubs) {
           webpush.sendNotification(
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            payload
+            payload,
+            { urgency: "high", TTL: 60 }
           ).catch(() => storage.removePushSubscription(sub.endpoint));
         }
       } catch (_) {}
@@ -1335,7 +1337,8 @@ export async function registerRoutes(
           for (const sub of userSubs) {
             webpush.sendNotification(
               { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-              payload
+              payload,
+              { urgency: "high", TTL: 60 }
             ).then(() => {
               console.log(`[push] ✓ sent to ${userId} endpoint: ${sub.endpoint.slice(0, 50)}...`);
             }).catch((err: any) => {
@@ -1394,7 +1397,8 @@ export async function registerRoutes(
       for (const sub of subs) {
         await webpush.sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          payload
+          payload,
+          { urgency: "high", TTL: 60 }
         ).then(() => { sent++; }).catch(async (err: any) => {
           console.warn(`[push-test] failed:`, err?.statusCode);
           if (err?.statusCode === 410) await storage.removePushSubscription(sub.endpoint);
@@ -1487,7 +1491,8 @@ export async function registerRoutes(
         for (const sub of allSubs) {
           await webpush.sendNotification(
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            payload
+            payload,
+            { urgency: "high", TTL: 60 }
           ).then(() => { pushSent++; }).catch(async (err: any) => {
             pushFailed++;
             console.warn(`[broadcast] push failed: status=${err?.statusCode} msg=${err?.message} endpoint=${sub.endpoint.slice(0, 60)}`);
