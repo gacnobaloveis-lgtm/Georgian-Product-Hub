@@ -193,6 +193,17 @@ async function ensurePushSubscriptionsTable() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    // Clean up duplicate subscriptions — keep newest 3 per user
+    await pool.query(`
+      DELETE FROM push_subscriptions
+      WHERE id NOT IN (
+        SELECT id FROM (
+          SELECT id, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY id DESC) AS rn
+          FROM push_subscriptions
+        ) ranked
+        WHERE rn <= 3
+      )
+    `);
     console.log("[migrate] push_subscriptions table ensured");
   } catch (err) {
     console.error("[migrate] Error ensuring push_subscriptions table:", err);

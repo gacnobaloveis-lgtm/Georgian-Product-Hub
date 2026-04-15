@@ -1450,7 +1450,17 @@ export async function registerRoutes(
 
       // Send push notifications to all subscribers
       try {
-        const allSubs = await storage.getAllPushSubscriptions();
+        const rawSubs = await storage.getAllPushSubscriptions();
+        // Deduplicate: send at most one push per userId (use newest subscription per user)
+        const seenUsers = new Set<string>();
+        const allSubs = rawSubs
+          .slice()
+          .sort((a, b) => b.id - a.id) // newest first
+          .filter(s => {
+            if (seenUsers.has(s.userId)) return false;
+            seenUsers.add(s.userId);
+            return true;
+          });
 
         // Build absolute image URL so Android/Chrome can fetch it for the rich notification
         const siteOrigin = process.env.SITE_URL ||

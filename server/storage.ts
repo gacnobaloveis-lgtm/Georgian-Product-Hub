@@ -343,10 +343,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async savePushSubscription(userId: string, endpoint: string, p256dh: string, auth: string): Promise<void> {
+    // Upsert by endpoint
     await db.execute(sql`
       INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth)
       VALUES (${userId}, ${endpoint}, ${p256dh}, ${auth})
       ON CONFLICT (endpoint) DO UPDATE SET user_id = ${userId}, p256dh = ${p256dh}, auth = ${auth}
+    `);
+    // Keep at most 3 subscriptions per user (for up to 3 devices).
+    // Delete oldest beyond that limit to avoid duplicate notifications.
+    await db.execute(sql`
+      DELETE FROM push_subscriptions
+      WHERE user_id = ${userId}
+        AND id NOT IN (
+          SELECT id FROM push_subscriptions
+          WHERE user_id = ${userId}
+          ORDER BY id DESC
+          LIMIT 3
+        )
     `);
   }
 
