@@ -19,6 +19,7 @@ import NotFound from "@/pages/not-found";
 import { CartContext, useCartProvider } from "@/hooks/use-cart";
 import { AdminChatWidget } from "@/components/AdminChatWidget";
 import { BroadcastNotification } from "@/components/BroadcastNotification";
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { useEffect } from "react";
 
 function useOnlinePing() {
@@ -68,6 +69,7 @@ function App() {
           <Router />
           <AdminChatWidget />
           <BroadcastNotification />
+          <PWAInstallBanner />
           <Toaster />
         </TooltipProvider>
       </CartContext.Provider>
