@@ -1462,10 +1462,12 @@ export async function registerRoutes(
         // Also build absolute icon using the site's PWA icon
         const absoluteIcon = `${siteOrigin}/pwa-icon.png`;
 
+        const baseUrl = url || "/";
         const payload = JSON.stringify({
           title: title.trim(),
           body: body.trim().substring(0, 120),
-          url: url || "/",
+          url: baseUrl,
+          broadcastId: broadcast.id,
           image: absoluteImage,
           icon: absoluteIcon,
           tag: `broadcast-${broadcast.id}`,

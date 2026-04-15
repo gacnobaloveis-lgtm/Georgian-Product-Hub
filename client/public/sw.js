@@ -1,4 +1,4 @@
-const CACHE_NAME = "spiningebi-v4";
+const CACHE_NAME = "spiningebi-v5";
 const STATIC_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".svg", ".ico", ".woff", ".woff2", ".ttf"];
 
 self.addEventListener("install", () => {
@@ -57,7 +57,7 @@ self.addEventListener("push", (event) => {
     badge: "/favicon.png",
     tag: notifTag,
     renotify: true,
-    data: { url: data.url },
+    data: { url: data.url, broadcastId: data.broadcastId || null },
   };
 
   // image field shows a large product photo in the notification on Android/Chrome
@@ -71,7 +71,15 @@ self.addEventListener("push", (event) => {
 // Click on notification — open/focus the app
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = (event.notification.data && event.notification.data.url) || "/";
+  const data = event.notification.data || {};
+  let targetUrl = data.url || "/";
+
+  // Append broadcastId so the app can auto-mark it as read (avoids duplicate in-app banner)
+  if (data.broadcastId) {
+    const sep = targetUrl.includes("?") ? "&" : "?";
+    targetUrl = `${targetUrl}${sep}mark_read=${data.broadcastId}`;
+  }
+
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {

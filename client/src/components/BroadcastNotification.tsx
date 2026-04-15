@@ -78,6 +78,29 @@ export function BroadcastNotification() {
     refetchInterval: 30000,
   });
 
+  // ── Auto-mark as read when opened via push notification click ──────────────
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const params = new URLSearchParams(window.location.search);
+    const markReadId = params.get("mark_read");
+    if (!markReadId) return;
+    const id = parseInt(markReadId, 10);
+    if (isNaN(id)) return;
+
+    // Add to dismissed immediately so banner won't flash
+    setDismissed(prev => new Set([...prev, id]));
+
+    // Mark as read on server
+    fetch(`/api/notifications/read/${id}`, { method: "POST", credentials: "include" })
+      .then(() => queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread"] }))
+      .catch(() => {});
+
+    // Clean URL without reload
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("mark_read");
+    window.history.replaceState({}, "", cleanUrl.toString());
+  }, [isAuthenticated]);
+
   const readMutation = useMutation({
     mutationFn: async (id: number) => {
       await fetch(`/api/notifications/read/${id}`, {
