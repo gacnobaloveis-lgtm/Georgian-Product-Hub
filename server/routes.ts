@@ -101,11 +101,79 @@ function generateReferralCode(): string {
 const DEFAULT_REFERRAL_CREDIT = 5;
 const REFERRAL_COOKIE_DAYS = 30;
 
+// ── Social-media bot prerenderer ────────────────────────────────────────────
+// Facebook, Telegram, WhatsApp, Twitter etc. don't run JS.
+// When they crawl /products/:id we return a tiny HTML page with proper OG tags
+// so the shared link shows the product image + title + price.
+const SOCIAL_BOTS =
+  /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|Discordbot|vkShare|Pinterest|Instagram|Googlebot/i;
+
+function escHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   app.use(cookieParser());
+
+  // Bot prerendering for product detail pages
+  app.get("/products/:id", async (req, res, next) => {
+    const ua = req.headers["user-agent"] || "";
+    if (!SOCIAL_BOTS.test(ua)) return next(); // regular browser → SPA
+
+    const productId = parseInt(req.params.id, 10);
+    if (isNaN(productId)) return next();
+
+    try {
+      const product = await storage.getProduct(productId);
+      if (!product) return next();
+
+      const siteUrl = (process.env.SITE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+      const imageUrl = product.imageUrl
+        ? product.imageUrl.startsWith("http")
+          ? product.imageUrl
+          : `${siteUrl}${product.imageUrl}`
+        : `${siteUrl}/pwa-icon.png`;
+      const rawPrice = product.discountPrice ?? product.originalPrice;
+      const price = `₾${Number(rawPrice).toFixed(2)}`;
+      const title = escHtml(`${product.name} — ${price} | spiningebi.ge`);
+      const desc = escHtml(`${(product.description ?? "").slice(0, 200)}. ფასი: ${price}`);
+      const pageUrl = escHtml(`${siteUrl}/products/${productId}`);
+      const safeImage = escHtml(imageUrl);
+
+      console.log(`[og-bot] serving OG HTML for product ${productId} to: ${ua.slice(0, 60)}`);
+
+      return res.status(200).set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8"/>
+  <title>${title}</title>
+  <meta property="og:type" content="product"/>
+  <meta property="og:site_name" content="spiningebi.ge"/>
+  <meta property="og:title" content="${title}"/>
+  <meta property="og:description" content="${desc}"/>
+  <meta property="og:image" content="${safeImage}"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:url" content="${pageUrl}"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:title" content="${title}"/>
+  <meta name="twitter:description" content="${desc}"/>
+  <meta name="twitter:image" content="${safeImage}"/>
+  <meta http-equiv="refresh" content="0;url=${pageUrl}"/>
+</head>
+<body><a href="${pageUrl}">${title}</a></body>
+</html>`);
+    } catch (err) {
+      next(err);
+    }
+  });
 
   app.get("/uploads/:filename", async (req, res) => {
     const filename = req.params.filename;
