@@ -259,37 +259,77 @@ export default function MyProfile() {
             </div>
           </GlassPanel>
 
-          {/* Push notification settings — hidden when denied or unsupported */}
-          {pushStatus !== "unsupported" && pushStatus !== "denied" && pushStatus !== "checking" && (
-            <GlassPanel className="p-5 sm:p-7">
-              <h2 className="text-base font-semibold flex items-center gap-2 mb-4">
-                <Bell className="h-4 w-4 text-primary" />
-                შეტყობინებები
-              </h2>
-              {pushStatus === "granted" ? (
-                <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3">
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
-                  <div>
-                    <p className="text-sm font-medium text-green-800" data-testid="text-push-status">შეტყობინებები ჩართულია</p>
-                    <p className="text-xs text-green-600">მიიღებ push შეტყობინებებს აქციებსა და სიახლეებზე</p>
+          {/* Push notification settings */}
+          {(() => {
+            const ua = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+            const isPWA = window.matchMedia("(display-mode: standalone)").matches || (window.navigator as any).standalone === true;
+            const isIOSSafari = isIOS && !isPWA;
+
+            if (isIOSSafari) {
+              return (
+                <GlassPanel className="p-5 sm:p-7">
+                  <h2 className="text-base font-semibold flex items-center gap-2 mb-4">
+                    <Bell className="h-4 w-4 text-primary" />
+                    შეტყობინებები
+                  </h2>
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
+                    <p className="text-sm font-medium text-blue-900">iPhone — Home Screen-ის გავლით</p>
+                    <p className="text-xs text-blue-700 leading-relaxed">
+                      iPhone-ზე push შეტყობინებები მუშაობს მხოლოდ PWA-ს სახით (Home Screen-ზე დამატება):
+                    </p>
+                    <ol className="text-xs text-blue-700 space-y-1.5 list-none">
+                      <li className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-200 text-[10px] font-bold text-blue-800">1</span>
+                        Safari-ში — Share ღილაკი (ქვედა ზოლი) <span className="text-base">⎋</span>
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-200 text-[10px] font-bold text-blue-800">2</span>
+                        "Add to Home Screen" → "Add"
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-200 text-[10px] font-bold text-blue-800">3</span>
+                        Home Screen-ის App-იდან — ჩართე შეტყობინებები
+                      </li>
+                    </ol>
                   </div>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">ჩართე push შეტყობინებები — მიიღე სიახლეები და აქციები app-ის გარეშეც</p>
-                  <Button
-                    onClick={handleEnablePush}
-                    disabled={pushStatus === "saving"}
-                    className="w-full gap-2"
-                    data-testid="button-enable-push-profile"
-                  >
-                    <Bell className="h-4 w-4" />
-                    {pushStatus === "saving" ? "ვრთავ..." : "შეტყობინებების ჩართვა"}
-                  </Button>
-                </div>
-              )}
-            </GlassPanel>
-          )}
+                </GlassPanel>
+              );
+            }
+
+            if (pushStatus === "unsupported" || pushStatus === "denied" || pushStatus === "checking") return null;
+
+            return (
+              <GlassPanel className="p-5 sm:p-7">
+                <h2 className="text-base font-semibold flex items-center gap-2 mb-4">
+                  <Bell className="h-4 w-4 text-primary" />
+                  შეტყობინებები
+                </h2>
+                {pushStatus === "granted" ? (
+                  <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-green-800" data-testid="text-push-status">შეტყობინებები ჩართულია</p>
+                      <p className="text-xs text-green-600">მიიღებ push შეტყობინებებს აქციებსა და სიახლეებზე</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">ჩართე push შეტყობინებები — მიიღე სიახლეები და აქციები app-ის გარეშეც</p>
+                    <Button
+                      onClick={handleEnablePush}
+                      disabled={pushStatus === "saving"}
+                      className="w-full gap-2"
+                      data-testid="button-enable-push-profile"
+                    >
+                      <Bell className="h-4 w-4" />
+                      {pushStatus === "saving" ? "ვრთავ..." : "შეტყობინებების ჩართვა"}
+                    </Button>
+                  </div>
+                )}
+              </GlassPanel>
+            );
+          })()}
 
           <GlassPanel className="p-5 sm:p-7">
             <div className="flex items-center justify-between mb-4">
