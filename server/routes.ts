@@ -1265,7 +1265,7 @@ export async function registerRoutes(
         const payload = JSON.stringify({
           title: "💬 ახალი შეტყობინება",
           body: message.trim().substring(0, 100),
-          url: "/admin/chat",
+          url: "/admin-dashboard",
         });
         for (const sub of adminSubs) {
           webpush.sendNotification(
