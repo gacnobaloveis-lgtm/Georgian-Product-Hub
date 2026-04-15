@@ -20,10 +20,13 @@ async function attemptPushSubscription(
 ) {
   try {
     if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      console.warn("[push] browser does not support push");
       onResult?.(false, "ბრაუზერი push შეტყობინებებს არ უჭერს მხარს");
       return;
     }
+
     const perm = await Notification.requestPermission();
+    console.log("[push] permission:", perm);
     if (perm === "denied") {
       onResult?.(false, "შეტყობინებები დაბლოკილია ბრაუზერის პარამეტრებში");
       return;
@@ -32,9 +35,12 @@ async function attemptPushSubscription(
       onResult?.(false, "");
       return;
     }
+
     const keyRes = await fetch("/api/push/vapid-key");
     const { publicKey } = await keyRes.json();
+    console.log("[push] vapid key:", publicKey ? publicKey.slice(0, 20) + "..." : "MISSING");
     if (!publicKey) { onResult?.(false, "Push კონფიგურაცია ვერ მოიძებნა"); return; }
+
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
@@ -42,18 +48,29 @@ async function attemptPushSubscription(
       const b64 = (publicKey + pad).replace(/-/g, "+").replace(/_/g, "/");
       const key = Uint8Array.from([...atob(b64)].map((c) => c.charCodeAt(0)));
       sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+      console.log("[push] new subscription created");
+    } else {
+      console.log("[push] existing subscription found");
     }
+
+    // Small delay to ensure auth session cookie is established after registration
+    await new Promise(resolve => setTimeout(resolve, 800));
+
     const saveRes = await fetch("/api/push/subscribe", {
       method: "POST", credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(sub.toJSON()),
     });
+    console.log("[push] save to server status:", saveRes.status);
     if (saveRes.ok) {
       onResult?.(true, "🔔 შეტყობინებები ჩართულია!");
     } else {
-      onResult?.(false, "შეტყობინებების გააქტიურება ვერ მოხერხდა");
+      const errData = await saveRes.json().catch(() => ({}));
+      console.warn("[push] server save failed:", saveRes.status, errData);
+      onResult?.(false, `სერვერზე შენახვა ვერ მოხერხდა (${saveRes.status})`);
     }
   } catch (e: unknown) {
+    console.error("[push] error:", e);
     onResult?.(false, String(e));
   }
 }
@@ -270,7 +287,11 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
         onRegistered?.();
         if (wantsPush) {
           attemptPushSubscription((ok, msg) => {
-            if (ok) toast({ title: "🔔 შეტყობინებები ჩართულია!" });
+            if (ok) {
+              toast({ title: "🔔 შეტყობინებები ჩართულია!" });
+            } else if (msg) {
+              toast({ variant: "destructive", title: "Push შეცდომა", description: msg });
+            }
           });
         }
       } else {
