@@ -596,7 +596,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
               {profile?.city?.trim().toLowerCase() === "ქუთაისი" ? (
                 `ქუთაისში მიტანა უფასოა! ${checkoutItems.length} ნივთის შეკვეთა — ₾${selectedTotal.toFixed(2)}. გსურთ გაგრძელება?`
               ) : (
-                `შეგახსენებთ, რომ ტრანსპორტირების საფასური (11.50 ლარი) ანაზღაურდება კურიერთან. ${checkoutItems.length} ნივთის შეკვეთა — ₾${selectedTotal.toFixed(2)}. გსურთ გაგრძელება?`
+                `ბანკის ბარათს დაამატებთ საყიდლად. გაითვალისწინეთ, საკურიერო მომსახურეობა — 10.50 ₾. ${checkoutItems.length} ნივთის შეკვეთა — ₾${selectedTotal.toFixed(2)}. გსურთ გაგრძელება?`
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
