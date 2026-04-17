@@ -7,7 +7,7 @@ import multer from "multer";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
-import { randomUUID } from "crypto";
+import { randomUUID, createHash } from "crypto";
 import express from "express";
 import cookieParser from "cookie-parser";
 import https from "https";
@@ -1663,6 +1663,86 @@ Disallow: /api/
 
 Sitemap: https://spiningebi.ge/sitemap.xml`
     );
+  });
+
+  // ── Flitt (Fondy) Payment ──────────────────────────────────────────────────
+  const FLITT_URL = "https://pay.flitt.com/api/checkout/url/";
+
+  function flittSignature(params: Record<string, string | number>): string {
+    const sorted = Object.keys(params).sort();
+    const values = sorted.map(k => String(params[k]));
+    const raw = [process.env.FLITT_SECRET_KEY || "test", ...values].join("|");
+    return createHash("sha1").update(raw).digest("hex");
+  }
+
+  async function flittRequest(params: Record<string, string | number>): Promise<any> {
+    const sig = flittSignature(params);
+    const body = JSON.stringify({ request: { ...params, signature: sig } });
+    return new Promise((resolve, reject) => {
+      const url = new URL(FLITT_URL);
+      const req = https.request(
+        {
+          hostname: url.hostname,
+          path: url.pathname,
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(body),
+          },
+        },
+        (resp) => {
+          let data = "";
+          resp.on("data", (c) => (data += c));
+          resp.on("end", () => {
+            console.log("[Flitt response]", resp.statusCode, data.substring(0, 300));
+            try { resolve(JSON.parse(data)); } catch { resolve(data); }
+          });
+        }
+      );
+      req.on("error", reject);
+      req.write(body);
+      req.end();
+    });
+  }
+
+  app.post("/api/flitt/pay", async (req: any, res) => {
+    try {
+      const { amount, description, orderId } = req.body;
+      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+        return res.status(400).json({ message: "თანხა აუცილებელია" });
+      }
+      const appUrl = (process.env.APP_URL || "https://spiningebi.ge").replace(/\/$/, "");
+      const merchantId = Number(process.env.FLITT_MERCHANT_ID || "1549901");
+      const amountTetri = Math.round(Number(amount) * 100); // GEL → tetri
+      const oid = orderId ? String(orderId) : randomUUID();
+
+      const params: Record<string, string | number> = {
+        merchant_id: merchantId,
+        order_id: oid,
+        order_desc: (description || "spiningebi.ge შეკვეთა").substring(0, 255),
+        amount: amountTetri,
+        currency: "GEL",
+        response_url: `${appUrl}/payment/success`,
+        server_callback_url: `${appUrl}/api/flitt/callback`,
+      };
+
+      const result = await flittRequest(params);
+      const resp = result?.response;
+
+      if (resp?.checkout_url) {
+        return res.json({ payUrl: resp.checkout_url, paymentId: resp.payment_id });
+      }
+      console.error("[Flitt pay] bad response:", JSON.stringify(result));
+      return res.status(502).json({ message: "გადახდის ბმულის მიღება ვერ მოხერხდა", detail: resp?.error_message || result });
+    } catch (err: any) {
+      console.error("[Flitt pay] error:", err);
+      return res.status(500).json({ message: "გადახდის შეცდომა", detail: err.message });
+    }
+  });
+
+  app.post("/api/flitt/callback", express.json(), (req, res) => {
+    console.log("[Flitt callback]", JSON.stringify(req.body));
+    res.sendStatus(200);
   });
 
   // TBC Bank Payment

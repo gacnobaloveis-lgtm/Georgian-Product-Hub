@@ -259,7 +259,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
         ? `spiningebi.ge — ${itemsToOrder[0].name} (${itemsToOrder[0].quantity} ც.)`
         : `spiningebi.ge — ${itemsToOrder.length} ნივთი`;
 
-      const payRes = await fetch("/api/pay", {
+      const payRes = await fetch("/api/flitt/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -272,7 +272,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
 
       if (!payRes.ok) {
         const err = await payRes.json();
-        toast({ variant: "destructive", title: "გადახდის შეცდომა", description: err.message || "TBC გადახდა ვერ დაიწყო" });
+        toast({ variant: "destructive", title: "გადახდის შეცდომა", description: err.message || "გადახდა ვერ დაიწყო" });
         setTbcSubmitting(false);
         return;
       }

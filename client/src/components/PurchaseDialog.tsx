@@ -228,7 +228,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
 
       const order = await orderRes.json();
 
-      const payRes = await fetch("/api/pay", {
+      const payRes = await fetch("/api/flitt/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -241,7 +241,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
 
       if (!payRes.ok) {
         const err = await payRes.json();
-        toast({ variant: "destructive", title: "გადახდის შეცდომა", description: err.message || "TBC გადახდა ვერ დაიწყო" });
+        toast({ variant: "destructive", title: "გადახდის შეცდომა", description: err.message || "გადახდა ვერ დაიწყო" });
         return;
       }
 
