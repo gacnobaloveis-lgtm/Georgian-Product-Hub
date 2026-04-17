@@ -7,7 +7,7 @@ import multer from "multer";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
-import { randomUUID, createHash } from "crypto";
+import { randomUUID, createHash, timingSafeEqual } from "crypto";
 import express from "express";
 import cookieParser from "cookie-parser";
 import https from "https";
@@ -177,7 +177,17 @@ export async function registerRoutes(
 
   app.get("/uploads/:filename", async (req, res) => {
     const filename = req.params.filename;
+
+    // Path traversal protection: only allow safe filenames (no ../ or absolute paths)
+    if (!filename || !/^[a-zA-Z0-9_\-\.]+$/.test(filename) || filename.includes("..")) {
+      return res.status(400).end();
+    }
     const filePath = path.join(uploadsDir, filename);
+    const resolvedPath = path.resolve(filePath);
+    const resolvedUploadsDir = path.resolve(uploadsDir);
+    if (!resolvedPath.startsWith(resolvedUploadsDir + path.sep)) {
+      return res.status(403).end();
+    }
 
     if (fs.existsSync(filePath)) {
       res.setHeader("Cache-Control", "public, max-age=3600, must-revalidate");
@@ -242,10 +252,14 @@ export async function registerRoutes(
 
   app.post("/api/admin/login", async (req: any, res) => {
     const { secretKey } = req.body;
-    if (!ADMIN_SECRET) {
-      return res.status(500).json({ message: "ადმინ გასაღები არ არის კონფიგურირებული" });
+    if (!ADMIN_SECRET || typeof secretKey !== "string") {
+      return res.status(401).json({ message: "არასწორი გასაღები" });
     }
-    if (secretKey === ADMIN_SECRET) {
+    // Timing-safe comparison to prevent brute-force timing attacks
+    const a = Buffer.from(secretKey.padEnd(64).slice(0, 64));
+    const b = Buffer.from(ADMIN_SECRET.padEnd(64).slice(0, 64));
+    const match = timingSafeEqual(a, b) && secretKey === ADMIN_SECRET;
+    if (match) {
       req.session.isAdmin = true;
       if (req.isAuthenticated && req.isAuthenticated()) {
         const userId = req.user?.claims?.sub;
@@ -1735,16 +1749,18 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       if (resp?.checkout_url) {
         return res.json({ payUrl: resp.checkout_url, paymentId: resp.payment_id });
       }
-      console.error("[Flitt pay] bad response:", JSON.stringify(result));
-      return res.status(502).json({ message: "გადახდის ბმულის მიღება ვერ მოხერხდა", detail: resp?.error_message || result });
+      console.error("[Flitt pay] bad response:", resp?.error_message || "unknown");
+      return res.status(502).json({ message: "გადახდის ბმულის მიღება ვერ მოხერხდა" });
     } catch (err: any) {
       console.error("[Flitt pay] error:", err);
-      return res.status(500).json({ message: "გადახდის შეცდომა", detail: err.message });
+      return res.status(500).json({ message: "გადახდის შეცდომა" });
     }
   });
 
   app.post("/api/flitt/callback", express.json(), (req, res) => {
-    console.log("[Flitt callback]", JSON.stringify(req.body));
+    // Log only non-sensitive fields for audit
+    const { order_id, payment_id, order_status, response_status } = req.body || {};
+    console.log("[Flitt callback]", { order_id, payment_id, order_status, response_status });
     res.sendStatus(200);
   });
 
@@ -1859,11 +1875,11 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         return res.json({ payId: result.payId, payUrl: href });
       }
 
-      console.error("TBC pay response:", JSON.stringify(result));
-      return res.status(502).json({ message: "გადახდის ბმულის მიღება ვერ მოხერხდა", detail: result });
+      console.error("TBC pay response: missing payId or links");
+      return res.status(502).json({ message: "გადახდის ბმულის მიღება ვერ მოხერხდა" });
     } catch (err: any) {
       console.error("TBC pay error:", err);
-      return res.status(500).json({ message: "გადახდის შეცდომა", detail: err.message });
+      return res.status(500).json({ message: "გადახდის შეცდომა" });
     }
   });
 

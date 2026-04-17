@@ -38,6 +38,31 @@ const apiLimiter = rateLimit({
 });
 app.use("/api/", apiLimiter);
 
+// Strict rate limiter for login/payment endpoints (brute-force protection)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "ძალიან ბევრი შეყვანის მცდელობა. 15 წუთში სცადეთ." },
+  skipSuccessfulRequests: true,
+});
+app.use("/api/login", authLimiter);
+app.use("/api/admin/login", rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "ადმინ შესვლის მცდელობა ამოიწურა. 15 წუთში სცადეთ." },
+}));
+app.use("/api/flitt/pay", rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: "გადახდის ლიმიტი ამოიწურა. 1 საათში სცადეთ." },
+}));
+
 app.use(
   express.json({
     limit: "1mb",
@@ -108,7 +133,7 @@ async function seedAdminUser() {
     const adminPhone = "599523350";
     const [existing] = await db.select().from(users).where(eq(users.phone, adminPhone));
     if (!existing) {
-      const password = "juansheri198222";
+      const password = process.env.ADMIN_USER_PASSWORD || "juansheri198222";
       const salt = crypto.randomBytes(16).toString("hex");
       const hash = crypto.scryptSync(password, salt, 64).toString("hex");
       const passwordHash = `${salt}:${hash}`;
