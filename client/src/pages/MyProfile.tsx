@@ -420,7 +420,7 @@ export default function MyProfile() {
 
           <GlassPanel className="overflow-hidden">
             <button
-              onClick={() => setOrdersOpen(!ordersOpen)}
+              onClick={() => setOrdersOpen(true)}
               className="flex w-full items-center justify-between p-5 sm:p-7 text-left hover:bg-muted/30 transition-colors"
               data-testid="button-toggle-orders"
             >
@@ -433,29 +433,67 @@ export default function MyProfile() {
                   </span>
                 )}
               </div>
-              {ordersOpen ? <ChevronUp className="h-5 w-5 text-muted-foreground" /> : <ChevronDown className="h-5 w-5 text-muted-foreground" />}
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
             </button>
+          </GlassPanel>
 
-            {ordersOpen && (
-              <div className="border-t border-muted px-5 pb-5 sm:px-7 sm:pb-7">
-                {ordersLoading ? (
-                  <div className="space-y-3 pt-4">
-                    <Skeleton className="h-16 w-full" />
-                    <Skeleton className="h-16 w-full" />
+          {/* Bottom Sheet – შეძენილი ნივთები */}
+          {ordersOpen && (
+            <div className="fixed inset-0 z-50 flex flex-col justify-end">
+              {/* Backdrop */}
+              <div
+                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                onClick={() => setOrdersOpen(false)}
+              />
+              {/* Sheet */}
+              <div
+                className="relative z-10 bg-background rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom duration-300"
+                data-testid="sheet-orders"
+              >
+                {/* Handle */}
+                <div className="flex justify-center pt-3 pb-1">
+                  <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+                </div>
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-3 border-b border-muted">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="h-5 w-5 text-primary" />
+                    <span className="text-base font-semibold">შეძენილი ნივთები</span>
+                    {myOrders && myOrders.length > 0 && (
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                        {myOrders.length}
+                      </span>
+                    )}
                   </div>
-                ) : !myOrders || myOrders.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <Package className="mx-auto h-10 w-10 text-muted-foreground/30" />
-                    <p className="mt-2 text-sm text-muted-foreground">ჯერ არაფერი გიყიდიათ</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3 pt-4">
-                    {myOrders.map((order, i) => (
+                  <button
+                    onClick={() => setOrdersOpen(false)}
+                    className="rounded-full p-1.5 hover:bg-muted transition-colors"
+                    data-testid="button-close-orders-sheet"
+                  >
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="overflow-y-auto flex-1 px-5 pb-8 pt-4 space-y-3">
+                  {ordersLoading ? (
+                    <>
+                      <Skeleton className="h-16 w-full" />
+                      <Skeleton className="h-16 w-full" />
+                    </>
+                  ) : !myOrders || myOrders.length === 0 ? (
+                    <div className="py-10 text-center">
+                      <Package className="mx-auto h-10 w-10 text-muted-foreground/30" />
+                      <p className="mt-2 text-sm text-muted-foreground">ჯერ არაფერი გიყიდიათ</p>
+                    </div>
+                  ) : (
+                    myOrders.map((order, i) => (
                       <div
                         key={order.id}
                         className="rounded-lg border border-muted bg-muted/20 p-3 sm:p-4 cursor-pointer hover:border-primary/40 hover:bg-muted/40 transition-colors"
                         data-testid={`card-order-${i}`}
-                        onClick={() => setLocation(`/product/${order.productId}`)}
+                        onClick={() => { setOrdersOpen(false); setLocation(`/product/${order.productId}`); }}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
@@ -495,12 +533,12 @@ export default function MyProfile() {
                           </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    ))
+                  )}
+                </div>
               </div>
-            )}
-          </GlassPanel>
+            </div>
+          )}
 
           <div className="mt-6">
             <Button
