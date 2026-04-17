@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { User, MapPin, Phone, Mail, ShoppingBag, ChevronDown, ChevronUp, ArrowLeft, Package, Save, Pencil, Wallet, LogOut, Truck, Bell, CheckCircle2, ExternalLink } from "lucide-react";
+import { User, MapPin, Phone, Mail, ShoppingBag, ChevronDown, ChevronUp, ArrowLeft, Package, Save, Pencil, Wallet, LogOut, Truck, Bell, CheckCircle2, ExternalLink, X } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import type { Order } from "@shared/models/auth";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
@@ -437,26 +437,21 @@ export default function MyProfile() {
             </button>
           </GlassPanel>
 
-          {/* Bottom Sheet – შეძენილი ნივთები */}
+          {/* Modal Sheet – შეძენილი ნივთები */}
           {ordersOpen && (
-            <div className="fixed inset-0 z-50 flex flex-col justify-end">
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               {/* Backdrop */}
               <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                 onClick={() => setOrdersOpen(false)}
               />
               {/* Sheet */}
               <div
-                className="relative z-10 bg-background rounded-t-2xl shadow-2xl max-h-[80vh] flex flex-col animate-in slide-in-from-bottom duration-300"
+                className="relative z-10 bg-background rounded-2xl shadow-2xl w-full max-w-md max-h-[75vh] flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-200"
                 data-testid="sheet-orders"
               >
-                {/* Handle */}
-                <div className="flex justify-center pt-3 pb-1">
-                  <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
-                </div>
-
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-3 border-b border-muted">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-muted">
                   <div className="flex items-center gap-2">
                     <ShoppingBag className="h-5 w-5 text-primary" />
                     <span className="text-base font-semibold">შეძენილი ნივთები</span>
@@ -471,12 +466,12 @@ export default function MyProfile() {
                     className="rounded-full p-1.5 hover:bg-muted transition-colors"
                     data-testid="button-close-orders-sheet"
                   >
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    <X className="h-5 w-5 text-muted-foreground" />
                   </button>
                 </div>
 
                 {/* Content */}
-                <div className="overflow-y-auto flex-1 px-5 pb-8 pt-4 space-y-3">
+                <div className="overflow-y-auto flex-1 px-5 pb-6 pt-4 space-y-3">
                   {ordersLoading ? (
                     <>
                       <Skeleton className="h-16 w-full" />
