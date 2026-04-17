@@ -395,6 +395,18 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
               </div>
             </div>
 
+            {profile?.city?.trim().toLowerCase() === "ქუთაისი" ? (
+              <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800 px-3 py-2 text-sm text-green-800 dark:text-green-300">
+                <span>🚚</span>
+                <span>ქუთაისში მიტანა უფასოა!</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 px-3 py-2 text-sm text-blue-800 dark:text-blue-300">
+                <span>🚚</span>
+                <span>საკურიერო მომსახურეობა — <strong>10.50 ₾</strong> (ანაზღაურდება კურიერთან)</span>
+              </div>
+            )}
+
             <button
               onClick={handleTbcPay}
               disabled={creditSubmitting || tbcSubmitting || authLoading}
