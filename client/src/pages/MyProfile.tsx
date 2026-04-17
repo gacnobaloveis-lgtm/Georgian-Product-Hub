@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { User, MapPin, Phone, Mail, ShoppingBag, ChevronDown, ChevronUp, ArrowLeft, Package, Save, Pencil, Wallet, LogOut, Truck, Bell, CheckCircle2 } from "lucide-react";
-import { Link } from "wouter";
+import { User, MapPin, Phone, Mail, ShoppingBag, ChevronDown, ChevronUp, ArrowLeft, Package, Save, Pencil, Wallet, LogOut, Truck, Bell, CheckCircle2, ExternalLink } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import type { Order } from "@shared/models/auth";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
 
@@ -38,6 +38,7 @@ const GEORGIAN_CITIES = [
 export default function MyProfile() {
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [ordersOpen, setOrdersOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -451,17 +452,21 @@ export default function MyProfile() {
                     {myOrders.map((order, i) => (
                       <div
                         key={order.id}
-                        className="rounded-lg border border-muted bg-muted/20 p-3 sm:p-4"
+                        className="rounded-lg border border-muted bg-muted/20 p-3 sm:p-4 cursor-pointer hover:border-primary/40 hover:bg-muted/40 transition-colors"
                         data-testid={`card-order-${i}`}
+                        onClick={() => setLocation(`/products/${order.productId}`)}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <p className="font-medium text-sm sm:text-base" data-testid={`text-order-name-${i}`}>
-                              {order.selectedColor && (
-                                <span className="text-primary">{order.selectedColor} </span>
-                              )}
-                              {order.productName}
-                            </p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-medium text-sm sm:text-base" data-testid={`text-order-name-${i}`}>
+                                {order.selectedColor && (
+                                  <span className="text-primary">{order.selectedColor} </span>
+                                )}
+                                {order.productName}
+                              </p>
+                              <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />
+                            </div>
                             <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                               <span data-testid={`text-order-qty-${i}`}>{order.quantity} ც.</span>
                               <span data-testid={`text-order-price-${i}`} className="font-semibold text-foreground">
