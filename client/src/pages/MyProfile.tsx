@@ -454,7 +454,7 @@ export default function MyProfile() {
                         key={order.id}
                         className="rounded-lg border border-muted bg-muted/20 p-3 sm:p-4 cursor-pointer hover:border-primary/40 hover:bg-muted/40 transition-colors"
                         data-testid={`card-order-${i}`}
-                        onClick={() => setLocation(`/products/${order.productId}`)}
+                        onClick={() => setLocation(`/product/${order.productId}`)}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
