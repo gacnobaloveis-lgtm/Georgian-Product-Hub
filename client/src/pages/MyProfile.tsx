@@ -39,7 +39,8 @@ export default function MyProfile() {
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [ordersOpen, setOrdersOpen] = useState(false);
+  const ordersAutoOpen = new URLSearchParams(window.location.search).get("orders") === "open";
+  const [ordersOpen, setOrdersOpen] = useState(ordersAutoOpen);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
