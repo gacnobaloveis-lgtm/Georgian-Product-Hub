@@ -1716,9 +1716,12 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       const amountTetri = Math.round(Number(amount) * 100); // GEL → tetri
       const oid = orderId ? String(orderId) : randomUUID();
 
+      // Flitt rejects duplicate order_ids — always add timestamp suffix to make unique
+      const uniqueOid = `${oid}-${Date.now()}`;
+
       const params: Record<string, string | number> = {
         merchant_id: merchantId,
-        order_id: oid,
+        order_id: uniqueOid,
         order_desc: (description || "spiningebi.ge შეკვეთა").substring(0, 255),
         amount: amountTetri,
         currency: "GEL",
