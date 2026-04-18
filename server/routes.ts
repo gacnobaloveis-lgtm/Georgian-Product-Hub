@@ -1757,6 +1757,32 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     }
   });
 
+  // Embedded checkout params — frontend calls this to get signed params for checkout.js widget
+  app.post("/api/flitt/embed-params", async (req: any, res) => {
+    if (!req.isAuthenticated?.() || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    const { amount, orderId, description } = req.body;
+    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+      return res.status(400).json({ message: "თანხა აუცილებელია" });
+    }
+    const appUrl = (process.env.APP_URL || "https://spiningebi.ge").replace(/\/$/, "");
+    const merchantId = Number(process.env.FLITT_MERCHANT_ID || "1549901");
+    const amountTetri = Math.round(Number(amount) * 100);
+    const uniqueOid = `${orderId || randomUUID()}-${Date.now()}`;
+
+    const params: Record<string, string | number> = {
+      merchant_id: merchantId,
+      order_id: uniqueOid,
+      order_desc: (description || "spiningebi.ge შეკვეთა").substring(0, 255),
+      amount: amountTetri,
+      currency: "GEL",
+      response_url: `${appUrl}/payment/success`,
+    };
+    const signature = flittSignature(params);
+    return res.json({ ...params, signature });
+  });
+
   app.post("/api/flitt/callback", express.json(), (req, res) => {
     // Log only non-sensitive fields for audit
     const { order_id, payment_id, order_status, response_status } = req.body || {};

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { FlittCheckout } from "@/components/FlittCheckout";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +54,8 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [creditSubmitting, setCreditSubmitting] = useState(false);
   const [tbcSubmitting, setTbcSubmitting] = useState(false);
+  const [flittOpen, setFlittOpen] = useState(false);
+  const [pendingFlitt, setPendingFlitt] = useState<{ orderId: number; amount: number; description: string } | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -227,30 +230,12 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
       }
 
       const order = await orderRes.json();
-
-      const payRes = await fetch("/api/flitt/pay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          amount: total,
-          description: `spiningebi.ge — ${productName} (${quantity} ც.)`,
-          orderId: order.id,
-        }),
+      setPendingFlitt({
+        orderId: order.id,
+        amount: total,
+        description: `spiningebi.ge — ${productName} (${quantity} ც.)`,
       });
-
-      if (!payRes.ok) {
-        const err = await payRes.json();
-        toast({ variant: "destructive", title: "გადახდის შეცდომა", description: err.message || "გადახდა ვერ დაიწყო" });
-        return;
-      }
-
-      const { payUrl } = await payRes.json();
-      if (payUrl) {
-        window.location.href = payUrl;
-      } else {
-        toast({ variant: "destructive", title: "შეცდომა", description: "გადახდის ბმული ვერ მოვიპოვეთ" });
-      }
+      setFlittOpen(true);
     } catch {
       toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
     } finally {
@@ -259,6 +244,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -456,5 +442,16 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
         )}
       </DialogContent>
     </Dialog>
+
+    {pendingFlitt && (
+      <FlittCheckout
+        open={flittOpen}
+        onClose={() => { setFlittOpen(false); setPendingFlitt(null); }}
+        amount={pendingFlitt.amount}
+        orderId={pendingFlitt.orderId}
+        description={pendingFlitt.description}
+      />
+    )}
+  </>
   );
 }
