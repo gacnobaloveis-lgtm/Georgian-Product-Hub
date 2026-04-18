@@ -8,7 +8,7 @@ declare global {
   }
 }
 
-const CHECKOUT_JS = "https://pay.flitt.com/static/checkout/checkout.js";
+const CHECKOUT_JS = "https://pay.fondy.eu/checkout.js";
 
 function loadCheckoutScript(): Promise<void> {
   return new Promise((resolve, reject) => {
