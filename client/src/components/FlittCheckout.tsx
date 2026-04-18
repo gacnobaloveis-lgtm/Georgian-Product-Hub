@@ -67,18 +67,10 @@ export function FlittCheckout({ open, onClose, amount, orderId, description }: F
           window.checkout("#flitt-checkout-container", {
             options: {
               methods: ["card"],
-              methods_disabled: ["banks", "most_popular", "wallets", "apple_pay", "google_pay", "samsung_pay"],
-              fields: false,
-              title: false,
-              link: false,
+              methods_disabled: ["banks", "most_popular", "wallets"],
               full_screen: false,
-              button: true,
               active_tab: "card",
-              card_icons: ["mastercard", "visa"],
-              theme: {
-                type: "light",
-                preset: "plain",
-              },
+              theme: { type: "light" },
             },
             params,
           });
