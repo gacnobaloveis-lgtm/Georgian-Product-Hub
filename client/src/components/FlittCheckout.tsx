@@ -4,7 +4,7 @@ import { Loader2, CreditCard } from "lucide-react";
 
 declare global {
   interface Window {
-    checkout: (selector: string, options: any) => void;
+    fondy: (selectorOrOptions: any, options?: any) => void;
   }
 }
 
@@ -12,7 +12,7 @@ const CHECKOUT_JS = "https://pay.fondy.eu/checkout.js";
 
 function loadCheckoutScript(): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (typeof window.checkout === "function") { resolve(); return; }
+    if (typeof window.fondy === "function") { resolve(); return; }
     const existing = document.querySelector(`script[src="${CHECKOUT_JS}"]`);
     if (existing) {
       existing.addEventListener("load", () => resolve());
@@ -63,8 +63,8 @@ export function FlittCheckout({ open, onClose, amount, orderId, description }: F
         await new Promise(r => setTimeout(r, 120));
 
         const el = document.getElementById("flitt-checkout-container");
-        if (el && typeof window.checkout === "function") {
-          window.checkout("#flitt-checkout-container", {
+        if (el && typeof window.fondy === "function") {
+          window.fondy("#flitt-checkout-container", {
             options: {
               methods: ["card"],
               methods_disabled: ["banks", "most_popular", "wallets"],
