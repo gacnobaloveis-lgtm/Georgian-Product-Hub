@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { FlittCheckout } from "@/components/FlittCheckout";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useCart, CartItem } from "@/hooks/use-cart";
@@ -66,8 +65,6 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   const [editForm, setEditForm] = useState<EditForm>({ fullName: "", city: "", address: "", phone: "" });
   const [tbcSubmitting, setTbcSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [flittOpen, setFlittOpen] = useState(false);
-  const [pendingFlitt, setPendingFlitt] = useState<{ orderId: number; amount: number; description: string } | null>(null);
   const confirmedItemsRef = useRef<CartItem[]>([]);
   const pendingCheckoutItemsRef = useRef<CartItem[]>([]);
 
@@ -262,15 +259,33 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
         ? `spiningebi.ge — ${itemsToOrder[0].name} (${itemsToOrder[0].quantity} ც.)`
         : `spiningebi.ge — ${itemsToOrder.length} ნივთი`;
 
-      clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
-      setSelected(new Set());
-      setPendingFlitt({
-        orderId: createdOrderIds[0],
-        amount: totalAmount,
-        description,
+      const payRes = await fetch("/api/flitt/pay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          amount: totalAmount,
+          description,
+          orderId: createdOrderIds[0],
+        }),
       });
-      setFlittOpen(true);
-      setTbcSubmitting(false);
+
+      if (!payRes.ok) {
+        const err = await payRes.json();
+        toast({ variant: "destructive", title: "გადახდის შეცდომა", description: err.message || "გადახდა ვერ დაიწყო" });
+        setTbcSubmitting(false);
+        return;
+      }
+
+      const { payUrl } = await payRes.json();
+      if (payUrl) {
+        clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
+        setSelected(new Set());
+        window.location.href = payUrl;
+      } else {
+        toast({ variant: "destructive", title: "შეცდომა", description: "გადახდის ბმული ვერ მოვიპოვეთ" });
+        setTbcSubmitting(false);
+      }
     } catch {
       toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
       setTbcSubmitting(false);
@@ -602,16 +617,6 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
         onOpenChange={setAuthDialogOpen}
         onRegistered={handleRegistered}
       />
-
-      {pendingFlitt && (
-        <FlittCheckout
-          open={flittOpen}
-          onClose={() => { setFlittOpen(false); setPendingFlitt(null); }}
-          amount={pendingFlitt.amount}
-          orderId={pendingFlitt.orderId}
-          description={pendingFlitt.description}
-        />
-      )}
     </>
   );
 }
