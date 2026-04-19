@@ -964,7 +964,7 @@ export async function registerRoutes(
   // Public: total registered users count
   app.get("/api/users/count", async (_req, res) => {
     try {
-      const all = await storage.getAllUsers();
+      const all = await storage.getUsers();
       res.json({ count: all.length });
     } catch {
       res.json({ count: 0 });
