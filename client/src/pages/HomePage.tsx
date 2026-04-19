@@ -256,6 +256,7 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
           >
             <span className="text-[10px] font-bold sm:text-xs" style={{ color: "#D4A017" }}>დააგროვე კრედიტი</span>
             <Coins className="h-3.5 w-3.5 shrink-0" style={{ color: "#FFD700", fill: "#FFD700" }} />
+            <Share2 className="h-3 w-3 shrink-0" style={{ color: "#D4A017" }} />
           </button>
         </CardContent>
       </Card>
