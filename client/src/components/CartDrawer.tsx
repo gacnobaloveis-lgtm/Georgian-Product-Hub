@@ -67,7 +67,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   const [editForm, setEditForm] = useState<EditForm>({ fullName: "", city: "", address: "", phone: "" });
   const [tbcSubmitting, setTbcSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [flittPayUrl, setFlittPayUrl] = useState<string | null>(null);
+  const [flittPay, setFlittPay] = useState<{ orderId: number; amount: number; description: string } | null>(null);
   const [, navigate] = useLocation();
   const confirmedItemsRef = useRef<CartItem[]>([]);
   const pendingCheckoutItemsRef = useRef<CartItem[]>([]);
@@ -263,35 +263,10 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
         ? `spiningebi.ge — ${itemsToOrder[0].name} (${itemsToOrder[0].quantity} ც.)`
         : `spiningebi.ge — ${itemsToOrder.length} ნივთი`;
 
-      const payRes = await fetch("/api/flitt/pay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          amount: totalAmount,
-          description,
-          orderId: createdOrderIds[0],
-          cardOnly: true,
-        }),
-      });
-
-      if (!payRes.ok) {
-        const err = await payRes.json();
-        toast({ variant: "destructive", title: "გადახდის შეცდომა", description: err.message || "გადახდა ვერ დაიწყო" });
-        setTbcSubmitting(false);
-        return;
-      }
-
-      const { payUrl } = await payRes.json();
-      if (payUrl) {
-        clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
-        setSelected(new Set());
-        setFlittPayUrl(payUrl);
-        setTbcSubmitting(false);
-      } else {
-        toast({ variant: "destructive", title: "შეცდომა", description: "გადახდის ბმული ვერ მოვიპოვეთ" });
-        setTbcSubmitting(false);
-      }
+      clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
+      setSelected(new Set());
+      setFlittPay({ orderId: createdOrderIds[0], amount: totalAmount, description });
+      setTbcSubmitting(false);
     } catch {
       toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
       setTbcSubmitting(false);
@@ -624,16 +599,20 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
         onRegistered={handleRegistered}
       />
 
-      <FlittPaymentDialog
-        open={!!flittPayUrl}
-        payUrl={flittPayUrl}
-        onClose={() => setFlittPayUrl(null)}
-        onSuccess={() => {
-          setFlittPayUrl(null);
-          onOpenChange(false);
-          navigate("/profile?orders=open");
-        }}
-      />
+      {flittPay && (
+        <FlittPaymentDialog
+          open={!!flittPay}
+          amount={flittPay.amount}
+          orderId={flittPay.orderId}
+          description={flittPay.description}
+          onClose={() => setFlittPay(null)}
+          onSuccess={() => {
+            setFlittPay(null);
+            onOpenChange(false);
+            navigate("/profile?orders=open");
+          }}
+        />
+      )}
     </>
   );
 }

@@ -55,7 +55,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [creditSubmitting, setCreditSubmitting] = useState(false);
   const [tbcSubmitting, setTbcSubmitting] = useState(false);
-  const [flittPayUrl, setFlittPayUrl] = useState<string | null>(null);
+  const [flittPay, setFlittPay] = useState<{ orderId: number; amount: number; description: string } | null>(null);
   const [, navigate] = useLocation();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -231,31 +231,11 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
       }
 
       const order = await orderRes.json();
-
-      const payRes = await fetch("/api/flitt/pay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          amount: total,
-          description: `spiningebi.ge — ${productName} (${quantity} ც.)`,
-          orderId: order.id,
-          cardOnly: true,
-        }),
+      setFlittPay({
+        orderId: order.id,
+        amount: total,
+        description: `spiningebi.ge — ${productName} (${quantity} ც.)`,
       });
-
-      if (!payRes.ok) {
-        const err = await payRes.json();
-        toast({ variant: "destructive", title: "გადახდის შეცდომა", description: err.message || "გადახდა ვერ დაიწყო" });
-        return;
-      }
-
-      const { payUrl } = await payRes.json();
-      if (payUrl) {
-        setFlittPayUrl(payUrl);
-      } else {
-        toast({ variant: "destructive", title: "შეცდომა", description: "გადახდის ბმული ვერ მოვიპოვეთ" });
-      }
     } catch {
       toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
     } finally {
@@ -265,16 +245,20 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
 
   return (
     <>
-    <FlittPaymentDialog
-      open={!!flittPayUrl}
-      payUrl={flittPayUrl}
-      onClose={() => setFlittPayUrl(null)}
-      onSuccess={() => {
-        setFlittPayUrl(null);
-        onOpenChange(false);
-        navigate("/profile?orders=open");
-      }}
-    />
+    {flittPay && (
+      <FlittPaymentDialog
+        open={!!flittPay}
+        amount={flittPay.amount}
+        orderId={flittPay.orderId}
+        description={flittPay.description}
+        onClose={() => setFlittPay(null)}
+        onSuccess={() => {
+          setFlittPay(null);
+          onOpenChange(false);
+          navigate("/profile?orders=open");
+        }}
+      />
+    )}
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
