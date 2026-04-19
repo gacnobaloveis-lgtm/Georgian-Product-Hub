@@ -1712,8 +1712,6 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       if (cardOnly) {
         requestData.default_payment_system = "card";
         requestData.required_rectoken = "n";
-        requestData.methods = "card,wallets";
-        requestData.methods_disabled = "banklinks_eu,emoney,local_methods,bank_transfer,installments,trustly,piraeus";
       }
 
       const result = await flittClient.Checkout(requestData);
