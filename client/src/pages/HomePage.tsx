@@ -254,8 +254,8 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
             className="mt-1 flex items-center gap-1.5 animate-pulse-share"
             data-testid={`button-share-${product.id}`}
           >
-            <span className="text-[10px] font-bold sm:text-xs" style={{ color: "#7C3AED" }}>დააგროვე კრედიტი</span>
-            <Coins className="h-3.5 w-3.5 shrink-0" style={{ color: "#7C3AED" }} />
+            <span className="text-[10px] font-bold sm:text-xs" style={{ color: "#D4A017" }}>დააგროვე კრედიტი</span>
+            <Coins className="h-3.5 w-3.5 shrink-0" style={{ color: "#FFD700", fill: "#FFD700" }} />
           </button>
         </CardContent>
       </Card>
