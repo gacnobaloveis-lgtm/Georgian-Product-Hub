@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { FlittPaymentDialog } from "@/components/FlittPaymentDialog";
+import { PaymentSuccessDialog } from "@/components/PaymentSuccessDialog";
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
   const [creditSubmitting, setCreditSubmitting] = useState(false);
   const [tbcSubmitting, setTbcSubmitting] = useState(false);
   const [flittPay, setFlittPay] = useState<{ orderId: number; amount: number; description: string } | null>(null);
+  const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
   const [, navigate] = useLocation();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -256,10 +258,15 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
         onSuccess={() => {
           setFlittPay(null);
           onOpenChange(false);
-          navigate("/profile?orders=open");
+          setPaymentSuccessOpen(true);
         }}
       />
     )}
+    <PaymentSuccessDialog
+      open={paymentSuccessOpen}
+      onGoHome={() => { setPaymentSuccessOpen(false); navigate("/"); }}
+      onGoOrders={() => { setPaymentSuccessOpen(false); navigate("/profile?orders=open"); }}
+    />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>

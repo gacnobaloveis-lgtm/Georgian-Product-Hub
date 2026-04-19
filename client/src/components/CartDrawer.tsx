@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { FlittPaymentDialog } from "@/components/FlittPaymentDialog";
+import { PaymentSuccessDialog } from "@/components/PaymentSuccessDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useCart, CartItem } from "@/hooks/use-cart";
@@ -68,6 +69,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   const [tbcSubmitting, setTbcSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [flittPay, setFlittPay] = useState<{ orderId: number; amount: number; description: string } | null>(null);
+  const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
   const [, navigate] = useLocation();
   const confirmedItemsRef = useRef<CartItem[]>([]);
   const pendingCheckoutItemsRef = useRef<CartItem[]>([]);
@@ -610,10 +612,15 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
           onSuccess={() => {
             setFlittPay(null);
             onOpenChange(false);
-            navigate("/profile?orders=open");
+            setPaymentSuccessOpen(true);
           }}
         />
       )}
+      <PaymentSuccessDialog
+        open={paymentSuccessOpen}
+        onGoHome={() => { setPaymentSuccessOpen(false); navigate("/"); }}
+        onGoOrders={() => { setPaymentSuccessOpen(false); navigate("/profile?orders=open"); }}
+      />
     </>
   );
 }
