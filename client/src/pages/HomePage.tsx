@@ -22,6 +22,7 @@ import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { LucideIcon } from "@/components/IconPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Link, useLocation } from "wouter";
+import { queryClient } from "@/lib/queryClient";
 import { useCategories } from "@/hooks/use-categories";
 import type { Product, Category, TermsSection } from "@shared/schema";
 import wobblerIcon from "@assets/image_1771887558144.png";
@@ -196,6 +197,9 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
     }
     const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
     window.open(fbUrl, "_blank", "width=600,height=400");
+    fetch(`/api/products/${product.id}/share`, { method: "POST" })
+      .then(() => queryClient.invalidateQueries({ queryKey: ["/api/products"] }))
+      .catch(() => {});
   };
 
   return (
@@ -251,12 +255,17 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
           <button
             type="button"
             onClick={handleShare}
-            className="mt-1 flex items-center gap-1.5 animate-pulse-share"
+            className="mt-1 flex flex-col items-start gap-0 animate-pulse-share"
             data-testid={`button-share-${product.id}`}
           >
-            <span className="text-[10px] font-bold sm:text-xs" style={{ color: "#7C3AED" }}>დააგროვე კრედიტი</span>
-            <Coins className="h-3.5 w-3.5 shrink-0" style={{ color: "#B8860B", fill: "#DAA520" }} />
-            <Send className="h-3 w-3 shrink-0" style={{ color: "#7C3AED" }} />
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] font-bold sm:text-xs" style={{ color: "#7C3AED" }}>დააგროვე კრედიტი</span>
+              <Coins className="h-3.5 w-3.5 shrink-0" style={{ color: "#B8860B", fill: "#DAA520" }} />
+              <Send className="h-3 w-3 shrink-0" style={{ color: "#7C3AED" }} />
+            </div>
+            <span className="text-[9px] text-gray-500 sm:text-[10px]" data-testid={`text-share-count-${product.id}`}>
+              გადაზიარდა {product.shareCount ?? 0} ჯერ
+            </span>
           </button>
         </CardContent>
       </Card>

@@ -412,6 +412,17 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/products/:id/share", async (req, res) => {
+    const id = Number(req.params.id);
+    if (isNaN(id) || id <= 0) return res.status(400).json({ message: "არასწორი ID" });
+    try {
+      await storage.incrementShareCount(id);
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.put(api.products.update.path, requireAdmin, upload.none(), async (req, res) => {
     try {
       const id = Number(req.params.id);

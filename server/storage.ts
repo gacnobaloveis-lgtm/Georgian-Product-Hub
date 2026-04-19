@@ -28,6 +28,7 @@ export interface IStorage {
   deleteOrdersOlderThan(date: Date): Promise<number>;
   incrementSoldCount(productId: number, qty: number): Promise<void>;
   incrementViewCount(productId: number): Promise<void>;
+  incrementShareCount(productId: number): Promise<void>;
   getUserByReferralCode(code: string): Promise<User | undefined>;
   addCredit(userId: string, amount: number): Promise<void>;
   deductCredit(userId: string, amount: number): Promise<boolean>;
@@ -160,6 +161,12 @@ export class DatabaseStorage implements IStorage {
   async incrementViewCount(productId: number): Promise<void> {
     await db.update(products)
       .set({ viewCount: sql`COALESCE(${products.viewCount}, 0) + 1` })
+      .where(eq(products.id, productId));
+  }
+
+  async incrementShareCount(productId: number): Promise<void> {
+    await db.update(products)
+      .set({ shareCount: sql`COALESCE(${products.shareCount}, 0) + 1` })
       .where(eq(products.id, productId));
   }
 

@@ -17,6 +17,7 @@ export const products = pgTable("products", {
   categoryId: integer("category_id"),
   soldCount: integer("sold_count").notNull().default(0),
   viewCount: integer("view_count").notNull().default(0),
+  shareCount: integer("share_count").notNull().default(0),
 });
 
 export const media = pgTable("media", {
