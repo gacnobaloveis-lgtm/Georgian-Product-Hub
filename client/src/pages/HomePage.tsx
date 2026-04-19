@@ -17,7 +17,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText, Download, Info } from "lucide-react";
+import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText, Download, Info, Coins } from "lucide-react";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { LucideIcon } from "@/components/IconPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -254,8 +254,8 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
             className="mt-1 flex items-center gap-1.5 animate-pulse-share"
             data-testid={`button-share-${product.id}`}
           >
-            <span className="text-[10px] font-bold sm:text-xs" style={{ color: "#FF6B35" }}>დააგროვე კრედიტი</span>
-            <Share2 className="h-3.5 w-3.5 shrink-0" style={{ color: "#FF6B35" }} />
+            <span className="text-[10px] font-bold sm:text-xs" style={{ color: "#7C3AED" }}>დააგროვე კრედიტი</span>
+            <Coins className="h-3.5 w-3.5 shrink-0" style={{ color: "#7C3AED" }} />
           </button>
         </CardContent>
       </Card>
