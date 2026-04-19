@@ -112,11 +112,25 @@ function SiteFooter() {
             </button>
           </div>
         </div>
-        <div className="mt-6 border-t border-purple-200/50 pt-4 text-center">
+        <div className="mt-6 border-t border-purple-200/50 pt-4 text-center space-y-1">
+          <RegisteredUsersCount />
           <p className="text-xs text-gray-500">© {new Date().getFullYear()} spiningebi.ge — ყველა უფლება დაცულია</p>
         </div>
       </div>
     </footer>
+  );
+}
+
+function RegisteredUsersCount() {
+  const { data } = useQuery<{ count: number }>({
+    queryKey: ["/api/users/count"],
+    refetchInterval: 60000,
+  });
+  if (!data || !data.count) return null;
+  return (
+    <p className="text-xs font-semibold text-purple-700" data-testid="text-registered-count">
+      სულ დარეგისტრირდა <span className="text-emerald-600">{data.count}</span> მომხმარებელი
+    </p>
   );
 }
 

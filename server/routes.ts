@@ -961,6 +961,16 @@ export async function registerRoutes(
     res.json({ count: activeSessions.size });
   });
 
+  // Public: total registered users count
+  app.get("/api/users/count", async (_req, res) => {
+    try {
+      const all = await storage.getAllUsers();
+      res.json({ count: all.length });
+    } catch {
+      res.json({ count: 0 });
+    }
+  });
+
   // Public ping — client calls every 30s to register as "online"
   app.post("/api/ping", (req, res) => {
     const sid = (req.query.sid as string) || "";
