@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { useLocation } from "wouter";
+import { FlittPaymentDialog } from "@/components/FlittPaymentDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useCart, CartItem } from "@/hooks/use-cart";
@@ -65,6 +67,8 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   const [editForm, setEditForm] = useState<EditForm>({ fullName: "", city: "", address: "", phone: "" });
   const [tbcSubmitting, setTbcSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [flittPayUrl, setFlittPayUrl] = useState<string | null>(null);
+  const [, navigate] = useLocation();
   const confirmedItemsRef = useRef<CartItem[]>([]);
   const pendingCheckoutItemsRef = useRef<CartItem[]>([]);
 
@@ -267,6 +271,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
           amount: totalAmount,
           description,
           orderId: createdOrderIds[0],
+          cardOnly: true,
         }),
       });
 
@@ -281,7 +286,8 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
       if (payUrl) {
         clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
         setSelected(new Set());
-        window.location.href = payUrl;
+        setFlittPayUrl(payUrl);
+        setTbcSubmitting(false);
       } else {
         toast({ variant: "destructive", title: "შეცდომა", description: "გადახდის ბმული ვერ მოვიპოვეთ" });
         setTbcSubmitting(false);
@@ -616,6 +622,17 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
         open={authDialogOpen}
         onOpenChange={setAuthDialogOpen}
         onRegistered={handleRegistered}
+      />
+
+      <FlittPaymentDialog
+        open={!!flittPayUrl}
+        payUrl={flittPayUrl}
+        onClose={() => setFlittPayUrl(null)}
+        onSuccess={() => {
+          setFlittPayUrl(null);
+          onOpenChange(false);
+          navigate("/profile?orders=open");
+        }}
       />
     </>
   );

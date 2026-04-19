@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { FlittPaymentDialog } from "@/components/FlittPaymentDialog";
 import {
   Dialog,
   DialogContent,
@@ -53,6 +55,8 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [creditSubmitting, setCreditSubmitting] = useState(false);
   const [tbcSubmitting, setTbcSubmitting] = useState(false);
+  const [flittPayUrl, setFlittPayUrl] = useState<string | null>(null);
+  const [, navigate] = useLocation();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -236,6 +240,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
           amount: total,
           description: `spiningebi.ge — ${productName} (${quantity} ც.)`,
           orderId: order.id,
+          cardOnly: true,
         }),
       });
 
@@ -247,7 +252,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
 
       const { payUrl } = await payRes.json();
       if (payUrl) {
-        window.location.href = payUrl;
+        setFlittPayUrl(payUrl);
       } else {
         toast({ variant: "destructive", title: "შეცდომა", description: "გადახდის ბმული ვერ მოვიპოვეთ" });
       }
@@ -259,6 +264,17 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
   }
 
   return (
+    <>
+    <FlittPaymentDialog
+      open={!!flittPayUrl}
+      payUrl={flittPayUrl}
+      onClose={() => setFlittPayUrl(null)}
+      onSuccess={() => {
+        setFlittPayUrl(null);
+        onOpenChange(false);
+        navigate("/profile?orders=open");
+      }}
+    />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -456,5 +472,6 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
         )}
       </DialogContent>
     </Dialog>
+    </>
   );
 }

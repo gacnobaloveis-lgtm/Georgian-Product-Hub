@@ -11,6 +11,15 @@ export default function PaymentSuccess() {
   const payId = params.get("payId") || params.get("transactionId") || "";
 
   useEffect(() => {
+    // If shown inside the Flitt iframe modal, notify parent and don't auto-redirect
+    if (window.parent && window.parent !== window) {
+      try {
+        window.parent.postMessage({ type: "flitt-payment-success", payId }, window.location.origin);
+        return;
+      } catch {
+        // fall through to normal redirect
+      }
+    }
     const timer = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
@@ -22,7 +31,7 @@ export default function PaymentSuccess() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [setLocation]);
+  }, [setLocation, payId]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4">

@@ -1721,7 +1721,7 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
 
   app.post("/api/flitt/pay", async (req: any, res) => {
     try {
-      const { amount, description, orderId } = req.body;
+      const { amount, description, orderId, cardOnly } = req.body;
       if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
         return res.status(400).json({ message: "თანხა აუცილებელია" });
       }
@@ -1742,6 +1742,11 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         response_url: `${appUrl}/payment/success`,
         server_callback_url: `${appUrl}/api/flitt/callback`,
       };
+
+      if (cardOnly) {
+        params.default_payment_system = "card";
+        params.required_rectoken = "n";
+      }
 
       const result = await flittRequest(params);
       const resp = result?.response;
