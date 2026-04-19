@@ -34,6 +34,11 @@ export default function LiveContactPage() {
     refetchInterval: 4000,
   });
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    queryClient.invalidateQueries({ queryKey: ["/api/chat/unread-count"] });
+  }, [isAuthenticated, messages, queryClient]);
+
   const sendMutation = useMutation({
     mutationFn: async (message: string) => {
       const res = await apiRequest("POST", "/api/chat/messages", { message });
