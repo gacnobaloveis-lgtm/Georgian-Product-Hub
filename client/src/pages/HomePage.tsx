@@ -884,7 +884,7 @@ export default function HomePage() {
       {isAuthenticated && !hasAdminRole && (
         <button
           onClick={() => setLocation("/live-contact")}
-          className="float-above-nav fixed right-4 md:right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-2xl ring-4 ring-white/60 hover:scale-105 active:scale-95 transition-transform"
+          className="float-above-nav fixed right-4 md:right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-[0_4px_14px_rgba(0,0,0,0.25)] hover:bg-emerald-600 hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)] active:scale-95 transition-all duration-200"
           aria-label="ცოცხალი ჩათი"
           data-testid="button-chat-bubble"
         >
