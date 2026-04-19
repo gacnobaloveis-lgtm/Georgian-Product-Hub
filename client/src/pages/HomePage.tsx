@@ -332,13 +332,8 @@ function MobileBottomNav({
       >
         <div className="relative">
           <UserCircle className="h-4 w-4" />
-          {chatUnreadCount > 0 && (
-            <span className="absolute -top-1.5 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-              {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
-            </span>
-          )}
         </div>
-        <span className={chatUnreadCount > 0 ? "text-red-500 font-bold" : ""}>პროფილი</span>
+        <span>პროფილი</span>
       </button>
       {hasAdminRole && (
         <Link href="/admin-login">
@@ -871,6 +866,22 @@ export default function HomePage() {
       </div>
 
       <SiteFooter />
+
+      {isAuthenticated && (
+        <button
+          onClick={() => setLocation("/live-contact")}
+          className="float-above-nav fixed right-4 md:right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-2xl ring-4 ring-white/60 hover:scale-105 active:scale-95 transition-transform"
+          aria-label="ცოცხალი ჩათი"
+          data-testid="button-chat-bubble"
+        >
+          <MessageCircle className="h-6 w-6" />
+          {chatUnreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white ring-2 ring-white" data-testid="badge-chat-unread">
+              {chatUnreadCount > 99 ? "99+" : chatUnreadCount}
+            </span>
+          )}
+        </button>
+      )}
 
       <MobileBottomNav
         onCategoriesOpen={() => setCategoryDrawerOpen(true)}
