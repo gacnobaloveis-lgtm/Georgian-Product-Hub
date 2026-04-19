@@ -1679,45 +1679,13 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     );
   });
 
-  // ── Flitt (Fondy) Payment ──────────────────────────────────────────────────
-  const FLITT_URL = "https://pay.flitt.com/api/checkout/url/";
-
-  function flittSignature(params: Record<string, string | number>): string {
-    const sorted = Object.keys(params).sort();
-    const values = sorted.map(k => String(params[k]));
-    const raw = [process.env.FLITT_SECRET_KEY || "test", ...values].join("|");
-    return createHash("sha1").update(raw).digest("hex");
-  }
-
-  async function flittRequest(params: Record<string, string | number>): Promise<any> {
-    const sig = flittSignature(params);
-    const body = JSON.stringify({ request: { ...params, signature: sig } });
-    return new Promise((resolve, reject) => {
-      const url = new URL(FLITT_URL);
-      const req = https.request(
-        {
-          hostname: url.hostname,
-          path: url.pathname,
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Content-Length": Buffer.byteLength(body),
-          },
-        },
-        (resp) => {
-          let data = "";
-          resp.on("data", (c) => (data += c));
-          resp.on("end", () => {
-            console.log("[Flitt response]", resp.statusCode, data.substring(0, 300));
-            try { resolve(JSON.parse(data)); } catch { resolve(data); }
-          });
-        }
-      );
-      req.on("error", reject);
-      req.write(body);
-      req.end();
-    });
-  }
+  // ── Flitt Payment (official SDK) ───────────────────────────────────────────
+  const FlittPayMod: any = await import("@flittpayments/flitt-node-js-sdk");
+  const FlittPay = FlittPayMod.default || FlittPayMod;
+  const flittClient = new FlittPay({
+    merchantId: Number(process.env.FLITT_MERCHANT_ID || "1549901"),
+    secretKey: process.env.FLITT_SECRET_KEY || "test",
+  });
 
   app.post("/api/flitt/pay", async (req: any, res) => {
     try {
@@ -1726,30 +1694,28 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         return res.status(400).json({ message: "თანხა აუცილებელია" });
       }
       const appUrl = (process.env.APP_URL || "https://spiningebi.ge").replace(/\/$/, "");
-      const merchantId = Number(process.env.FLITT_MERCHANT_ID || "1549901");
       const amountTetri = Math.round(Number(amount) * 100); // GEL → tetri
       const oid = orderId ? String(orderId) : randomUUID();
 
       // Flitt rejects duplicate order_ids — always add timestamp suffix to make unique
       const uniqueOid = `${oid}-${Date.now()}`;
 
-      const params: Record<string, string | number> = {
-        merchant_id: merchantId,
+      const requestData: Record<string, string | number> = {
         order_id: uniqueOid,
         order_desc: (description || "spiningebi.ge შეკვეთა").substring(0, 255),
-        amount: amountTetri,
         currency: "GEL",
+        amount: amountTetri,
         response_url: `${appUrl}/payment/success`,
         server_callback_url: `${appUrl}/api/flitt/callback`,
       };
 
       if (cardOnly) {
-        params.default_payment_system = "card";
-        params.required_rectoken = "n";
+        requestData.default_payment_system = "card";
+        requestData.required_rectoken = "n";
       }
 
-      const result = await flittRequest(params);
-      const resp = result?.response;
+      const result = await flittClient.Checkout(requestData);
+      const resp = result?.response || result;
 
       if (resp?.checkout_url) {
         return res.json({ payUrl: resp.checkout_url, paymentId: resp.payment_id });
@@ -1757,35 +1723,9 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       console.error("[Flitt pay] bad response:", resp?.error_message || "unknown");
       return res.status(502).json({ message: "გადახდის ბმულის მიღება ვერ მოხერხდა" });
     } catch (err: any) {
-      console.error("[Flitt pay] error:", err);
+      console.error("[Flitt pay] error:", err?.message || err);
       return res.status(500).json({ message: "გადახდის შეცდომა" });
     }
-  });
-
-  // Embedded checkout params — frontend calls this to get signed params for checkout.js widget
-  app.post("/api/flitt/embed-params", async (req: any, res) => {
-    if (!req.isAuthenticated?.() || !req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-    const { amount, orderId, description } = req.body;
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-      return res.status(400).json({ message: "თანხა აუცილებელია" });
-    }
-    const appUrl = (process.env.APP_URL || "https://spiningebi.ge").replace(/\/$/, "");
-    const merchantId = Number(process.env.FLITT_MERCHANT_ID || "1549901");
-    const amountTetri = Math.round(Number(amount) * 100);
-    const uniqueOid = `${orderId || randomUUID()}-${Date.now()}`;
-
-    const params: Record<string, string | number> = {
-      merchant_id: merchantId,
-      order_id: uniqueOid,
-      order_desc: (description || "spiningebi.ge შეკვეთა").substring(0, 255),
-      amount: amountTetri,
-      currency: "GEL",
-      response_url: `${appUrl}/payment/success`,
-    };
-    const signature = flittSignature(params);
-    return res.json({ ...params, signature });
   });
 
   app.post("/api/flitt/callback", express.json(), (req, res) => {
