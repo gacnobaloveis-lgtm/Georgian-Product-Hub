@@ -267,6 +267,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
       setSelected(new Set());
       setFlittPay({ orderId: createdOrderIds[0], amount: totalAmount, description });
       setTbcSubmitting(false);
+      onOpenChange(false);
     } catch {
       toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
       setTbcSubmitting(false);

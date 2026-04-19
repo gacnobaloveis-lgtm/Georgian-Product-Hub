@@ -236,6 +236,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
         amount: total,
         description: `spiningebi.ge — ${productName} (${quantity} ც.)`,
       });
+      onOpenChange(false);
     } catch {
       toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
     } finally {
