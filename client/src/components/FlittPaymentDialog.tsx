@@ -3,35 +3,6 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-declare global {
-  interface Window {
-    fondy?: (selector: string, options: any) => void;
-  }
-}
-
-const SCRIPT_SRC = "https://pay.fondy.eu/checkout.js";
-let scriptPromise: Promise<void> | null = null;
-
-function loadCheckoutScript(): Promise<void> {
-  if (typeof window.fondy === "function") return Promise.resolve();
-  if (scriptPromise) return scriptPromise;
-  scriptPromise = new Promise<void>((resolve, reject) => {
-    const existing = document.querySelector(`script[src="${SCRIPT_SRC}"]`) as HTMLScriptElement | null;
-    if (existing) {
-      existing.addEventListener("load", () => resolve());
-      existing.addEventListener("error", () => reject(new Error("Failed to load Flitt SDK")));
-      return;
-    }
-    const s = document.createElement("script");
-    s.src = SCRIPT_SRC;
-    s.async = true;
-    s.onload = () => resolve();
-    s.onerror = () => { scriptPromise = null; reject(new Error("Failed to load Flitt SDK")); };
-    document.head.appendChild(s);
-  });
-  return scriptPromise;
-}
-
 interface FlittPaymentDialogProps {
   open: boolean;
   amount: number;          // GEL
@@ -42,7 +13,8 @@ interface FlittPaymentDialogProps {
 }
 
 export function FlittPaymentDialog({ open, amount, orderId, description, onClose, onSuccess }: FlittPaymentDialogProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [payUrl, setPayUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const initializedRef = useRef(false);
@@ -51,73 +23,65 @@ export function FlittPaymentDialog({ open, amount, orderId, description, onClose
   useEffect(() => {
     if (!open) {
       initializedRef.current = false;
+      setPayUrl(null);
       return;
     }
     if (initializedRef.current) return;
     initializedRef.current = true;
     setLoading(true);
     setError(null);
+    setPayUrl(null);
 
     let cancelled = false;
-
     (async () => {
       try {
-        const paramsRes = await fetch("/api/flitt/embed-params", {
+        const res = await fetch("/api/flitt/pay", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ amount, orderId, description }),
+          body: JSON.stringify({ amount, orderId, description, cardOnly: true }),
         });
-        if (!paramsRes.ok) {
-          const err = await paramsRes.json().catch(() => ({}));
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
           throw new Error(err.message || "გადახდის ინიციალიზაცია ვერ მოხერხდა");
         }
-        const signedParams = await paramsRes.json();
-
-        await loadCheckoutScript();
-
-        if (cancelled || !containerRef.current) return;
-
-        // Wait one tick so the empty container is in the DOM and visible
-        await new Promise((r) => requestAnimationFrame(() => r(null)));
-
-        const Options = {
-          options: {
-            methods_disabled: ["banks", "most_popular", "wallets"],
-            full_screen: false,
-            theme: { type: "light", layout: "plain" },
-          },
-          params: signedParams,
-        };
-
-        if (typeof window.fondy !== "function") {
-          throw new Error("Flitt SDK არ ჩაიტვირთა");
-        }
-        window.fondy("#flitt-checkout-container", Options);
-        setLoading(false);
+        const { payUrl: url } = await res.json();
+        if (cancelled) return;
+        if (!url) throw new Error("გადახდის ბმული ვერ მოვიპოვეთ");
+        setPayUrl(url);
       } catch (e: any) {
         if (cancelled) return;
         setError(e?.message || "გადახდის შეცდომა");
         setLoading(false);
-        toast({ variant: "destructive", title: "შეცდომა", description: e?.message || "გადახდის SDK ვერ ჩაიტვირთა" });
+        toast({ variant: "destructive", title: "შეცდომა", description: e?.message || "გადახდა ვერ დაიწყო" });
       }
     })();
-
     return () => { cancelled = true; };
   }, [open, amount, orderId, description, toast]);
 
-  // Listen for success postMessage from Flitt SDK
+  // Detect navigation to /payment/success inside the iframe
+  function handleIframeLoad() {
+    setLoading(false);
+    try {
+      const href = iframeRef.current?.contentWindow?.location.href;
+      if (href && href.includes("/payment/success")) {
+        onSuccess();
+      }
+    } catch {
+      // cross-origin – iframe is on Flitt's domain, ignore
+    }
+  }
+
+  // Listen for postMessage from /payment/success (same-origin) or Flitt SDK events
   useEffect(() => {
     function handleMessage(e: MessageEvent) {
       const data = e.data;
-      if (!data) return;
-      // Flitt SDK posts events like { type: 'success' } / { event: 'payment_success' }
+      if (!data || typeof data !== "object") return;
       if (
         data.type === "flitt-payment-success" ||
-        data.type === "success" ||
         data.event === "success" ||
         data.event === "payment_success" ||
-        (typeof data === "object" && data.response_status === "success")
+        data.response_status === "success"
       ) {
         onSuccess();
       }
@@ -129,21 +93,31 @@ export function FlittPaymentDialog({ open, amount, orderId, description, onClose
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent
-        className="p-0 overflow-hidden gap-0 max-w-[95vw] sm:max-w-[420px] w-[420px] sm:rounded-2xl bg-white"
+        className="p-0 overflow-hidden gap-0 max-w-[95vw] sm:max-w-[440px] w-[440px] h-[680px] sm:rounded-2xl bg-white"
         data-testid="dialog-flitt-payment"
       >
         <DialogTitle className="sr-only">ბარათით გადახდა</DialogTitle>
         <DialogDescription className="sr-only">შეიყვანეთ ბარათის მონაცემები</DialogDescription>
-        <div className="relative min-h-[420px] max-h-[80vh] overflow-auto">
-          {loading && (
+        <div className="relative w-full h-full">
+          {(loading || !payUrl) && !error && (
             <div className="absolute inset-0 flex items-center justify-center bg-white z-10">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           )}
-          {error && !loading && (
+          {error && (
             <div className="p-6 text-center text-sm text-destructive">{error}</div>
           )}
-          <div id="flitt-checkout-container" ref={containerRef} className="p-2" />
+          {payUrl && !error && (
+            <iframe
+              ref={iframeRef}
+              src={payUrl}
+              onLoad={handleIframeLoad}
+              className="w-full h-full border-0"
+              title="Flitt Payment"
+              allow="payment *"
+              data-testid="iframe-flitt-payment"
+            />
+          )}
         </div>
       </DialogContent>
     </Dialog>
