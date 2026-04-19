@@ -867,7 +867,7 @@ export default function HomePage() {
 
       <SiteFooter />
 
-      {isAuthenticated && (
+      {isAuthenticated && !hasAdminRole && (
         <button
           onClick={() => setLocation("/live-contact")}
           className="float-above-nav fixed right-4 md:right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-2xl ring-4 ring-white/60 hover:scale-105 active:scale-95 transition-transform"
