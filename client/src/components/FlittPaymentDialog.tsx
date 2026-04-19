@@ -5,15 +5,15 @@ import { useToast } from "@/hooks/use-toast";
 
 declare global {
   interface Window {
-    checkout?: (selector: string, options: any) => void;
+    fondy?: (selector: string, options: any) => void;
   }
 }
 
-const SCRIPT_SRC = "https://pay.flitt.com/checkout.js";
+const SCRIPT_SRC = "https://pay.fondy.eu/checkout.js";
 let scriptPromise: Promise<void> | null = null;
 
 function loadCheckoutScript(): Promise<void> {
-  if (typeof window.checkout === "function") return Promise.resolve();
+  if (typeof window.fondy === "function") return Promise.resolve();
   if (scriptPromise) return scriptPromise;
   scriptPromise = new Promise<void>((resolve, reject) => {
     const existing = document.querySelector(`script[src="${SCRIPT_SRC}"]`) as HTMLScriptElement | null;
@@ -90,10 +90,10 @@ export function FlittPaymentDialog({ open, amount, orderId, description, onClose
           params: signedParams,
         };
 
-        if (typeof window.checkout !== "function") {
+        if (typeof window.fondy !== "function") {
           throw new Error("Flitt SDK არ ჩაიტვირთა");
         }
-        window.checkout("#flitt-checkout-container", Options);
+        window.fondy("#flitt-checkout-container", Options);
         setLoading(false);
       } catch (e: any) {
         if (cancelled) return;
