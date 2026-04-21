@@ -1,0 +1,469 @@
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { FlittPaymentDialog } from "@/components/FlittPaymentDialog";
+import { PaymentSuccessDialog } from "@/components/PaymentSuccessDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { Loader2, ShoppingBag, AlertCircle, Pencil, Check, Coins } from "lucide-react";
+import { SiVisa, SiMastercard } from "react-icons/si";
+import { queryClient } from "@/lib/queryClient";
+
+const GEORGIAN_CITIES = [
+  "თბილისი", "ქუთაისი", "ბათუმი", "რუსთავი", "ფოთი", "ზუგდიდი",
+  "გორი", "თელავი", "ახალციხე", "ოზურგეთი", "სენაკი", "ხაშური",
+  "სამტრედია", "მარნეული", "ქობულეთი", "წყალტუბო", "საგარეჯო",
+  "გარდაბანი", "ბოლნისი", "ზესტაფონი",
+];
+
+interface PurchaseDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  productId: number;
+  productName: string;
+  productPrice: string;
+  quantity: number;
+  selectedColor: string | null;
+}
+
+interface ProfileData {
+  firstName: string | null;
+  lastName: string | null;
+  city: string | null;
+  address: string | null;
+  phone: string | null;
+  myCredit?: string | null;
+}
+
+interface EditForm {
+  fullName: string;
+  city: string;
+  address: string;
+  phone: string;
+}
+
+export function PurchaseDialog({ open, onOpenChange, productId, productName, productPrice, quantity, selectedColor }: PurchaseDialogProps) {
+  const { toast } = useToast();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const [creditSubmitting, setCreditSubmitting] = useState(false);
+  const [tbcSubmitting, setTbcSubmitting] = useState(false);
+  const [flittPay, setFlittPay] = useState<{ orderId: number; amount: number; description: string } | null>(null);
+  const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
+  const [, navigate] = useLocation();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editForm, setEditForm] = useState<EditForm>({ fullName: "", city: "", address: "", phone: "" });
+  const [userCredit, setUserCredit] = useState(0);
+  const [creditToGel, setCreditToGel] = useState(1);
+
+  const unitPrice = Number(productPrice);
+  const total = unitPrice * quantity;
+  const creditNeeded = total / creditToGel;
+  const hasEnoughCredit = userCredit >= creditNeeded;
+
+  useEffect(() => {
+    if (open && isAuthenticated && user) {
+      setProfileLoading(true);
+      setEditing(false);
+      Promise.all([
+        fetch("/api/profile", { credentials: "include" }).then(res => res.ok ? res.json() : null),
+        fetch("/api/credit-info", { credentials: "include" }).then(res => res.ok ? res.json() : { credit_to_gel: "1" }),
+      ])
+        .then(([profileData, creditInfo]) => {
+          setProfile(profileData);
+          if (profileData && !isProfileComplete(profileData)) {
+            startEditing(profileData);
+          }
+          setUserCredit(Number(profileData?.myCredit || 0));
+          setCreditToGel(Number(creditInfo?.credit_to_gel || 1));
+        })
+        .catch(() => {})
+        .finally(() => setProfileLoading(false));
+    }
+  }, [open, isAuthenticated, user]);
+
+  function isProfileComplete(p: ProfileData | null): boolean {
+    return !!(
+      p?.firstName?.trim() &&
+      p?.lastName?.trim() &&
+      p?.city?.trim() &&
+      p?.address?.trim() &&
+      p?.phone?.trim()
+    );
+  }
+
+  function startEditing(p: ProfileData | null) {
+    setEditForm({
+      fullName: "",
+      city: p?.city || "",
+      address: p?.address || "",
+      phone: p?.phone || "",
+    });
+    setEditing(true);
+  }
+
+  async function handleSaveProfile() {
+    const nameParts = editForm.fullName.trim().split(/\s+/);
+    if (nameParts.length < 2 || !nameParts[0] || !nameParts[1]) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "შეიყვანეთ სახელი და გვარი" });
+      return;
+    }
+    if (!editForm.city) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "აირჩიეთ ქალაქი" });
+      return;
+    }
+    if (!editForm.address.trim()) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "შეიყვანეთ მისამართი" });
+      return;
+    }
+    if (!editForm.phone.trim()) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "შეიყვანეთ ტელეფონის ნომერი" });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(" ");
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          city: editForm.city,
+          address: editForm.address.trim(),
+          phone: editForm.phone.trim(),
+        }),
+      });
+      if (res.ok) {
+        const updated: ProfileData = { firstName, lastName, city: editForm.city, address: editForm.address.trim(), phone: editForm.phone.trim() };
+        setProfile(updated);
+        setEditing(false);
+        queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+        toast({ title: "შენახულია" });
+      } else {
+        toast({ variant: "destructive", title: "შეცდომა", description: "შენახვა ვერ მოხერხდა" });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ");
+  const profileComplete = isProfileComplete(profile);
+
+  async function handleCreditPurchase() {
+    if (!isAuthenticated || !profile || !profileComplete || !hasEnoughCredit) return;
+
+    setCreditSubmitting(true);
+    try {
+      const res = await fetch("/api/orders/credit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          productId,
+          productName,
+          productPrice: String(total),
+          quantity,
+          selectedColor,
+          fullName: fullName.trim(),
+          city: profile.city,
+          address: profile.address!.trim(),
+          phone: profile.phone!.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        toast({ title: "შეკვეთა მიღებულია!", description: `"${productName}" (${quantity} ც.) კრედიტით შეძენილია.` });
+        queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        onOpenChange(false);
+      } else {
+        const data = await res.json();
+        toast({ variant: "destructive", title: "შეცდომა", description: data.message || "შეკვეთა ვერ მოხერხდა" });
+      }
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
+    } finally {
+      setCreditSubmitting(false);
+    }
+  }
+
+  async function handleTbcPay() {
+    if (!isAuthenticated || !profile || !profileComplete) return;
+    setTbcSubmitting(true);
+    try {
+      const orderRes = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          productId,
+          productName,
+          productPrice: String(total),
+          quantity,
+          selectedColor,
+          fullName: fullName.trim(),
+          city: profile.city,
+          address: profile.address!.trim(),
+          phone: profile.phone!.trim(),
+        }),
+      });
+
+      if (!orderRes.ok) {
+        const data = await orderRes.json();
+        toast({ variant: "destructive", title: "შეცდომა", description: data.message || "შეკვეთა ვერ შეიქმნა" });
+        return;
+      }
+
+      const order = await orderRes.json();
+      setFlittPay({
+        orderId: order.id,
+        amount: total,
+        description: `spiningebi.ge — ${productName} (${quantity} ც.)`,
+      });
+      onOpenChange(false);
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
+    } finally {
+      setTbcSubmitting(false);
+    }
+  }
+
+  return (
+    <>
+    {flittPay && (
+      <FlittPaymentDialog
+        open={!!flittPay}
+        amount={flittPay.amount}
+        orderId={flittPay.orderId}
+        description={flittPay.description}
+        onClose={() => setFlittPay(null)}
+        onSuccess={() => {
+          setFlittPay(null);
+          onOpenChange(false);
+          setPaymentSuccessOpen(true);
+        }}
+      />
+    )}
+    <PaymentSuccessDialog
+      open={paymentSuccessOpen}
+      onGoHome={() => { setPaymentSuccessOpen(false); navigate("/"); }}
+      onGoOrders={() => { setPaymentSuccessOpen(false); navigate("/profile?orders=open"); }}
+    />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShoppingBag className="h-5 w-5 text-primary" />
+            შეკვეთა
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="mb-3 rounded-lg border border-muted bg-muted/30 p-3 space-y-2">
+          <p className="text-sm font-medium" data-testid="text-order-product">{productName}</p>
+          {selectedColor && (
+            <p className="text-xs text-muted-foreground" data-testid="text-order-color">ფერი: <span className="font-medium text-foreground">{selectedColor}</span></p>
+          )}
+
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between" data-testid="text-order-unit-price">
+              <span className="text-muted-foreground">ფასი ({quantity} ც.):</span>
+              <span className="font-medium">₾{total.toFixed(2)}</span>
+            </div>
+            <hr className="border-muted" />
+            <div className="flex justify-between" data-testid="text-order-total">
+              <span className="font-semibold">სულ:</span>
+              <span className="text-lg font-bold text-primary">₾{total.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        {profileLoading ? (
+          <div className="flex items-center justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : editing ? (
+          <div className="space-y-3">
+            {!profileComplete && (
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+                <p className="text-sm text-amber-800">შეავსეთ ყველა ველი შეკვეთის გასაფორმებლად</p>
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">სახელი და გვარი</label>
+              <Input
+                value={editForm.fullName}
+                onChange={e => setEditForm(prev => ({ ...prev, fullName: e.target.value }))}
+                placeholder="სახელი გვარი"
+                className="min-h-[44px]"
+                data-testid="input-order-fullname"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">ქალაქი</label>
+              <Select value={editForm.city} onValueChange={v => setEditForm(prev => ({ ...prev, city: v }))}>
+                <SelectTrigger className="min-h-[44px]" data-testid="select-order-city">
+                  <SelectValue placeholder="აირჩიეთ ქალაქი" />
+                </SelectTrigger>
+                <SelectContent>
+                  {GEORGIAN_CITIES.map(city => (
+                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">მისამართი</label>
+              <Input
+                value={editForm.address}
+                onChange={e => setEditForm(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="ქუჩა, ბინა, რაიონი"
+                className="min-h-[44px]"
+                data-testid="input-order-address"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">ტელეფონი</label>
+              <Input
+                value={editForm.phone}
+                onChange={e => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                placeholder="+995 5XX XXX XXX"
+                className="min-h-[44px]"
+                data-testid="input-order-phone"
+              />
+            </div>
+
+            <Button
+              onClick={handleSaveProfile}
+              disabled={saving}
+              className="min-h-[44px] w-full"
+              data-testid="button-save-profile-inline"
+            >
+              {saving ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> ინახება...</>
+              ) : (
+                <><Check className="mr-2 h-4 w-4" /> შენახვა</>
+              )}
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="rounded-lg border border-muted bg-muted/20 p-3 space-y-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs font-medium text-muted-foreground">მიწოდების ინფორმაცია</span>
+                <button
+                  type="button"
+                  onClick={() => startEditing(profile)}
+                  className="flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-600 transition-colors"
+                  data-testid="button-edit-inline"
+                >
+                  <Pencil className="h-3 w-3" />
+                  რედაქტირება
+                </button>
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex justify-between">
+                  <span className="text-xs text-muted-foreground">სახელი და გვარი</span>
+                  <span className="text-sm font-medium" data-testid="text-order-fullname">{fullName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-muted-foreground">ქალაქი</span>
+                  <span className="text-sm font-medium" data-testid="text-order-city">{profile?.city}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-muted-foreground">მისამართი</span>
+                  <span className="text-sm font-medium" data-testid="text-order-address">{profile?.address}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-xs text-muted-foreground">ტელეფონი</span>
+                  <span className="text-sm font-medium" data-testid="text-order-phone">{profile?.phone}</span>
+                </div>
+              </div>
+            </div>
+
+            {profile?.city?.trim().toLowerCase() === "ქუთაისი" ? (
+              <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800 px-3 py-2 text-sm text-green-800 dark:text-green-300">
+                <span>🚚</span>
+                <span>ქუთაისში მიტანა უფასოა!</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 px-3 py-2 text-sm text-blue-800 dark:text-blue-300">
+                <span>🚚</span>
+                <span>საკურიერო მომსახურეობა — <strong>10.50 ₾</strong> (ანაზღაურდება კურიერთან)</span>
+              </div>
+            )}
+
+            <button
+              onClick={handleTbcPay}
+              disabled={creditSubmitting || tbcSubmitting || authLoading}
+              className="min-h-[44px] w-full rounded-md border-2 border-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2"
+              data-testid="button-tbc-pay"
+            >
+              {tbcSubmitting ? (
+                <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
+                  <Loader2 className="h-4 w-4 animate-spin" /> მიმდინარეობს...
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="flex items-center gap-3">
+                    <SiVisa className="h-6 w-auto text-[#1A1F71]" style={{ fontSize: 38 }} />
+                    <SiMastercard className="h-6 w-auto" style={{ fontSize: 34, color: "#EB001B" }} />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    ბარათით გადახდა — ₾{total.toFixed(2)}
+                  </span>
+                </div>
+              )}
+            </button>
+
+            <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 space-y-2">
+              <Button
+                onClick={() => {
+                  if (hasEnoughCredit) {
+                    handleCreditPurchase();
+                  } else {
+                    toast({ variant: "destructive", title: "კრედიტი არასაკმარისია", description: "როგორ დავაგროვო კრედიტი — ნახეთ გზამკვლევში" });
+                  }
+                }}
+                disabled={creditSubmitting || tbcSubmitting || authLoading}
+                variant="outline"
+                className="min-h-[44px] w-full border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-900"
+                data-testid="button-order-credit"
+              >
+                {creditSubmitting ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> იგზავნება...</>
+                ) : (
+                  <><Coins className="mr-2 h-4 w-4" /> კრედიტით შეძენა</>
+                )}
+              </Button>
+            </div>
+
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+    </>
+  );
+}
