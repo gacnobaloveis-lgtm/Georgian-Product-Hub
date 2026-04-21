@@ -1,0 +1,122 @@
+You reached the start of the range
+Apr 21, 2026, 9:28 PM
+ 
+[Region: europe-west4]
+==============
+Using Nixpacks
+==============
+
+context: sq57-pFhX
+╔══════════════════════════════ Nixpacks v1.38.0 ══════════════════════════════╗
+║ setup      │ nodejs_18, npm-9_x, openssl                                     ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ caddy      │ pkgs: caddy                                                     ║
+║            │ cmds: caddy fmt --overwrite /assets/Caddyfile                   ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ install    │ npm ci                                                          ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ build      │ npm run build                                                   ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ start      │ exec caddy run --config /assets/Caddyfile --adapter caddyfile   ║
+║            │ 2>&1                                                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+425ms
+
+internal
+load .dockerignore
+0ms
+
+internal
+load build context
+0ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix cached
+0ms
+
+stage-0
+WORKDIR /app/ cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+57ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+48s
+61 store paths deleted, 559.56 MiB freed
+
+stage-0
+COPY .nixpacks/assets /assets/
+149ms
+
+stage-0
+COPY . /app/.
+36ms
+
+stage-0
+RUN  caddy fmt --overwrite /assets/Caddyfile
+775ms
+
+stage-0
+COPY . /app/.
+135ms
+
+stage-0
+COPY . /app/.
+147ms
+
+stage-0
+RUN npm run build
+893ms
+npm warn config production Use `--omit=dev` instead.
+> rest-express@1.0.0 build
+> tsx script/build.ts
+Building client...
+You are using Node.js 18.20.5. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.
+vite v7.3.0 building client environment for production...
+✓ 0 modules transformed.
+error during build:
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///app/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///app/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (file:///app/node_modules/rollup/dist/es/shared/node-entry.js:21654:20)
+    at async Promise.all (index 0)
+node:internal/errors:865
+  const err = new Error(message);
+              ^
+Error: Command failed: vite build
+
+    at __node_internal_genericNodeError (node:internal/errors:865:15)
+    at checkExecSyncError (node:child_process:890:11)
+    at execSync (node:child_process:962:15)
+    at <anonymous> (/app/script/build.ts:6:1)
+    at ModuleJob.run (node:internal/modules/esm/module_job:195:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:337:24)
+    at async loadESM (node:internal/process/esm_loader:34:7)
+    at async handleMainPromise (node:internal/modules/run_main:106:12) {
+  status: 1,
+  signal: null,
+  output: [ null, null, null ],
+  pid: 49,
+  stdout: null,
+  stderr: null
+}
+Node.js v18.20.5
+Dockerfile:30
+31 |
+32 |
+ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c npm run build" did not complete successfully: exit code: 1
+Error: Docker build failed
