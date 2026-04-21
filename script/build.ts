@@ -1,57 +1,20 @@
 import { build as esbuild } from "esbuild";
 import { build as viteBuild } from "vite";
 import { rm, readFile } from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(__dirname, "..");
-
-// server deps to bundle to reduce openat(2) syscalls
-// which helps cold start times
 const allowlist = [
-  "@google/generative-ai",
-  "axios",
-  "connect-pg-simple",
-  "cookie-parser",
-  "cors",
-  "date-fns",
-  "drizzle-zod",
-  "express",
-  "express-rate-limit",
-  "express-session",
-  "helmet",
-  "jsonwebtoken",
-  "memoizee",
-  "memorystore",
-  "multer",
-  "nanoid",
-  "nodemailer",
-  "openai",
-  "passport",
-  "passport-facebook",
-  "passport-google-oauth20",
-  "passport-local",
-  "pg",
-  "stripe",
-  "uuid",
-  "ws",
-  "xlsx",
-  "zod",
-  "zod-validation-error",
+  "@google/generative-ai", "axios", "connect-pg-simple", "cookie-parser",
+  "cors", "date-fns", "drizzle-zod", "express", "express-rate-limit",
+  "express-session", "helmet", "jsonwebtoken", "memoizee", "memorystore",
+  "multer", "nanoid", "nodemailer", "openai", "passport", "passport-facebook",
+  "passport-google-oauth20", "passport-local", "pg", "stripe", "uuid", "ws",
+  "xlsx", "zod", "zod-validation-error",
 ];
 
 async function buildAll() {
   await rm("dist", { recursive: true, force: true });
-
   console.log("building client...");
-  console.log("project root:", projectRoot);
-  console.log("config file:", path.resolve(projectRoot, "vite.config.ts"));
-  await viteBuild({
-    configFile: path.resolve(projectRoot, "vite.config.ts"),
-    root: path.resolve(projectRoot, "client"),
-  });
-
+  await viteBuild();
   console.log("building server...");
   const pkg = JSON.parse(await readFile("package.json", "utf-8"));
   const allDeps = [
@@ -59,16 +22,13 @@ async function buildAll() {
     ...Object.keys(pkg.devDependencies || {}),
   ];
   const externals = allDeps.filter((dep) => !allowlist.includes(dep));
-
   await esbuild({
     entryPoints: ["server/index.ts"],
     platform: "node",
     bundle: true,
     format: "cjs",
     outfile: "dist/index.cjs",
-    define: {
-      "process.env.NODE_ENV": '"production"',
-    },
+    define: { "process.env.NODE_ENV": '"production"' },
     minify: false,
     sourcemap: true,
     external: externals,
@@ -76,7 +36,4 @@ async function buildAll() {
   });
 }
 
-buildAll().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+buildAll().catch((err) => { console.error(err); process.exit(1); });

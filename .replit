@@ -4,7 +4,6 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["gh"]
 
 [[ports]]
 localPort = 5000
@@ -17,7 +16,6 @@ PORT = "5000"
 deploymentTarget = "autoscale"
 run = ["node", "./dist/index.cjs"]
 build = ["npm", "run", "build"]
-publicDir = "dist/public"
 
 [workflows]
 runButton = "Project"
@@ -44,12 +42,6 @@ waitForPort = 5000
 
 [userenv.shared]
 SESSION_SECRET = "5399d200788adcb08861ff930f7de10a13cdc141d7055b2b46ea13cc36acb80d"
-ADMIN_PASSWORD = "fishing2026"
-VAPID_PUBLIC_KEY = "BKmNG5nNdq5OtG6fpGtXwpU8Mh-6xIbKcQP1ieb1Vtvilwzdw9z0MLaAXM4MwlFIUPR1lOnaDh3mGGHbgHcJKD8"
-VAPID_PRIVATE_KEY = "pPk37s3kSP1BZ93EhMsczdImEwU9iP4Skn_b6Ex4UUU"
-VAPID_EMAIL = "mailto:spiningebi@gmail.com"
-FLITT_MERCHANT_ID = "1549901"
-FLITT_SECRET_KEY = "test"
 
 [agent]
 integrations = ["javascript_log_in_with_replit:2.0.0"]
