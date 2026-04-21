@@ -1,0 +1,88 @@
+You reached the start of the range
+Apr 21, 2026, 11:31 PM
+[Region: europe-west4]
+INFO No package manager inferred, using npm default
+ 
+ 
+╭─────────────────╮
+│ Railpack 0.23.0 │
+╰─────────────────╯
+ 
+↳ Detected Node
+↳ Using npm package manager
+ 
+Packages
+──────────
+node  │  22.22.2  │  railpack default (22)
+ 
+Steps
+──────────
+▸ install
+$ npm ci
+ 
+▸ build
+$ npm install --include=dev && npm run build
+ 
+Deploy
+──────────
+$ npm run start
+ 
+ 
+Successfully prepared Railpack plan for build
+ 
+ 
+context: g02q-gNLW
+
+load build definition from railpack-plan.json
+0ms
+
+install apt packages: libatomic1
+2s
+Processing triggers for libc-bin (2.36-9+deb12u13) ...
+
+install mise packages: node cached
+0ms
+
+copy /mise/shims, /mise/installs, /usr/local/bin/mise, /etc/mise/config.toml, /root/.local/state/mise cached
+0ms
+
+mkdir -p /app/node_modules/.cache cached
+0ms
+
+copy package-lock.json, package.json
+71ms
+
+npm ci
+7s
+Run `npm audit` for details.
+
+copy / /app, .
+151ms
+
+npm install --include=dev && npm run build
+3s
+npm warn config production Use `--omit=dev` instead.
+up to date, audited 530 packages in 2s
+12 vulnerabilities (1 low, 2 moderate, 9 high)
+To address issues that do not require attention, run:
+  npm audit fix
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+npm warn config production Use `--omit=dev` instead.
+> rest-express@1.0.0 build
+> tsx script/build.ts
+building client...
+project root: /app
+config file: /app/vite.config.ts
+vite v7.3.0 building client environment for production...
+✓ 0 modules transformed.
+✗ Build failed in 105ms
+Could not resolve entry module "client/index.html".
+    at getRollupError (file:///app/node_modules/rollup/dist/es/shared/parseAst.js:401:41)
+    at error (file:///app/node_modules/rollup/dist/es/shared/parseAst.js:397:42)
+    at ModuleLoader.loadEntryModule (/app/node_modules/rollup/dist/es/shared/node-entry.js:21654:20)
+    at async Promise.all (index 0) {
+  code: 'UNRESOLVED_ENTRY'
+}
+ERROR: failed to build: failed to solve: process "sh -c npm install --include=dev && npm run build" did not complete successfully: exit code: 1
