@@ -6,7 +6,7 @@ const allowlist = [
   "@google/generative-ai", "axios", "connect-pg-simple", "cookie-parser",
   "cors", "date-fns", "drizzle-zod", "express", "express-rate-limit",
   "express-session", "helmet", "jsonwebtoken", "memoizee", "memorystore",
-  "multer", "nanoid", "nodemailer", "openai", "passport", "passport-facebook",
+  "multer", "nanoid", "nodemailer", "openai", "openid-client", "passport", "passport-facebook",
   "passport-google-oauth20", "passport-local", "pg", "stripe", "uuid", "ws",
   "xlsx", "zod", "zod-validation-error",
 ];
