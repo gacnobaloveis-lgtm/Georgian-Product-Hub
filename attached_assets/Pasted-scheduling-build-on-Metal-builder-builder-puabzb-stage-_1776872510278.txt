@@ -1,0 +1,137 @@
+scheduling build on Metal builder "builder-puabzb"
+
+stage-0
+FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+20ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+905ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+54s
+61 store paths deleted, 559.56 MiB freed
+scheduling build on Metal builder "builder-hgdsqj"
+[snapshot] received sha256:725816552fab2d0ec9246830a5844cf38c19a8b774246521e2781357f62a70e6 md5:1ff6877eb1e9a02141a03ade0e976092
+receiving snapshot
+6.8 MB
+1.5s
+analyzing snapshot
+6.8 MB
+118ms
+uploading snapshot
+6.8 MB
+122ms
+unpacking archive
+11.3 MB
+135ms
+using build driver nixpacks-v1.41.0
+ 
+╔══════════════════════════════ Nixpacks v1.41.0 ══════════════════════════════╗
+║ setup      │ nodejs_18, npm-9_x, openssl                                     ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ caddy      │ pkgs: caddy                                                     ║
+║            │ cmds: caddy fmt --overwrite /assets/Caddyfile                   ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ install    │ npm ci                                                          ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ build      │ npm run build                                                   ║
+║──────────────────────────────────────────────────────────────────────────────║
+║ start      │ exec caddy run --config /assets/Caddyfile --adapter caddyfile   ║
+║            │ 2>&1                                                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+ 
+ 
+Saved output to:
+  snapshot-target-unpack
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+426ms
+
+internal
+load .dockerignore
+0ms
+UndefinedVar: Usage of undefined variable '$NIXPACKS_PATH' (line 24)(https://docs.docker.com/go/dockerfile/rule/undefined-var/)
+ details: Variables should be defined before their use
+
+internal
+load build context
+0ms
+
+stage-0
+COPY .nixpacks/assets /assets/
+440ms
+
+stage-0
+COPY . /app/.
+518ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d cached
+0ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix cached
+0ms
+
+stage-0
+WORKDIR /app/ cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix cached
+0ms
+
+stage-0
+COPY .nixpacks/assets /assets/ cached
+0ms
+
+stage-0
+RUN  caddy fmt --overwrite /assets/Caddyfile
+785ms
+
+stage-0
+COPY . /app/.
+643ms
+
+stage-0
+RUN npm ci
+13s
+Run `npm audit` for details.
+
+stage-0
+COPY . /app/.
+679ms
+
+stage-0
+RUN npm run build
+8s
+⚡ Done in 171ms
+
+stage-0
+RUN printf '\nPATH=/app/node_modules/.bin:$PATH' >> /root/.profile
+666ms
+
+stage-0
+COPY . /app
+766ms
+
+exporting to docker image format
+6s
+containerimage.digest: sha256:919d69ef9257ce3325d3a86b7482c745bb20162c183d5340e6529624b7ac8fea
+containerimage.descriptor: eyJtZWRpYVR5cGUiOiJhcHBsaWNhdGlvbi92bmQub2NpLmltYWdlLm1hbmlmZXN0LnYxK2pzb24iLCJkaWdlc3QiOiJzaGEyNTY6OTE5ZDY5ZWY5MjU3Y2UzMzI1ZDNhODZiNzQ4MmM3NDViYjIwMTYyYzE4M2Q1MzQwZTY1Mjk2MjRiN2FjOGZlYSIsInNpemUiOjM3MDksImFubm90YXRpb25zIjp7Im9yZy5vcGVuY29udGFpbmVycy5pbWFnZS5jcmVhdGVkIjoiMjAyNi0wNC0yMlQxNTozNDowNFoifSwicGxhdGZvcm0iOnsiYXJjaGl0ZWN0dXJlIjoiYW1kNjQiLCJvcyI6ImxpbnV4In19
+containerimage.config.digest: sha256:4a9aee9020b43c21a0bab2f8b1b219d6882f4cba5028d526908ad09661d5b986
