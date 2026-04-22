@@ -201,9 +201,17 @@ export async function registerRoutes(
       );
       if (result.rows.length > 0 && result.rows[0].data) {
         const row = result.rows[0];
+        let data: Buffer | string = row.data;
+        if (typeof data === "string") {
+          if (data.startsWith("\\x")) {
+            data = Buffer.from(data.slice(2), "hex");
+          } else {
+            data = Buffer.from(data, "binary");
+          }
+        }
         res.setHeader("Content-Type", row.mime_type || "image/webp");
         res.setHeader("Cache-Control", "public, max-age=3600, must-revalidate");
-        return res.send(row.data);
+        return res.send(data);
       }
     } catch (err) {
       console.error("DB image fetch error:", err);
