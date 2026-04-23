@@ -28,7 +28,7 @@ import type { Product, Category, TermsSection } from "@shared/schema";
 import wobblerIcon from "@assets/image_1771887558144.png";
 import rodIcon from "@assets/image_1776963958973.png";
 import reelIcon from "@assets/image_1776955924859.png";
-import lineIcon from "@assets/image_1771888120512.png";
+import lineIcon from "@assets/image_1776964112724.png";
 import jigIcon from "@assets/image_1771888304367.png";
 import spinnerIcon from "@assets/image_1771888431502.png";
 import vestIcon from "@assets/image_1772362338173.png";
