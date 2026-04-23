@@ -426,7 +426,7 @@ function CategoryDrawer({
                   }`}
                   data-testid={`drawer-cat-${cat.id}`}
                 >
-                  {icon ? <img src={icon} alt="" className="h-7 w-7 shrink-0 object-contain" /> : cat.icon ? <LucideIcon name={cat.icon} className="h-5 w-5 shrink-0" /> : null}
+                  {icon ? <img src={icon} alt="" className={`${cat.name === "სპინინგის კოჭები" ? "h-9 w-9" : "h-7 w-7"} shrink-0 object-contain`} /> : cat.icon ? <LucideIcon name={cat.icon} className="h-5 w-5 shrink-0" /> : null}
                   {cat.name}
                 </button>
               );
