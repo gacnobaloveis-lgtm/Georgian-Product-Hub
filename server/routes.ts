@@ -1365,7 +1365,7 @@ export async function registerRoutes(
       if (prevUserMsgs.length === 0) {
         await storage.createChatMessage({
           userId,
-          message: "გმადლობთ შეკითხვისთვის! spiningebi.ge ადმინისტრატორი 24 საათში გიპასუხებთ.",
+          message: "გმადლობთ კითხვისთვის! spiningebi.ge ადმინისტრატორი უმოკლეს დროში გიპასუხებთ.",
           senderType: "bot",
           isRead: 0,
         });
