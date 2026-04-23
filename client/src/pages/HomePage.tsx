@@ -30,6 +30,7 @@ import rodIcon from "@assets/image_1776963958973.png";
 import reelIcon from "@assets/image_1776964761416.png";
 import lineIcon from "@assets/image_1776964112724.png";
 import jigIcon from "@assets/image_1776965688800.png";
+import mormishingIcon from "@assets/image_1776965808335.png";
 import spinnerIcon from "@assets/image_1776965581799.png";
 import vestIcon from "@assets/image_1772362338173.png";
 import fishermanLogo from "@assets/fisherman_transparent.png";
@@ -281,6 +282,8 @@ function getCategoryIcon(name: string) {
     "ვობლერები": wobblerIcon,
     "ტრიალები": spinnerIcon,
     "ყანყალები": jigIcon,
+    "მორმიშინგი": mormishingIcon,
+    "მორმიშკები": mormishingIcon,
     "ტანსაცმელი": vestIcon,
     "სპ.ჟილეტები": vestIcon,
   };
