@@ -29,7 +29,7 @@ import wobblerIcon from "@assets/image_1776964369278.png";
 import rodIcon from "@assets/image_1776963958973.png";
 import reelIcon from "@assets/image_1776964761416.png";
 import lineIcon from "@assets/image_1776964112724.png";
-import jigIcon from "@assets/image_1771888304367.png";
+import jigIcon from "@assets/image_1776965688800.png";
 import spinnerIcon from "@assets/image_1776965581799.png";
 import vestIcon from "@assets/image_1772362338173.png";
 import fishermanLogo from "@assets/fisherman_transparent.png";
