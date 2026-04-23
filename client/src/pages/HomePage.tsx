@@ -32,7 +32,7 @@ import lineIcon from "@assets/image_1776964112724.png";
 import jigIcon from "@assets/image_1776965688800.png";
 import mormishingIcon from "@assets/image_1776965808335.png";
 import spinnerIcon from "@assets/image_1776965581799.png";
-import vestIcon from "@assets/image_1776966311313.png";
+import vestIcon from "@assets/image_1776966819348.png";
 import fishermanLogo from "@assets/fisherman_transparent.png";
 import eyeIconPath from "@assets/image_1771961384457.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
