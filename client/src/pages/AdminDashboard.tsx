@@ -1335,6 +1335,44 @@ function AutoDravaSection() {
     );
   }
 
+  async function clearSoldCount(productId: number, productName: string) {
+    if (!window.confirm(`დარწმუნებული ხართ რომ "${productName}"-ის გაყიდვების რაოდენობა 0-ზე გადააყენოთ?`)) return;
+    const formData = new FormData();
+    formData.append("soldCount", "0");
+    updateProduct.mutate(
+      { id: productId, formData },
+      {
+        onSuccess: () => toast({ title: "გასუფთავდა" }),
+        onError: () => toast({ title: "შეცდომა", variant: "destructive" }),
+      }
+    );
+  }
+
+  const [clearingAll, setClearingAll] = useState(false);
+  async function clearAllSoldCounts() {
+    if (!products || products.length === 0) return;
+    const productsWithSales = products.filter(p => (p.soldCount || 0) > 0);
+    if (productsWithSales.length === 0) {
+      toast({ title: "ცარიელია", description: "გაყიდვები უკვე 0-ზეა" });
+      return;
+    }
+    if (!window.confirm(`ნამდვილად გასუფთავდეს ყველა (${productsWithSales.length}) პროდუქტის გაყიდვების რაოდენობა?`)) return;
+    setClearingAll(true);
+    try {
+      for (const p of productsWithSales) {
+        const formData = new FormData();
+        formData.append("soldCount", "0");
+        await fetch(`/api/products/${p.id}`, { method: "PATCH", credentials: "include", body: formData });
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "ყველა გაყიდვა გასუფთავდა" });
+    } catch {
+      toast({ title: "შეცდომა", variant: "destructive" });
+    } finally {
+      setClearingAll(false);
+    }
+  }
+
   async function saveSettings() {
     setSavingSettings(true);
     try {
@@ -1422,6 +1460,22 @@ function AutoDravaSection() {
             </div>
           </div>
 
+          {totalSold > 0 && (
+            <div className="mb-3 flex justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearAllSoldCounts}
+                disabled={clearingAll}
+                className="border-destructive/30 text-destructive hover:bg-destructive/10"
+                data-testid="button-clear-all-sold"
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                {clearingAll ? "სუფთავდება..." : "ყველა გაყიდვის გასუფთავება"}
+              </Button>
+            </div>
+          )}
+
           {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-10 w-full" />
@@ -1488,6 +1542,17 @@ function AutoDravaSection() {
                         >
                           🛒 {product.soldCount || 0} ც
                         </button>
+                        {(product.soldCount || 0) > 0 && (
+                          <button
+                            onClick={() => clearSoldCount(product.id, product.name)}
+                            disabled={updateProduct.isPending}
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                            title="გაყიდვების გასუფთავება"
+                            data-testid={`button-clear-sold-${product.id}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                       </>
                     )}
                   </div>
