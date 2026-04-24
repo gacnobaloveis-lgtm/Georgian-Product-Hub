@@ -520,8 +520,6 @@ export async function registerRoutes(
           .webp({ quality: 82 })
           .toBuffer();
 
-        fs.writeFileSync(outputPath, webpBuffer);
-
         const mediaItem = await storage.createMedia({
           filename,
           originalName: sanitizeFilename(file.originalname),
@@ -531,11 +529,17 @@ export async function registerRoutes(
 
         try {
           await pool.query(
-            "UPDATE media SET data = $1, mime_type = $2 WHERE id = $3",
+            "UPDATE media SET data = $1::bytea, mime_type = $2 WHERE id = $3",
             [webpBuffer, "image/webp", mediaItem.id]
           );
         } catch (dbErr) {
-          console.error("Failed to store image in DB:", dbErr);
+          console.error("CRITICAL: Failed to store image in DB, rolling back:", dbErr);
+          try { await storage.deleteMedia(mediaItem.id); } catch {}
+          throw new Error("ბაზაში სურათის შენახვა ვერ მოხერხდა — სცადეთ თავიდან");
+        }
+
+        try { fs.writeFileSync(outputPath, webpBuffer); } catch (diskErr) {
+          console.warn("Disk cache write failed (image still saved in DB):", diskErr);
         }
 
         results.push(mediaItem);
