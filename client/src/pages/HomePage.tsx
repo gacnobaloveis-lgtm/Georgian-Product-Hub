@@ -162,8 +162,104 @@ function ImgWithFallback({
   );
 }
 
+function ProductSlideshow({
+  images,
+  alt,
+  productId,
+  className,
+}: {
+  images: string[];
+  alt: string;
+  productId: number;
+  className?: string;
+}) {
+  const validImages = images.filter(Boolean);
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (validImages.length < 2 || paused) return;
+    const offset = (productId * 700) % 3000;
+    const timer = setTimeout(() => {
+      const interval = setInterval(() => {
+        setIndex((i) => (i + 1) % validImages.length);
+      }, 3500);
+      (timer as any).interval = interval;
+    }, offset);
+    return () => {
+      clearTimeout(timer);
+      if ((timer as any).interval) clearInterval((timer as any).interval);
+    };
+  }, [validImages.length, paused, productId]);
+
+  if (validImages.length === 0) {
+    return (
+      <ImgWithFallback
+        src={undefined}
+        alt={alt}
+        loading="lazy"
+        className={className}
+      />
+    );
+  }
+
+  if (validImages.length === 1) {
+    return (
+      <ImgWithFallback
+        src={validImages[0]}
+        alt={alt}
+        loading="lazy"
+        className={className}
+      />
+    );
+  }
+
+  return (
+    <div
+      className="relative h-full w-full"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {validImages.map((src, i) => (
+        <ImgWithFallback
+          key={i}
+          src={src}
+          alt={alt}
+          loading={i === 0 ? "eager" : "lazy"}
+          className={`${className ?? ""} absolute inset-0 transition-opacity duration-700 ${
+            i === index ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ))}
+      <div className="absolute bottom-1 left-1/2 z-10 flex -translate-x-1/2 gap-1">
+        {validImages.map((_, i) => (
+          <span
+            key={i}
+            className={`h-1 rounded-full transition-all ${
+              i === index ? "w-3 bg-white" : "w-1 bg-white/60"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ProductCard({ product, referralCode }: { product: Product; referralCode?: string | null }) {
   const mainImage = product.imageUrl || null;
+  const slideshowImages: string[] = (() => {
+    const arr: string[] = [];
+    if (mainImage) arr.push(mainImage);
+    try {
+      const album = JSON.parse((product as any).albumImages || "[]");
+      if (Array.isArray(album)) {
+        for (const img of album) {
+          if (typeof img === "string" && img && !arr.includes(img)) arr.push(img);
+        }
+      }
+    } catch {}
+    return arr;
+  })();
   const hasDiscount = product.discountPrice && Number(product.discountPrice) < Number(product.originalPrice);
   const discountPct =
     hasDiscount && Number(product.originalPrice) > 0
@@ -207,13 +303,12 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
     <Link href={`/product/${product.id}`}>
       <Card className="cursor-pointer border-card-border bg-card transition-shadow hover:shadow-lg" onClick={handleClick} data-testid={`card-product-${product.id}`}>
         <CardContent className="p-2 sm:p-3">
-          <div className="relative mb-2 overflow-hidden rounded-md bg-muted">
-            <ImgWithFallback
-              src={mainImage || undefined}
+          <div className="relative mb-2 aspect-square overflow-hidden rounded-md bg-muted" data-testid={`img-product-main-${product.id}`}>
+            <ProductSlideshow
+              images={slideshowImages}
               alt={product.name}
-              loading="lazy"
-              className="aspect-square w-full object-cover transition-transform duration-200 hover:scale-105"
-              data-testid={`img-product-main-${product.id}`}
+              productId={product.id}
+              className="h-full w-full object-cover"
             />
             {hasDiscount && (
               <span className="absolute left-1.5 top-1.5 z-10 rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow">
