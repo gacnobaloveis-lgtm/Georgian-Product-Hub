@@ -183,7 +183,7 @@ function ProductSlideshow({
     const timer = setTimeout(() => {
       const interval = setInterval(() => {
         setIndex((i) => (i + 1) % validImages.length);
-      }, 3500);
+      }, 10000);
       (timer as any).interval = interval;
     }, offset);
     return () => {
