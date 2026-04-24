@@ -874,6 +874,29 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/orders/all", requireAdmin, async (_req, res) => {
+    try {
+      const count = await storage.deleteAllOrders();
+      res.json({ deleted: count });
+    } catch (err) {
+      console.error("Delete all orders error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.delete("/api/admin/orders/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id) || id <= 0) return res.status(400).json({ message: "არასწორი ID" });
+      const ok = await storage.deleteOrder(id);
+      if (!ok) return res.status(404).json({ message: "შეკვეთა ვერ მოიძებნა" });
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Delete order error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.patch("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
     try {
       const id = Number(req.params.id);

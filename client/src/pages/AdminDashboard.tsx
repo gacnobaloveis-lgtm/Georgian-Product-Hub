@@ -1077,6 +1077,61 @@ function OrdersSection() {
     },
   });
 
+  const deleteOrder = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/admin/orders/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("შეცდომა");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({ title: "შეკვეთა წაიშალა" });
+    },
+    onError: () => {
+      toast({ title: "შეცდომა", variant: "destructive" });
+    },
+  });
+
+  const clearAllOrders = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/orders/all`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("შეცდომა");
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      toast({ title: `წაიშალა ${data.deleted} შეკვეთა` });
+    },
+    onError: () => {
+      toast({ title: "შეცდომა", variant: "destructive" });
+    },
+  });
+
+  const handleDeleteOne = (id: number, name: string) => {
+    if (window.confirm(`დარწმუნებული ხარ რომ გინდა წაშალო შეკვეთა „${name}"?`)) {
+      deleteOrder.mutate(id);
+    }
+  };
+
+  const handleClearAll = () => {
+    if (!ordersList || ordersList.length === 0) return;
+    const msg = `ნამდვილად გინდა წაშალო ყველა ${ordersList.length} შეკვეთა? ეს მოქმედება შეუქცევადია!`;
+    if (window.confirm(msg)) {
+      const second = window.prompt(`დასადასტურებლად ჩაწერე სიტყვა: წაშლა`);
+      if (second === "წაშლა") {
+        clearAllOrders.mutate();
+      } else if (second !== null) {
+        toast({ title: "გაუქმდა — სიტყვა არ ემთხვევა", variant: "destructive" });
+      }
+    }
+  };
+
   const [openMonths, setOpenMonths] = useState<Set<string>>(new Set());
 
   const MONTH_NAMES_KA: Record<number, string> = {
@@ -1141,6 +1196,7 @@ function OrdersSection() {
                     <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">ფასი</th>
                     <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">დრო</th>
                     <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">გაგზავნილი</th>
+                    <th className="px-3 py-2 text-right text-xs font-medium text-muted-foreground">წაშლა</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1171,6 +1227,17 @@ function OrdersSection() {
                             }`} />
                           </button>
                         </td>
+                        <td className="px-3 py-2.5 text-right">
+                          <button
+                            data-testid={`btn-delete-order-${prefix}-${gIdx}-${oIdx}`}
+                            disabled={deleteOrder.isPending}
+                            onClick={(e) => { e.stopPropagation(); handleDeleteOne(order.id, order.productName); }}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                            title="წაშლა"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
@@ -1188,6 +1255,17 @@ function OrdersSection() {
       <div className="mb-4 flex items-center gap-2">
         <ShoppingBag className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-semibold">შეკვეთები</h2>
+        {ordersList && ordersList.length > 0 && (
+          <button
+            data-testid="btn-clear-all-orders"
+            disabled={clearAllOrders.isPending}
+            onClick={handleClearAll}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition-colors hover:bg-red-100 disabled:opacity-50"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            ყველას წაშლა
+          </button>
+        )}
       </div>
 
       {isLoading ? (
