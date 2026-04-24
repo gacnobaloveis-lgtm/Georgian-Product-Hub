@@ -26,6 +26,8 @@ export interface IStorage {
   getOrdersByUser(userId: string): Promise<Order[]>;
   updateOrderStatus(orderId: number, status: string): Promise<Order | undefined>;
   deleteOrdersOlderThan(date: Date): Promise<number>;
+  deleteOrder(orderId: number): Promise<boolean>;
+  deleteAllOrders(): Promise<number>;
   incrementSoldCount(productId: number, qty: number): Promise<void>;
   incrementViewCount(productId: number): Promise<void>;
   incrementShareCount(productId: number): Promise<void>;
@@ -181,6 +183,16 @@ export class DatabaseStorage implements IStorage {
 
   async deleteOrdersOlderThan(date: Date): Promise<number> {
     const deleted = await db.delete(orders).where(lt(orders.createdAt, date)).returning();
+    return deleted.length;
+  }
+
+  async deleteOrder(orderId: number): Promise<boolean> {
+    const deleted = await db.delete(orders).where(eq(orders.id, orderId)).returning();
+    return deleted.length > 0;
+  }
+
+  async deleteAllOrders(): Promise<number> {
+    const deleted = await db.delete(orders).returning();
     return deleted.length;
   }
 
