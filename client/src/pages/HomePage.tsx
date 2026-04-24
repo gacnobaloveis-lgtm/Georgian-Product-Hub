@@ -34,7 +34,7 @@ import mormishingIcon from "@assets/image_1776965808335.png";
 import spinnerIcon from "@assets/image_1776965581799.png";
 import vestIcon from "@assets/image_1776966819348.png";
 import fishermanLogo from "@assets/fisherman_transparent.png";
-import eyeIconPath from "@assets/image_1771961384457.png";
+import eyeIconPath from "@assets/image_1777053072588.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 
 function SiteFooter() {
