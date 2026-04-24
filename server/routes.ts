@@ -1143,15 +1143,43 @@ export async function registerRoutes(
       if (!product || !product.imageUrl) {
         return res.status(404).end();
       }
+
+      let sourceBuffer: Buffer | null = null;
+
       const imgPath = product.imageUrl.startsWith("/")
         ? path.join(process.cwd(), "public", product.imageUrl)
         : product.imageUrl;
 
-      if (!fs.existsSync(imgPath)) {
+      if (fs.existsSync(imgPath)) {
+        sourceBuffer = fs.readFileSync(imgPath);
+      } else if (product.imageUrl.startsWith("/uploads/")) {
+        const filename = product.imageUrl.replace("/uploads/", "");
+        if (/^[a-zA-Z0-9_\-\.]+$/.test(filename)) {
+          try {
+            const dbResult = await pool.query(
+              "SELECT data FROM media WHERE filename = $1 AND data IS NOT NULL",
+              [filename]
+            );
+            if (dbResult.rows.length > 0 && dbResult.rows[0].data) {
+              let data: any = dbResult.rows[0].data;
+              if (typeof data === "string") {
+                data = data.startsWith("\\x")
+                  ? Buffer.from(data.slice(2), "hex")
+                  : Buffer.from(data, "binary");
+              }
+              sourceBuffer = data;
+            }
+          } catch (err) {
+            console.error("OG image DB fetch error:", err);
+          }
+        }
+      }
+
+      if (!sourceBuffer) {
         return res.status(404).end();
       }
 
-      const jpegBuffer = await sharp(imgPath)
+      const jpegBuffer = await sharp(sourceBuffer)
         .resize(1200, 630, { fit: "cover", position: "center" })
         .jpeg({ quality: 85 })
         .toBuffer();
