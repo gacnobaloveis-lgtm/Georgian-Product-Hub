@@ -188,7 +188,7 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
     fetch(`/api/products/${product.id}/view`, { method: "POST" }).catch(() => {});
   };
 
-  const handleShare = async (e: React.MouseEvent) => {
+  const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const baseUrl = window.location.origin;
@@ -196,6 +196,9 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
     if (referralCode) {
       productUrl += `?ref=${referralCode}`;
     }
+    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
+
+    const popup = window.open(fbUrl, "_blank", "width=600,height=600,noopener=no");
 
     const recordShare = () => {
       fetch(`/api/products/${product.id}/share`, { method: "POST" })
@@ -203,34 +206,26 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
         .catch(() => {});
     };
 
-    if (typeof navigator !== "undefined" && (navigator as any).share) {
-      try {
-        await (navigator as any).share({
-          title: product.name,
-          text: product.name,
-          url: productUrl,
-        });
-        recordShare();
-      } catch {
-      }
-      return;
-    }
-
-    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
-    const popup = window.open(fbUrl, "_blank", "width=600,height=600");
     if (!popup) {
       window.location.href = fbUrl;
       return;
     }
+
     const openedAt = Date.now();
     const checker = setInterval(() => {
-      if (popup.closed) {
-        clearInterval(checker);
-        if (Date.now() - openedAt >= 3000) {
-          recordShare();
+      try {
+        if (popup.closed) {
+          clearInterval(checker);
+          if (Date.now() - openedAt >= 3000) {
+            recordShare();
+          }
         }
+      } catch {
+        clearInterval(checker);
       }
     }, 700);
+
+    setTimeout(() => clearInterval(checker), 5 * 60 * 1000);
   };
 
   return (
