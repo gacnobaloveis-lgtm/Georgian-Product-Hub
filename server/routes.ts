@@ -1203,7 +1203,20 @@ export async function registerRoutes(
       }
 
       if (!sourceBuffer) {
-        return res.status(404).end();
+        const fallbackCandidates = [
+          path.join(process.cwd(), "client", "public", "images", "hero-fishing.png"),
+          path.join(process.cwd(), "dist", "public", "images", "hero-fishing.png"),
+          path.join(process.cwd(), "public", "images", "hero-fishing.png"),
+        ];
+        for (const fp of fallbackCandidates) {
+          if (fs.existsSync(fp)) {
+            sourceBuffer = fs.readFileSync(fp);
+            break;
+          }
+        }
+        if (!sourceBuffer) {
+          return res.status(404).end();
+        }
       }
 
       const jpegBuffer = await sharp(sourceBuffer)
