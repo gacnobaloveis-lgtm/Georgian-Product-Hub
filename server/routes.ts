@@ -1167,37 +1167,55 @@ export async function registerRoutes(
   app.get("/api/og-image/:id", async (req, res) => {
     try {
       const product = await storage.getProduct(Number(req.params.id));
-      if (!product || !product.imageUrl) {
+      if (!product) {
         return res.status(404).end();
       }
 
+      const candidates: string[] = [];
+      if (product.imageUrl) candidates.push(product.imageUrl);
+      try {
+        const album = JSON.parse((product as any).albumImages || "[]");
+        if (Array.isArray(album)) {
+          for (const url of album) {
+            if (typeof url === "string" && url && !candidates.includes(url)) {
+              candidates.push(url);
+            }
+          }
+        }
+      } catch {}
+
       let sourceBuffer: Buffer | null = null;
 
-      const imgPath = product.imageUrl.startsWith("/")
-        ? path.join(process.cwd(), "public", product.imageUrl)
-        : product.imageUrl;
+      for (const candidate of candidates) {
+        const imgPath = candidate.startsWith("/")
+          ? path.join(process.cwd(), "public", candidate)
+          : candidate;
 
-      if (fs.existsSync(imgPath)) {
-        sourceBuffer = fs.readFileSync(imgPath);
-      } else if (product.imageUrl.startsWith("/uploads/")) {
-        const filename = product.imageUrl.replace("/uploads/", "");
-        if (/^[a-zA-Z0-9_\-\.]+$/.test(filename)) {
-          try {
-            const dbResult = await pool.query(
-              "SELECT data FROM media WHERE filename = $1 AND data IS NOT NULL",
-              [filename]
-            );
-            if (dbResult.rows.length > 0 && dbResult.rows[0].data) {
-              let data: any = dbResult.rows[0].data;
-              if (typeof data === "string") {
-                data = data.startsWith("\\x")
-                  ? Buffer.from(data.slice(2), "hex")
-                  : Buffer.from(data, "binary");
+        if (fs.existsSync(imgPath)) {
+          sourceBuffer = fs.readFileSync(imgPath);
+          break;
+        }
+        if (candidate.startsWith("/uploads/")) {
+          const filename = candidate.replace("/uploads/", "");
+          if (/^[a-zA-Z0-9_\-\.]+$/.test(filename)) {
+            try {
+              const dbResult = await pool.query(
+                "SELECT data FROM media WHERE filename = $1 AND data IS NOT NULL",
+                [filename]
+              );
+              if (dbResult.rows.length > 0 && dbResult.rows[0].data) {
+                let data: any = dbResult.rows[0].data;
+                if (typeof data === "string") {
+                  data = data.startsWith("\\x")
+                    ? Buffer.from(data.slice(2), "hex")
+                    : Buffer.from(data, "binary");
+                }
+                sourceBuffer = data;
+                break;
               }
-              sourceBuffer = data;
+            } catch (err) {
+              console.error("OG image DB fetch error:", err);
             }
-          } catch (err) {
-            console.error("OG image DB fetch error:", err);
           }
         }
       }
