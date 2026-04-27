@@ -33,7 +33,7 @@ import jigIcon from "@assets/image_1776965688800.png";
 import mormishingIcon from "@assets/image_1776965808335.png";
 import spinnerIcon from "@assets/image_1776965581799.png";
 import vestIcon from "@assets/image_1776966819348.png";
-import fishermanLogo from "@assets/fisherman_transparent.png";
+import fishermanLogo from "@assets/spiningebi_logo.png";
 import eyeIconPath from "@assets/image_1777053072588.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 
@@ -705,8 +705,8 @@ export default function HomePage() {
     <div className="min-h-screen bg-mesh pb-20 md:pb-0">
       <div className="relative mb-4 overflow-hidden rounded-none sm:mb-8 sm:rounded-b-2xl">
         <img
-          src="/images/hero-fishing.png"
-          alt="მეთევზეობა"
+          src="/images/spiningebi-cover.png"
+          alt="spiningebi.ge"
           className="h-44 w-full object-cover sm:h-52 lg:h-56"
           data-testid="img-hero"
         />
