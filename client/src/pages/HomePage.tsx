@@ -714,7 +714,7 @@ export default function HomePage() {
           data-testid="img-hero"
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-black/55 to-transparent" />
-        <div className="absolute inset-x-0 top-0 flex items-start px-3 pt-2 sm:px-8 sm:pt-4 lg:px-16">
+        <div className="absolute inset-x-0 top-0 flex items-start pl-14 pr-3 pt-2 sm:pl-32 sm:pr-8 sm:pt-4 lg:pl-48 lg:pr-16">
           <div className="flex items-center gap-2 sm:gap-5">
             <button onClick={handleGoHome} className="shrink-0 hover:opacity-80 transition-opacity" data-testid="img-logo-btn">
               <img
