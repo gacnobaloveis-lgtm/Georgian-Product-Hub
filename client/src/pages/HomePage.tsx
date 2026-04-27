@@ -703,19 +703,11 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-mesh pb-20 md:pb-0">
-      <div
-        className="relative mb-4 h-44 overflow-hidden rounded-none sm:mb-8 sm:h-52 sm:rounded-b-2xl lg:h-64"
-        style={{
-          backgroundImage: "url('/images/spiningebi-cover.jpg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-xl" />
+      <div className="relative mb-4 h-44 overflow-hidden rounded-none bg-[#1a1410] sm:mb-8 sm:h-52 sm:rounded-b-2xl lg:h-64">
         <img
           src="/images/spiningebi-cover.jpg"
           alt="spiningebi.ge"
-          className="relative mx-auto block h-full w-auto max-w-full object-contain"
+          className="mx-auto block h-full w-auto max-w-full object-contain"
           data-testid="img-hero"
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/55 to-transparent" />
