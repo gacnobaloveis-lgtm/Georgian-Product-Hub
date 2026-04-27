@@ -707,7 +707,8 @@ export default function HomePage() {
         <img
           src="/images/spiningebi-cover.png"
           alt="spiningebi.ge"
-          className="h-44 w-full object-cover sm:h-52 lg:h-56"
+          className="h-44 w-full object-cover object-center sm:h-52 lg:h-56"
+          style={{ objectPosition: "center 30%" }}
           data-testid="img-hero"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
