@@ -141,7 +141,7 @@ const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000
 function cacheBust(url: string | undefined): string | undefined {
   if (!url) return url;
   const sep = url.includes("?") ? "&" : "?";
-  return `${url}${sep}v=2`;
+  return `${url}${sep}v=4`;
 }
 
 function ImgWithFallback({
@@ -707,9 +707,9 @@ export default function HomePage() {
         className="relative mb-1 aspect-[2/1] w-full overflow-hidden rounded-none sm:mb-8 sm:aspect-[5/1] sm:rounded-b-2xl lg:aspect-[7.5/1]"
       >
         <picture>
-          <source media="(max-width: 639px)" srcSet="/images/spiningebi-cover-mobile.jpg" />
+          <source media="(max-width: 639px)" srcSet="/images/spiningebi-cover-mobile.jpg?v=4" />
           <img
-            src="/images/spiningebi-cover.jpg"
+            src="/images/spiningebi-cover.jpg?v=4"
             alt="spiningebi.ge"
             className="block h-full w-full object-cover"
             data-testid="img-hero"
