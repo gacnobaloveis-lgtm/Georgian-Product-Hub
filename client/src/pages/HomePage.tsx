@@ -704,7 +704,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-mesh pb-20 md:pb-0">
       <div
-        className="relative mb-4 aspect-[2/1] w-full overflow-hidden rounded-none sm:mb-8 sm:aspect-[5/1] sm:rounded-b-2xl lg:aspect-[7.5/1]"
+        className="relative mb-1 aspect-[2/1] w-full overflow-hidden rounded-none sm:mb-8 sm:aspect-[5/1] sm:rounded-b-2xl lg:aspect-[7.5/1]"
       >
         <img
           src="/images/spiningebi-cover.jpg"
@@ -757,7 +757,7 @@ export default function HomePage() {
 
       {/* Mobile-only online counter */}
       {displayOnline !== null && (
-        <div className="md:hidden flex justify-center py-2" data-testid="badge-online-count-mobile">
+        <div className="md:hidden flex justify-center py-1" data-testid="badge-online-count-mobile">
           <div className="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -847,7 +847,7 @@ export default function HomePage() {
         </nav>
       </div>
 
-      <div className="mx-auto max-w-6xl px-3 py-3 sm:px-6 sm:py-6 md:mb-10 lg:px-8 lg:pt-0 lg:-mt-4">
+      <div className="mx-auto max-w-6xl px-3 pt-1 pb-3 sm:px-6 sm:py-6 md:mb-10 lg:px-8 lg:pt-0 lg:-mt-4">
         <div className="flex flex-col gap-4 md:gap-6 lg:flex-row lg:items-start lg:gap-6">
           <aside className="hidden w-full shrink-0 lg:sticky lg:top-6 lg:block lg:w-64 lg:self-start lg:mt-10">
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
