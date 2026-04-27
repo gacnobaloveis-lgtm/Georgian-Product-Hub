@@ -1222,6 +1222,9 @@ export async function registerRoutes(
 
       if (!sourceBuffer) {
         const fallbackCandidates = [
+          path.join(process.cwd(), "client", "public", "images", "spiningebi-cover.png"),
+          path.join(process.cwd(), "dist", "public", "images", "spiningebi-cover.png"),
+          path.join(process.cwd(), "public", "images", "spiningebi-cover.png"),
           path.join(process.cwd(), "client", "public", "images", "hero-fishing.png"),
           path.join(process.cwd(), "dist", "public", "images", "hero-fishing.png"),
           path.join(process.cwd(), "public", "images", "hero-fishing.png"),
