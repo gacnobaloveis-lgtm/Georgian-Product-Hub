@@ -707,7 +707,7 @@ export default function HomePage() {
         <img
           src="/images/spiningebi-cover.png"
           alt="spiningebi.ge"
-          className="h-44 w-full object-cover sm:h-52 lg:h-56"
+          className="block h-auto w-full object-contain"
           data-testid="img-hero"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
