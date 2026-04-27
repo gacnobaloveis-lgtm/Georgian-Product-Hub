@@ -704,8 +704,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-mesh pb-20 md:pb-0">
       <div
-        className="relative mb-4 w-full overflow-hidden rounded-none sm:mb-8 sm:rounded-b-2xl"
-        style={{ aspectRatio: "7.5 / 1" }}
+        className="relative mb-4 aspect-[3/1] w-full overflow-hidden rounded-none sm:mb-8 sm:aspect-[5/1] sm:rounded-b-2xl lg:aspect-[7.5/1]"
       >
         <img
           src="/images/spiningebi-cover.jpg"
