@@ -703,16 +703,15 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-mesh pb-20 md:pb-0">
-      <div className="relative mb-4 overflow-hidden rounded-none sm:mb-8 sm:rounded-b-2xl">
+      <div className="relative mb-4 overflow-hidden rounded-none bg-black sm:mb-8 sm:rounded-b-2xl">
         <img
-          src="/images/spiningebi-cover.png"
+          src="/images/spiningebi-cover.jpg"
           alt="spiningebi.ge"
-          className="h-44 w-full object-cover object-center sm:h-52 lg:h-56"
-          style={{ objectPosition: "center 30%" }}
+          className="block h-auto w-full"
           data-testid="img-hero"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent" />
-        <div className="absolute inset-0 flex items-center px-4 sm:px-8 lg:px-16">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 to-transparent sm:h-28" />
+        <div className="absolute inset-x-0 top-0 flex items-start px-4 pt-3 sm:px-8 sm:pt-5 lg:px-16">
           <div className="flex items-center gap-3 sm:gap-5">
             <button onClick={handleGoHome} className="shrink-0 hover:opacity-80 transition-opacity" data-testid="img-logo-btn">
               <img
