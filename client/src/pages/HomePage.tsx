@@ -706,12 +706,15 @@ export default function HomePage() {
       <div
         className="relative mb-1 aspect-[2/1] w-full overflow-hidden rounded-none sm:mb-8 sm:aspect-[5/1] sm:rounded-b-2xl lg:aspect-[7.5/1]"
       >
-        <img
-          src="/images/spiningebi-cover.jpg"
-          alt="spiningebi.ge"
-          className="block h-full w-full object-cover"
-          data-testid="img-hero"
-        />
+        <picture>
+          <source media="(max-width: 639px)" srcSet="/images/spiningebi-cover-mobile.jpg" />
+          <img
+            src="/images/spiningebi-cover.jpg"
+            alt="spiningebi.ge"
+            className="block h-full w-full object-cover"
+            data-testid="img-hero"
+          />
+        </picture>
         <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-black/55 to-transparent" />
         <div className="absolute inset-x-0 top-0 flex items-start pl-10 pr-3 pt-2 sm:pl-20 sm:pr-8 sm:pt-4 lg:pl-32 lg:pr-16">
           <div className="flex items-center gap-2 sm:gap-5">
