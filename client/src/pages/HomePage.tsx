@@ -144,6 +144,13 @@ function cacheBust(url: string | undefined): string | undefined {
   return `${url}${sep}v=4`;
 }
 
+const HERO_SLIDES = [
+  { mobile: "/images/spiningebi-cover-mobile.jpg?v=5", desktop: "/images/spiningebi-cover.jpg?v=5" },
+  { mobile: "/images/spiningebi-cover-mobile-2.jpg?v=1", desktop: "/images/spiningebi-cover-2.jpg?v=1" },
+  { mobile: "/images/spiningebi-cover-mobile-3.jpg?v=1", desktop: "/images/spiningebi-cover-3.jpg?v=1" },
+];
+const HERO_SLIDE_INTERVAL_MS = 20000;
+
 function ImgWithFallback({
   src,
   alt,
@@ -542,6 +549,13 @@ export default function HomePage() {
   const { data: categories } = useCategories();
   const { user, isAuthenticated } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [heroSlide, setHeroSlide] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHeroSlide((s) => (s + 1) % HERO_SLIDES.length);
+    }, HERO_SLIDE_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, []);
   const hasAdminRole = !!(user && user.role && ["admin", "moderator", "sales_admin"].includes(user.role));
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
@@ -706,15 +720,17 @@ export default function HomePage() {
       <div
         className="relative mb-1 aspect-[2/1] w-full overflow-hidden rounded-none sm:mb-8 sm:aspect-[5/1] sm:rounded-b-2xl lg:aspect-[7.5/1]"
       >
-        <picture>
-          <source media="(max-width: 639px)" srcSet="/images/spiningebi-cover-mobile.jpg?v=5" />
-          <img
-            src="/images/spiningebi-cover.jpg?v=5"
-            alt="spiningebi.ge"
-            className="block h-full w-full object-cover"
-            data-testid="img-hero"
-          />
-        </picture>
+        {HERO_SLIDES.map((slide, idx) => (
+          <picture key={idx}>
+            <source media="(max-width: 639px)" srcSet={slide.mobile} />
+            <img
+              src={slide.desktop}
+              alt="spiningebi.ge"
+              className={`absolute inset-0 block h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${idx === heroSlide ? "opacity-100" : "opacity-0"}`}
+              data-testid={idx === 0 ? "img-hero" : `img-hero-${idx}`}
+            />
+          </picture>
+        ))}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-black/55 to-transparent" />
         <div className="absolute inset-x-0 top-0 flex items-start pl-10 pr-3 pt-2 sm:pl-20 sm:pr-8 sm:pt-4 lg:pl-32 lg:pr-16">
           <div className="flex items-center gap-2 sm:gap-5">
