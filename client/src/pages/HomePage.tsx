@@ -707,9 +707,9 @@ export default function HomePage() {
         className="relative mb-1 aspect-[2/1] w-full overflow-hidden rounded-none sm:mb-8 sm:aspect-[5/1] sm:rounded-b-2xl lg:aspect-[7.5/1]"
       >
         <picture>
-          <source media="(max-width: 639px)" srcSet="/images/spiningebi-cover-mobile.jpg?v=4" />
+          <source media="(max-width: 639px)" srcSet="/images/spiningebi-cover-mobile.jpg?v=5" />
           <img
-            src="/images/spiningebi-cover.jpg?v=4"
+            src="/images/spiningebi-cover.jpg?v=5"
             alt="spiningebi.ge"
             className="block h-full w-full object-cover"
             data-testid="img-hero"
