@@ -9,7 +9,7 @@ declare global {
   }
 }
 
-const FLITT_SCRIPT_URL = "https://pay.flitt.com/static/checkout/v2/checkout.js";
+const FLITT_SCRIPT_URL = "https://pay.flitt.com/latest/checkout-vue/checkout.js";
 
 function loadFlittScript(): Promise<void> {
   return new Promise((resolve, reject) => {
