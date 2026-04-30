@@ -97,7 +97,10 @@ export function FlittPaymentDialog({ open, amount, orderId, description, onClose
         await new Promise((r) => requestAnimationFrame(() => r(null)));
         if (cancelled || !containerRef.current) return;
 
-        // 3. Mount inline checkout widget with custom theme
+        // 3. Mount inline checkout widget
+        // NOTE: New Flitt checkout-vue SDK only supports `border_radius` in css_variable.
+        // Custom main/card_bg/card_shadow colors aren't supported — we use a dark preset
+        // and override colors via CSS targeting widget DOM (see globals below).
         const widget = window.checkout(containerRef.current, {
           options: {
             methods: ["card"],
@@ -105,17 +108,21 @@ export function FlittPaymentDialog({ open, amount, orderId, description, onClose
             card_icons: ["mastercard", "visa"],
             full_screen: false,
             show_pay_button: true,
+            show_pay_button_amount: true,
             show_title: false,
             show_link: false,
             show_email: false,
-            theme: { type: "light", preset: "reset" },
+            show_lang: false,
+            show_fee: false,
+            show_secure_message: false,
+            show_processed: false,
+            show_test_mode: false,
+            show_order_desc: false,
+            theme: { type: "dark", preset: "solid_black" },
+            locales: ["en", "ru", "uk"],
           },
           params: { token },
-          css_variable: {
-            main: "#7d8ff8",
-            card_bg: "#353535",
-            card_shadow: "#9ADBE8",
-          },
+          css_variable: { border_radius: 12 },
         });
         widgetRef.current = widget;
         setLoading(false);
