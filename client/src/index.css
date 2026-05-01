@@ -402,10 +402,10 @@
   }
 }
 * {
+  word-break: normal !important;
   overflow-wrap: break-word !important;
-  word-break: keep-all !important;
-  hyphens: none !important;
-  text-align: left !important;
+  white-space: normal !important;
 }
+
 
 
