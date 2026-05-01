@@ -402,9 +402,10 @@
   }
 }
 * {
-  overflow-wrap: break-word !important; 
-  word-wrap: break-word !important;
-  word-break: initial !important;      
-  line-height: 1.6;                     
+  overflow-wrap: break-word !important;
+  word-break: keep-all !important;
+  hyphens: none !important;
+  text-align: left !important;
 }
+
 
