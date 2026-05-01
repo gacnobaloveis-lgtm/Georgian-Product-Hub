@@ -400,11 +400,9 @@
   .float-above-nav {
     bottom: 1.5rem;
   }
-}
-body div, body p, body span, body li {
+ body div, body p, body span, body li {
   word-break: keep-all !important;
   overflow-wrap: break-word !important;
   white-space: normal !important;
   display: block; 
-
-
+}
