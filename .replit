@@ -42,7 +42,6 @@ waitForPort = 5000
 [userenv]
 
 [userenv.shared]
-SESSION_SECRET = "5399d200788adcb08861ff930f7de10a13cdc141d7055b2b46ea13cc36acb80d"
 
 [agent]
 integrations = ["javascript_log_in_with_replit:2.0.0"]

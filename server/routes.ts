@@ -1283,36 +1283,45 @@ export async function registerRoutes(
         ? `${baseUrl}/product/${product.id}?ref=${encodeURIComponent(refCode)}`
         : `${baseUrl}/product/${product.id}`;
 
-      const description = product.description.substring(0, 200).replace(/\n/g, " ");
+      const rawDescription = product.description.substring(0, 200).replace(/\n/g, " ");
+      const priceStr = Number(price).toFixed(2);
+
+      // Escape every interpolated value to prevent stored XSS via product fields.
+      const safeName = escHtml(product.name);
+      const safeDesc = escHtml(rawDescription);
+      const safeImage = escHtml(imageUrl);
+      const safeProductUrl = escHtml(productUrl);
+      const safeSiteName = escHtml(SITE_NAME);
+      const safePrice = escHtml(priceStr);
 
       const html = `<!DOCTYPE html>
 <html lang="ka">
 <head>
 <meta charset="UTF-8">
-<title>${product.name} — ₾${Number(price).toFixed(2)} | ${SITE_NAME}</title>
-<meta name="description" content="${description}">
+<title>${safeName} — ₾${safePrice} | ${safeSiteName}</title>
+<meta name="description" content="${safeDesc}">
 <meta property="og:type" content="product">
-<meta property="og:title" content="${product.name} — ₾${Number(price).toFixed(2)}">
-<meta property="og:description" content="${description}">
-<meta property="og:image" content="${imageUrl}">
+<meta property="og:title" content="${safeName} — ₾${safePrice}">
+<meta property="og:description" content="${safeDesc}">
+<meta property="og:image" content="${safeImage}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/jpeg">
-<meta property="og:url" content="${productUrl}">
-<meta property="og:site_name" content="${SITE_NAME}">
+<meta property="og:url" content="${safeProductUrl}">
+<meta property="og:site_name" content="${safeSiteName}">
 <meta property="og:locale" content="ka_GE">
-<meta property="product:price:amount" content="${Number(price).toFixed(2)}">
+<meta property="product:price:amount" content="${safePrice}">
 <meta property="product:price:currency" content="GEL">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${product.name} — ₾${Number(price).toFixed(2)}">
-<meta name="twitter:description" content="${description}">
-<meta name="twitter:image" content="${imageUrl}">
+<meta name="twitter:title" content="${safeName} — ₾${safePrice}">
+<meta name="twitter:description" content="${safeDesc}">
+<meta name="twitter:image" content="${safeImage}">
 </head>
 <body>
-<h1>${product.name}</h1>
-<p>${description}</p>
-<img src="${imageUrl}" alt="${product.name}">
-<p>₾${Number(price).toFixed(2)}</p>
+<h1>${safeName}</h1>
+<p>${safeDesc}</p>
+<img src="${safeImage}" alt="${safeName}">
+<p>₾${safePrice}</p>
 </body>
 </html>`;
 

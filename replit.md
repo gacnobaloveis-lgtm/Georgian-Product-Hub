@@ -46,7 +46,10 @@ A web application for the Georgian market with full product CRUD management, ima
 
 ### Security
 - **Authentication**: Secret-key based admin login via `ADMIN_SECRET_KEY` env var
-- **Session Management**: express-session with `SESSION_SECRET`, httpOnly cookies, sameSite: lax
+- **Session Management**: express-session with `SESSION_SECRET` (Replit Secret only — never committed). In production, `getSession()` throws if `SESSION_SECRET` is missing or shorter than 32 chars; dev uses an ephemeral random fallback.
+- **Production Fail-Closed Startup**: If `setupAuth()` fails in production, `initializeApp()` calls `process.exit(1)` instead of marking the app ready.
+- **Admin Seeding**: `seedAdminUser()` refuses to create the admin account unless `ADMIN_USER_PASSWORD` is set and ≥12 chars. No hardcoded fallback password.
+- **SEO Crawler XSS Hardening**: `/product/:id` social-bot HTML branch escapes every interpolated product field (name, description, imageUrl, productUrl, price) via `escHtml()` before injecting into Open Graph / Twitter meta tags.
 - **Admin Middleware**: `requireAdmin` middleware on all mutating routes (POST/PUT/DELETE)
 - **Rate Limiting**: 200 requests per 15 minutes on `/api/` routes via express-rate-limit
 - **Security Headers**: Helmet middleware (CSP disabled for compatibility)
@@ -55,6 +58,7 @@ A web application for the Georgian market with full product CRUD management, ima
 - **Path Validation**: Album image paths validated to start with `/uploads/`
 - **Filename Sanitization**: Special characters stripped from uploaded filenames
 - **Frontend Route Guards**: `AdminRoute` component redirects unauthenticated users to `/admin-login`
+- **Patched Dependencies (May 2026 hardening pass)**: `multer@2.1.1`, `express-rate-limit@8.2.2`, `drizzle-orm@0.45.2`, `path-to-regexp@8.4.0`, `lodash@4.18.1`. Production-runtime HIGH CVEs: 0. Remaining HIGH advisories are in dev-only build packages (vite, rollup, minimatch, picomatch).
 
 ### Key Directories
 - `shared/` — Schema (Drizzle + Zod) and API route contracts

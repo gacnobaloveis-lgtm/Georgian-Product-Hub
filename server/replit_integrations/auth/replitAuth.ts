@@ -77,8 +77,18 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  let secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "SESSION_SECRET is missing or too short. Set a strong (>=32 char) value in Replit Secrets before deploying."
+      );
+    }
+    secret = crypto.randomBytes(32).toString("hex");
+    console.warn("[auth] SESSION_SECRET not set — using ephemeral dev value (sessions will reset on restart).");
+  }
   return session({
-    secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex"),
+    secret,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,

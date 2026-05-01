@@ -133,7 +133,16 @@ async function seedAdminUser() {
     const adminPhone = "599523350";
     const [existing] = await db.select().from(users).where(eq(users.phone, adminPhone));
     if (!existing) {
-      const password = process.env.ADMIN_USER_PASSWORD || "juansheri198222";
+      // Never seed the admin account with a hardcoded password.
+      // If ADMIN_USER_PASSWORD is missing or weak, skip seeding rather than create
+      // an account with a guessable password.
+      const password = process.env.ADMIN_USER_PASSWORD;
+      if (!password || password.length < 12) {
+        console.error(
+          "[seed] Skipping admin user creation: ADMIN_USER_PASSWORD env var missing or shorter than 12 chars.",
+        );
+        return;
+      }
       const salt = crypto.randomBytes(16).toString("hex");
       const hash = crypto.scryptSync(password, salt, 64).toString("hex");
       const passwordHash = `${salt}:${hash}`;
@@ -416,6 +425,13 @@ async function initializeApp() {
     log("App initialization completed");
   } catch (err: any) {
     console.error("[STARTUP] App init error:", err.message);
+    // In production, refuse to keep serving with a half-initialised auth/session stack.
+    // A logged-only failure (e.g. missing/short SESSION_SECRET) would otherwise leave
+    // the process alive and mark itself ready, defeating the fail-closed posture.
+    if (process.env.NODE_ENV === "production") {
+      console.error("[STARTUP] Fatal init failure in production. Exiting.");
+      process.exit(1);
+    }
   }
 
   try {
