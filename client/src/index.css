@@ -401,11 +401,10 @@
     bottom: 1.5rem;
   }
 }
-* {
-  word-break: normal !important;
+body div, body p, body span, body li {
+  word-break: keep-all !important;
   overflow-wrap: break-word !important;
   white-space: normal !important;
-}
-
+  display: block; 
 
 
