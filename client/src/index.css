@@ -402,5 +402,6 @@
   }
 }
 * {
-  word-break: break-all !important;
+  overflow-wrap: break-word !important;
+  word-break: normal !important;
 }
