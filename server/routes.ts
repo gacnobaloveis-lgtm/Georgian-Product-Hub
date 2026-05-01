@@ -48,6 +48,17 @@ function sanitizeString(input: string): string {
     .replace(/'/g, "&#x27;");
 }
 
+// Strip tags + collapse whitespace/&nbsp; — used to detect "empty" rich text
+// content like Quill's blank state (`<p><br></p>`, `<p>&nbsp;</p>`, etc).
+function isRichTextEmpty(input: string | undefined | null): boolean {
+  if (!input) return true;
+  const stripped = String(input)
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .trim();
+  return stripped.length === 0;
+}
+
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").substring(0, 200);
 }
@@ -1148,13 +1159,22 @@ export async function registerRoutes(
 
   app.put("/api/admin/contact-info", requireAdminOnly, async (req, res) => {
     try {
-      const { phone, email, whatsapp, address, workHours, dayOff } = req.body;
-      if (phone !== undefined) await storage.setSetting("contact_phone", phone);
-      if (email !== undefined) await storage.setSetting("contact_email", email);
-      if (whatsapp !== undefined) await storage.setSetting("contact_whatsapp", whatsapp);
-      if (address !== undefined) await storage.setSetting("contact_address", address);
-      if (workHours !== undefined) await storage.setSetting("contact_work_hours", workHours);
-      if (dayOff !== undefined) await storage.setSetting("contact_day_off", dayOff);
+      const fields: Array<[string, string]> = [
+        ["phone", "contact_phone"],
+        ["email", "contact_email"],
+        ["whatsapp", "contact_whatsapp"],
+        ["address", "contact_address"],
+        ["workHours", "contact_work_hours"],
+        ["dayOff", "contact_day_off"],
+      ];
+      for (const [body, settingKey] of fields) {
+        const value = req.body?.[body];
+        if (value === undefined) continue;
+        if (typeof value !== "string") {
+          return res.status(400).json({ message: `${body} უნდა იყოს ტექსტი` });
+        }
+        await storage.setSetting(settingKey, value);
+      }
       res.json({ success: true });
     } catch (err) {
       console.error("Contact info update error:", err);
@@ -1344,15 +1364,15 @@ export async function registerRoutes(
 
   app.post("/api/terms-sections", requireAdmin, async (req, res) => {
     try {
-      const title = req.body?.title?.trim();
-      const content = req.body?.content?.trim();
-      if (!title || !content) {
+      const title = typeof req.body?.title === "string" ? req.body.title.trim() : "";
+      const content = typeof req.body?.content === "string" ? req.body.content : "";
+      if (!title || isRichTextEmpty(content)) {
         return res.status(400).json({ message: "სათაური და შინაარსი აუცილებელია" });
       }
       const sortOrder = req.body?.sortOrder !== undefined ? Number(req.body.sortOrder) : 0;
       const section = await storage.createTermsSection({
-        title: sanitizeString(title),
-        content: sanitizeString(content),
+        title,
+        content,
         sortOrder,
       });
       res.status(201).json(section);
@@ -1370,14 +1390,20 @@ export async function registerRoutes(
       }
       const updates: Record<string, any> = {};
       if (req.body?.title !== undefined) {
+        if (typeof req.body.title !== "string") {
+          return res.status(400).json({ message: "სათაური უნდა იყოს ტექსტი" });
+        }
         const title = req.body.title.trim();
         if (!title) return res.status(400).json({ message: "სათაური აუცილებელია" });
-        updates.title = sanitizeString(title);
+        updates.title = title;
       }
       if (req.body?.content !== undefined) {
-        const content = req.body.content.trim();
-        if (!content) return res.status(400).json({ message: "შინაარსი აუცილებელია" });
-        updates.content = sanitizeString(content);
+        if (typeof req.body.content !== "string") {
+          return res.status(400).json({ message: "შინაარსი უნდა იყოს ტექსტი" });
+        }
+        const content = req.body.content;
+        if (isRichTextEmpty(content)) return res.status(400).json({ message: "შინაარსი აუცილებელია" });
+        updates.content = content;
       }
       if (req.body?.sortOrder !== undefined) {
         updates.sortOrder = Number(req.body.sortOrder);

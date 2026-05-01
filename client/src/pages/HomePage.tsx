@@ -36,6 +36,7 @@ import vestIcon from "@assets/image_1776966819348.png";
 import fishermanLogo from "@assets/spiningebi_logo.png";
 import eyeIconPath from "@assets/image_1777053072588.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
+import RichTextDisplay from "@/components/RichTextDisplay";
 
 function SiteFooter() {
   const [, setLocation] = useLocation();
@@ -69,7 +70,10 @@ function SiteFooter() {
             <h3 className="mb-3 text-sm font-bold text-gray-800">მისამართი</h3>
             <div className="flex items-start gap-2 text-sm text-gray-600">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-purple-500" />
-              <span>{c.address}</span>
+              <RichTextDisplay
+                html={c.address}
+                className="prose prose-sm max-w-none text-sm text-gray-600 [&_p]:my-0 [&_*]:!leading-snug"
+              />
             </div>
           </div>
           <div>
@@ -99,8 +103,14 @@ function SiteFooter() {
           </div>
           <div>
             <h3 className="mb-3 text-sm font-bold text-gray-800">სამუშაო საათები</h3>
-            <p className="text-sm text-gray-600">{c.workHours}</p>
-            <p className="text-sm text-gray-600">{c.dayOff}</p>
+            <RichTextDisplay
+              html={c.workHours}
+              className="prose prose-sm max-w-none text-sm text-gray-600 [&_p]:my-0 [&_*]:!leading-snug"
+            />
+            <RichTextDisplay
+              html={c.dayOff}
+              className="prose prose-sm max-w-none text-sm text-gray-600 [&_p]:my-0 [&_*]:!leading-snug mt-1"
+            />
           </div>
           <div>
             <h3 className="mb-3 text-sm font-bold text-gray-800">LIVE კონტაქტი</h3>

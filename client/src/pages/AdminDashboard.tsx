@@ -20,6 +20,8 @@ import { useAdminUsers, useUpdateUser, useDeleteUser } from "@/hooks/use-users";
 import type { Product } from "@shared/schema";
 import type { User, Order } from "@shared/models/auth";
 import { VisualSection } from "@/components/VisualSection";
+import RichTextEditor from "@/components/RichTextEditor";
+import RichTextDisplay from "@/components/RichTextDisplay";
 
 const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' fill='%23e2e8f0'%3E%3Crect width='80' height='80'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%2394a3b8'%3E%E1%83%90%E1%83%A0%E1%83%90%E1%83%A1%E1%83%A3%E1%83%A0%E1%83%90%E1%83%97%E1%83%98%3C/text%3E%3C/svg%3E";
 
@@ -1824,15 +1826,15 @@ function ContactInfoEditor() {
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground block mb-1">მისამართი</label>
-          <Input value={address} onChange={(e) => setAddress(e.target.value)} className="min-h-[44px]" data-testid="input-contact-address" />
+          <RichTextEditor value={address} onChange={setAddress} placeholder="მაგ: საქართველო, ქუთაისი, მელიქიშვილის 2" minHeight={120} testId="input-contact-address" />
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground block mb-1">სამუშაო საათები</label>
-          <Input value={workHours} onChange={(e) => setWorkHours(e.target.value)} className="min-h-[44px]" data-testid="input-contact-workhours" />
+          <RichTextEditor value={workHours} onChange={setWorkHours} placeholder="მაგ: ორშაბათი - შაბათი: 10:00 - 19:00" minHeight={120} testId="input-contact-workhours" />
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground block mb-1">დასვენების დღე</label>
-          <Input value={dayOff} onChange={(e) => setDayOff(e.target.value)} className="min-h-[44px]" data-testid="input-contact-dayoff" />
+          <RichTextEditor value={dayOff} onChange={setDayOff} placeholder="მაგ: კვირა: დასვენება" minHeight={120} testId="input-contact-dayoff" />
         </div>
       </div>
       <Button onClick={saveContact} disabled={saving} className="w-full min-h-[44px]" data-testid="button-save-contact">
@@ -2107,12 +2109,12 @@ function TermsSectionsManager() {
         </div>
         <div>
           <label className="text-xs font-medium text-muted-foreground block mb-1">შინაარსი</label>
-          <Textarea
+          <RichTextEditor
             value={newContent}
-            onChange={(e) => setNewContent(e.target.value)}
+            onChange={setNewContent}
             placeholder="სექციის ტექსტი..."
-            rows={4}
-            data-testid="input-terms-new-content"
+            minHeight={180}
+            testId="input-terms-new-content"
           />
         </div>
         <Button
@@ -2151,11 +2153,11 @@ function TermsSectionsManager() {
                   </div>
                   <div>
                     <label className="text-xs font-medium text-muted-foreground block mb-1">შინაარსი</label>
-                    <Textarea
+                    <RichTextEditor
                       value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      rows={4}
-                      data-testid={`input-terms-edit-content-${section.id}`}
+                      onChange={setEditContent}
+                      minHeight={180}
+                      testId={`input-terms-edit-content-${section.id}`}
                     />
                   </div>
                   <div className="flex gap-2">
@@ -2176,9 +2178,11 @@ function TermsSectionsManager() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
                       <h4 className="font-semibold text-sm" data-testid={`text-terms-title-${section.id}`}>{section.title}</h4>
-                      <p className="mt-1 text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap" data-testid={`text-terms-content-${section.id}`}>
-                        {section.content}
-                      </p>
+                      <RichTextDisplay
+                        html={section.content}
+                        className="prose prose-sm max-w-none mt-1 text-muted-foreground line-clamp-3 [&_*]:!my-0"
+                        testId={`text-terms-content-${section.id}`}
+                      />
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                       <Button

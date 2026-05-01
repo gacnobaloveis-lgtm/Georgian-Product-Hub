@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { ScrollText, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { TermsSection } from "@shared/schema";
+import RichTextDisplay from "@/components/RichTextDisplay";
 
 export default function TermsPage() {
   const [, setLocation] = useLocation();
@@ -40,7 +41,10 @@ export default function TermsPage() {
             {sections.map((section) => (
               <div key={section.id} className="rounded-xl border border-border bg-card p-6">
                 <h2 className="mb-3 text-base font-bold text-foreground">{section.title}</h2>
-                <p className="text-[15px] leading-7 text-muted-foreground whitespace-pre-wrap">{section.content}</p>
+                <RichTextDisplay
+                  html={section.content}
+                  className="prose prose-sm sm:prose-base max-w-none text-[15px] leading-7 text-muted-foreground"
+                />
               </div>
             ))}
           </div>

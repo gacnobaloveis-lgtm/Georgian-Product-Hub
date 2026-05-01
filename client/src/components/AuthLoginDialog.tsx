@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import type { TermsSection } from "@shared/schema";
+import RichTextDisplay from "@/components/RichTextDisplay";
 
 async function attemptPushSubscription(
   onResult?: (ok: boolean, msg: string) => void
@@ -711,7 +712,11 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
               termsSections.map((section) => (
                 <div key={section.id} className="space-y-1">
                   <h3 className="text-base font-bold" data-testid={`terms-title-${section.id}`}>{section.title}</h3>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap" data-testid={`terms-content-${section.id}`}>{section.content}</p>
+                  <RichTextDisplay
+                    html={section.content}
+                    className="prose prose-sm max-w-none text-sm text-muted-foreground"
+                    testId={`terms-content-${section.id}`}
+                  />
                 </div>
               ))
             )}

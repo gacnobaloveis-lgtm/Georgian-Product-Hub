@@ -183,6 +183,14 @@ A web application for the Georgian market with full product CRUD management, ima
 - Role assignment via "სტატუსები" section in admin panel (admin-only)
 - `requireAdminOnly` middleware restricts role changes and user deletion to full admins only
 
+## Rich Text Editor (Terms & Contact)
+- Terms & Conditions content and Contact info (address, work hours, day off) are edited via a WYSIWYG editor (`react-quill-new`) and stored as raw HTML in the existing `text` columns/settings. No schema changes.
+- `client/src/components/RichTextEditor.tsx` — admin input editor with toolbar (font size, headings, bold/italic/underline/strike, color, background, alignment, lists, link, blockquote). Custom font sizes registered via Quill `attributors/style/size`.
+- `client/src/components/RichTextDisplay.tsx` — safe renderer using DOMPurify with strict ALLOWED_TAGS (p, br, strong, em, u, s, blockquote, h1-h6, ul, ol, li, a, span, div) and ALLOWED_ATTR (href, target, rel, style, class). Includes legacy plain-text fallback (escape + `\n` → `<br>`) so existing values keep working.
+- Wired into: `AdminDashboard` (TermsSectionsManager + ContactInfoEditor), `TermsPage`, `HomePage` SiteFooter, and `AuthLoginDialog` terms preview.
+- Phone, email, and WhatsApp remain plain text inputs because they are used in `tel:`, `mailto:`, and `wa.me/` link `href` attributes.
+- Server: `/api/terms-sections` POST/PUT and `/api/admin/contact-info` PUT preserve raw HTML (no server-side HTML-escape) and validate with strict `typeof === "string"` checks. `isRichTextEmpty()` rejects Quill blank state (`<p><br></p>`, `&nbsp;`).
+
 ## Environment Variables
 - `DATABASE_URL` — PostgreSQL connection string (auto-managed)
 - `SESSION_SECRET` — Express session secret
