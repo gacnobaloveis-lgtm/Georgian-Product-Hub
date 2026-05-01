@@ -402,6 +402,9 @@
   }
 }
 * {
-  overflow-wrap: break-word !important;
-  word-break: normal !important;
+  overflow-wrap: break-word !important; 
+  word-wrap: break-word !important;
+  word-break: initial !important;      
+  line-height: 1.6;                     
 }
+
