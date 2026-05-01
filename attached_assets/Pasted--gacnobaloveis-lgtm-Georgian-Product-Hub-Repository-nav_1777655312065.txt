@@ -1,0 +1,159 @@
+
+gacnobaloveis-lgtm
+Georgian-Product-Hub
+Repository navigation
+Code
+Issues
+Pull requests
+Agents
+Actions
+Projects
+Wiki
+Security and quality
+Insights
+Settings
+Important update
+On April 24 we'll start using GitHub Copilot interaction data for AI model training unless you opt out. Review this update and manage your preferences in your GitHub account settings.
+Owner avatar
+Georgian-Product-Hub
+Public
+gacnobaloveis-lgtm/Georgian-Product-Hub
+subrepl-ycg2ekyj had recent pushes 13 minutes ago
+Go to file
+t
+T
+Name		
+gacnobaloveis-lgtm
+gacnobaloveis-lgtm
+feat: cover slideshow with 3 AI covers, 20s rotation
+8ff5b29
+ · 
+2 days ago
+.agents
+feat: add hero fishing background image
+last week
+attached_assets
+feat: new panoramic mountains+river cover, fitted to 1920x256
+4 days ago
+client
+feat: cover slideshow with 3 AI covers, 20s rotation
+2 days ago
+script
+fix: bundle openid-client (ESM) into CJS output to fix ERR_REQUIRE_ESM
+last week
+scripts
+feat: add database backup script and initial backup snapshot
+last week
+server
+feat: new spiningebi.ge logo + cover (bee logo + river hero, og fallb…
+4 days ago
+shared
+Restore missing website assets and update core application files
+last week
+.gitignore
+Fresh start: cleaned code and database
+2 months ago
+.replit
+Update project configuration for build process
+last week
+README.md
+Update project configuration for build process
+last week
+components.json
+Fresh start: cleaned code and database
+2 months ago
+drizzle.config.ts
+Fresh start: cleaned code and database
+2 months ago
+my_data_backup.sql
+Fresh start: cleaned code and database
+2 months ago
+neon_real_backup.sql
+Saved progress at the end of the loop
+last week
+package-lock.json
+Add missing dependencies for Railway build (passport-google-oauth20, …
+last week
+package.json
+Add missing dependencies for Railway build (passport-google-oauth20, …
+last week
+postcss.config.js
+Fresh start: cleaned code and database
+2 months ago
+processed_image.png
+Fresh start: cleaned code and database
+2 months ago
+processed_image_no_bg.png
+Fresh start: cleaned code and database
+2 months ago
+railway.json
+fix: ensure devDependencies installed during Railway build
+last week
+replit.md
+Update project configuration for build process
+last week
+tailwind.config.ts
+Fresh start: cleaned code and database
+2 months ago
+tsconfig.json
+Fresh start: cleaned code and database
+2 months ago
+vite.config.ts
+Update project configuration for build process
+last week
+Repository files navigation
+README
+Georgian-Product-Hub
+About
+No description, website, or topics provided.
+Resources
+ Readme
+ Activity
+Stars
+ 0 stars
+Watchers
+ 0 watching
+Forks
+ 0 forks
+Releases
+No releases published
+Create a new release
+Deployments
+140
+ welcoming-compassion / production 2 days ago
+ remarkable-expression / production inactive
+ stellar-prosperity / production inactive
++ 137 deployments
+Packages
+No packages published
+Publish your first package
+Contributors
+4
+@gacnobaloveis-lgtm
+gacnobaloveis-lgtm
+@replit-agent
+replit-agent Agent
+@railway-app[bot]
+railway-app[bot]
+@mandaetis-dev
+mandaetis-dev
+Languages
+TypeScript
+96.8%
+ 
+CSS
+1.5%
+ 
+HTML
+1.1%
+ 
+JavaScript
+0.6%
+Suggested workflows
+Based on your tech stack
+SLSA Generic generator logo
+SLSA Generic generator
+Generate SLSA3 provenance for your existing release workflows
+Deno logo
+Deno
+Test your Deno project

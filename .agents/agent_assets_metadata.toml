@@ -6,3 +6,39 @@ id = "GJonICCywJdrHb09xaGYT"
 uri = "file://client/public/images/hero-fishing.png"
 type = "image"
 title = "generated_image"
+
+[[generated]]
+id = "DwOCHT89TCKXHaVr87kqk"
+uri = "file://attached_assets/generated_images/cover_desktop.png"
+type = "image"
+title = "desktop fishing cover"
+
+[[generated]]
+id = "GR3wSd8TyVKeKRkxATeU7"
+uri = "file://attached_assets/generated_images/cover_mobile.png"
+type = "image"
+title = "mobile fishing cover"
+
+[[generated]]
+id = "sqc-GC98MoSkX5hAKtRF-"
+uri = "file://attached_assets/generated_images/cover2_desktop.png"
+type = "image"
+title = "desktop cover variant 2"
+
+[[generated]]
+id = "R2UmBdET4S7DDEu8QSrWy"
+uri = "file://attached_assets/generated_images/cover2_mobile.png"
+type = "image"
+title = "mobile cover variant 2"
+
+[[generated]]
+id = "a5z3OMcbJcNyxzL0pLGrZ"
+uri = "file://attached_assets/generated_images/cover3_desktop.png"
+type = "image"
+title = "desktop cover variant 3"
+
+[[generated]]
+id = "CAQ5k19v-8zwZklCyzNtb"
+uri = "file://attached_assets/generated_images/cover3_mobile.png"
+type = "image"
+title = "mobile cover variant 3"

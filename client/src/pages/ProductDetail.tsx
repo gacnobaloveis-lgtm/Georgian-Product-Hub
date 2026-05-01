@@ -27,6 +27,9 @@ function ImgWithFallback({
   ...rest
 }: React.ImgHTMLAttributes<HTMLImageElement>) {
   const [errored, setErrored] = useState(false);
+  useEffect(() => {
+    setErrored(false);
+  }, [src]);
   return (
     <img
       src={errored || !src ? PLACEHOLDER_IMG : cacheBust(src)}

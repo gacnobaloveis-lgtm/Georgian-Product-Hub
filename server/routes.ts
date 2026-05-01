@@ -48,6 +48,17 @@ function sanitizeString(input: string): string {
     .replace(/'/g, "&#x27;");
 }
 
+// Strip tags + collapse whitespace/&nbsp; — used to detect "empty" rich text
+// content like Quill's blank state (`<p><br></p>`, `<p>&nbsp;</p>`, etc).
+function isRichTextEmpty(input: string | undefined | null): boolean {
+  if (!input) return true;
+  const stripped = String(input)
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .trim();
+  return stripped.length === 0;
+}
+
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_").substring(0, 200);
 }
@@ -1148,13 +1159,22 @@ export async function registerRoutes(
 
   app.put("/api/admin/contact-info", requireAdminOnly, async (req, res) => {
     try {
-      const { phone, email, whatsapp, address, workHours, dayOff } = req.body;
-      if (phone !== undefined) await storage.setSetting("contact_phone", phone);
-      if (email !== undefined) await storage.setSetting("contact_email", email);
-      if (whatsapp !== undefined) await storage.setSetting("contact_whatsapp", whatsapp);
-      if (address !== undefined) await storage.setSetting("contact_address", address);
-      if (workHours !== undefined) await storage.setSetting("contact_work_hours", workHours);
-      if (dayOff !== undefined) await storage.setSetting("contact_day_off", dayOff);
+      const fields: Array<[string, string]> = [
+        ["phone", "contact_phone"],
+        ["email", "contact_email"],
+        ["whatsapp", "contact_whatsapp"],
+        ["address", "contact_address"],
+        ["workHours", "contact_work_hours"],
+        ["dayOff", "contact_day_off"],
+      ];
+      for (const [body, settingKey] of fields) {
+        const value = req.body?.[body];
+        if (value === undefined) continue;
+        if (typeof value !== "string") {
+          return res.status(400).json({ message: `${body} უნდა იყოს ტექსტი` });
+        }
+        await storage.setSetting(settingKey, value);
+      }
       res.json({ success: true });
     } catch (err) {
       console.error("Contact info update error:", err);
@@ -1283,36 +1303,45 @@ export async function registerRoutes(
         ? `${baseUrl}/product/${product.id}?ref=${encodeURIComponent(refCode)}`
         : `${baseUrl}/product/${product.id}`;
 
-      const description = product.description.substring(0, 200).replace(/\n/g, " ");
+      const rawDescription = product.description.substring(0, 200).replace(/\n/g, " ");
+      const priceStr = Number(price).toFixed(2);
+
+      // Escape every interpolated value to prevent stored XSS via product fields.
+      const safeName = escHtml(product.name);
+      const safeDesc = escHtml(rawDescription);
+      const safeImage = escHtml(imageUrl);
+      const safeProductUrl = escHtml(productUrl);
+      const safeSiteName = escHtml(SITE_NAME);
+      const safePrice = escHtml(priceStr);
 
       const html = `<!DOCTYPE html>
 <html lang="ka">
 <head>
 <meta charset="UTF-8">
-<title>${product.name} — ₾${Number(price).toFixed(2)} | ${SITE_NAME}</title>
-<meta name="description" content="${description}">
+<title>${safeName} — ₾${safePrice} | ${safeSiteName}</title>
+<meta name="description" content="${safeDesc}">
 <meta property="og:type" content="product">
-<meta property="og:title" content="${product.name} — ₾${Number(price).toFixed(2)}">
-<meta property="og:description" content="${description}">
-<meta property="og:image" content="${imageUrl}">
+<meta property="og:title" content="${safeName} — ₾${safePrice}">
+<meta property="og:description" content="${safeDesc}">
+<meta property="og:image" content="${safeImage}">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:type" content="image/jpeg">
-<meta property="og:url" content="${productUrl}">
-<meta property="og:site_name" content="${SITE_NAME}">
+<meta property="og:url" content="${safeProductUrl}">
+<meta property="og:site_name" content="${safeSiteName}">
 <meta property="og:locale" content="ka_GE">
-<meta property="product:price:amount" content="${Number(price).toFixed(2)}">
+<meta property="product:price:amount" content="${safePrice}">
 <meta property="product:price:currency" content="GEL">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="${product.name} — ₾${Number(price).toFixed(2)}">
-<meta name="twitter:description" content="${description}">
-<meta name="twitter:image" content="${imageUrl}">
+<meta name="twitter:title" content="${safeName} — ₾${safePrice}">
+<meta name="twitter:description" content="${safeDesc}">
+<meta name="twitter:image" content="${safeImage}">
 </head>
 <body>
-<h1>${product.name}</h1>
-<p>${description}</p>
-<img src="${imageUrl}" alt="${product.name}">
-<p>₾${Number(price).toFixed(2)}</p>
+<h1>${safeName}</h1>
+<p>${safeDesc}</p>
+<img src="${safeImage}" alt="${safeName}">
+<p>₾${safePrice}</p>
 </body>
 </html>`;
 
@@ -1335,15 +1364,15 @@ export async function registerRoutes(
 
   app.post("/api/terms-sections", requireAdmin, async (req, res) => {
     try {
-      const title = req.body?.title?.trim();
-      const content = req.body?.content?.trim();
-      if (!title || !content) {
+      const title = typeof req.body?.title === "string" ? req.body.title.trim() : "";
+      const content = typeof req.body?.content === "string" ? req.body.content : "";
+      if (!title || isRichTextEmpty(content)) {
         return res.status(400).json({ message: "სათაური და შინაარსი აუცილებელია" });
       }
       const sortOrder = req.body?.sortOrder !== undefined ? Number(req.body.sortOrder) : 0;
       const section = await storage.createTermsSection({
-        title: sanitizeString(title),
-        content: sanitizeString(content),
+        title,
+        content,
         sortOrder,
       });
       res.status(201).json(section);
@@ -1361,14 +1390,20 @@ export async function registerRoutes(
       }
       const updates: Record<string, any> = {};
       if (req.body?.title !== undefined) {
+        if (typeof req.body.title !== "string") {
+          return res.status(400).json({ message: "სათაური უნდა იყოს ტექსტი" });
+        }
         const title = req.body.title.trim();
         if (!title) return res.status(400).json({ message: "სათაური აუცილებელია" });
-        updates.title = sanitizeString(title);
+        updates.title = title;
       }
       if (req.body?.content !== undefined) {
-        const content = req.body.content.trim();
-        if (!content) return res.status(400).json({ message: "შინაარსი აუცილებელია" });
-        updates.content = sanitizeString(content);
+        if (typeof req.body.content !== "string") {
+          return res.status(400).json({ message: "შინაარსი უნდა იყოს ტექსტი" });
+        }
+        const content = req.body.content;
+        if (isRichTextEmpty(content)) return res.status(400).json({ message: "შინაარსი აუცილებელია" });
+        updates.content = content;
       }
       if (req.body?.sortOrder !== undefined) {
         updates.sortOrder = Number(req.body.sortOrder);
