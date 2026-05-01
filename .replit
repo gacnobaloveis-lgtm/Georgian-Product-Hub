@@ -43,5 +43,7 @@ waitForPort = 5000
 
 [userenv.shared]
 
+[userenv.development]
+
 [agent]
 integrations = ["javascript_log_in_with_replit:2.0.0"]
