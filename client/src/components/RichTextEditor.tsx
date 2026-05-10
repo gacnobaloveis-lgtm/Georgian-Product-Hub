@@ -94,6 +94,9 @@ export default function RichTextEditor({
         .rich-text-editor .ql-editor {
           min-height: ${minHeight}px;
           color: #111827;
+          word-break: normal;
+          overflow-wrap: break-word;
+          hyphens: none;
         }
         .rich-text-editor .ql-editor.ql-blank::before {
           color: #9ca3af;
