@@ -47,9 +47,16 @@ export default function RichTextDisplay({ html, className, testId }: RichTextDis
         a.setAttribute("target", "_blank");
         a.setAttribute("rel", "noopener noreferrer");
       });
+      const walker = document.createTreeWalker(tmp, NodeFilter.SHOW_TEXT);
+      const nodes: Text[] = [];
+      let n: Node | null;
+      while ((n = walker.nextNode())) nodes.push(n as Text);
+      nodes.forEach((t) => {
+        if (t.nodeValue) t.nodeValue = t.nodeValue.replace(/\u00A0/g, " ");
+      });
       return tmp.innerHTML;
     }
-    return cleaned;
+    return cleaned.replace(/&nbsp;/g, " ");
   }, [html]);
 
   if (!html) return null;
