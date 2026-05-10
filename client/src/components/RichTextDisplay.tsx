@@ -58,6 +58,8 @@ export default function RichTextDisplay({ html, className, testId }: RichTextDis
     <div
       className={className}
       data-testid={testId}
+      lang="ka"
+      style={{ wordBreak: "normal", overflowWrap: "break-word", hyphens: "none" }}
       dangerouslySetInnerHTML={{ __html: safeHtml }}
     />
   );
