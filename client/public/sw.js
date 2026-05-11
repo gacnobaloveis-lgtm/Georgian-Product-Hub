@@ -1,4 +1,4 @@
-const CACHE_NAME = "spiningebi-v12";
+const CACHE_NAME = "spiningebi-v13";
 const STATIC_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".svg", ".ico", ".woff", ".woff2", ".ttf"];
 
 self.addEventListener("install", () => {

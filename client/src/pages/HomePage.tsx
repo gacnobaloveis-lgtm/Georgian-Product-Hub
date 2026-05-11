@@ -45,88 +45,139 @@ function SiteFooter() {
   });
   const c = contact || { phone: "+995 599 52 33 51", email: "spiningebi@gmail.com", whatsapp: "+995 599 52 33 51", address: "საქართველო, ქუთაისი, მელიქიშვილის 2", workHours: "ორშაბათი - შაბათი: 10:00 - 19:00", dayOff: "კვირა: დასვენება" };
   const waNumber = c.whatsapp.replace(/[\s+()-]/g, "");
+  const sectionTitle = "mb-4 text-xs font-bold uppercase tracking-wider text-purple-700/80 flex items-center gap-2";
+  const titleDot = <span className="inline-block h-1.5 w-1.5 rounded-full bg-gradient-to-br from-purple-500 to-pink-500" />;
+  const itemRow = "group flex items-center gap-3 text-sm text-gray-700 hover:text-purple-700 transition-all duration-200";
+  const iconBadge = "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-purple-100 group-hover:ring-purple-300 group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200";
   return (
-    <footer className="mt-8 border-t border-purple-200/50" style={{ background: "#eef6fb" }} data-testid="footer">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <footer
+      className="relative mt-12 overflow-hidden"
+      style={{
+        background:
+          "linear-gradient(135deg, #f5f0ff 0%, #eef6fb 50%, #fef4f9 100%)",
+      }}
+      data-testid="footer"
+    >
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-emerald-500" />
+      <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-purple-200/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-pink-200/30 blur-3xl" />
+
+      <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <h3 className="mb-3 text-sm font-bold text-gray-800">საკონტაქტო ინფორმაცია</h3>
-            <ul className="space-y-2.5">
-              <li className="flex items-center gap-2 text-sm text-gray-600">
-                <Phone className="h-4 w-4 text-purple-500" />
-                <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="hover:text-purple-700">{c.phone}</a>
+            <h3 className={sectionTitle}>{titleDot} საკონტაქტო ინფორმაცია</h3>
+            <ul className="space-y-3">
+              <li>
+                <a href={`tel:${c.phone.replace(/\s/g, "")}`} className={itemRow} data-testid="footer-phone">
+                  <span className={iconBadge}>
+                    <Phone className="h-4 w-4 text-purple-600" />
+                  </span>
+                  <span className="font-medium">{c.phone}</span>
+                </a>
               </li>
-              <li className="flex items-center gap-2 text-sm text-gray-600">
-                <Mail className="h-4 w-4 text-purple-500" />
-                <a href={`mailto:${c.email}`} className="hover:text-purple-700">{c.email}</a>
+              <li>
+                <a href={`mailto:${c.email}`} className={itemRow} data-testid="footer-email">
+                  <span className={iconBadge}>
+                    <Mail className="h-4 w-4 text-pink-600" />
+                  </span>
+                  <span className="truncate">{c.email}</span>
+                </a>
               </li>
-              <li className="flex items-center gap-2 text-sm text-gray-600">
-                <MessageCircle className="h-4 w-4 text-green-500" />
-                <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className="hover:text-green-600">WhatsApp</a>
+              <li>
+                <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className={`${itemRow} hover:text-emerald-700`} data-testid="footer-whatsapp">
+                  <span className={`${iconBadge} group-hover:ring-emerald-300`}>
+                    <MessageCircle className="h-4 w-4 text-emerald-600" />
+                  </span>
+                  <span className="font-medium">WhatsApp</span>
+                </a>
+              </li>
+              <li>
+                <button
+                  onClick={() => setLocation("/live-contact")}
+                  className={`${itemRow} hover:text-emerald-700 w-full`}
+                  data-testid="footer-live-contact2"
+                >
+                  <span className={`${iconBadge} group-hover:ring-red-300 relative`}>
+                    <MessageCircle className="h-4 w-4 text-red-500" />
+                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
+                  </span>
+                  <span className="font-semibold">
+                    <span className="text-red-500">LIVE</span> კონტაქტი
+                  </span>
+                </button>
               </li>
             </ul>
           </div>
+
           <div>
-            <h3 className="mb-3 text-sm font-bold text-gray-800">მისამართი</h3>
-            <div className="flex items-start gap-2 text-sm text-gray-600">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-purple-500" />
+            <h3 className={sectionTitle}>{titleDot} მისამართი</h3>
+            <div className="group flex items-start gap-3 text-sm text-gray-700">
+              <span className={iconBadge}>
+                <MapPin className="h-4 w-4 text-purple-600" />
+              </span>
               <RichTextDisplay
                 html={c.address}
-                className="prose prose-sm max-w-none text-sm text-gray-600 [&_p]:my-0 [&_*]:!leading-snug"
+                className="prose prose-sm max-w-none text-sm text-gray-700 leading-relaxed [&_p]:my-0 [&_*]:!leading-relaxed pt-1"
               />
             </div>
           </div>
+
           <div>
-            <h3 className="mb-3 text-sm font-bold text-gray-800">ბმულები</h3>
-            <ul className="space-y-2.5">
+            <h3 className={sectionTitle}>{titleDot} ბმულები</h3>
+            <ul className="space-y-3">
               <li>
                 <button
                   onClick={() => setLocation("/terms")}
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-purple-700 transition-colors"
+                  className={`${itemRow} w-full`}
                   data-testid="footer-terms-link2"
                 >
-                  <ScrollText className="h-4 w-4 text-purple-500" />
+                  <span className={iconBadge}>
+                    <ScrollText className="h-4 w-4 text-purple-600" />
+                  </span>
                   წესები და პირობები
                 </button>
               </li>
               <li>
                 <button
                   onClick={() => setLocation("/about")}
-                  className="flex items-center gap-2 text-sm text-gray-600 hover:text-purple-700 transition-colors"
+                  className={`${itemRow} w-full`}
                   data-testid="footer-about-link2"
                 >
-                  <Info className="h-4 w-4 text-purple-500" />
+                  <span className={iconBadge}>
+                    <Info className="h-4 w-4 text-pink-600" />
+                  </span>
                   ჩვენს შესახებ
                 </button>
               </li>
             </ul>
           </div>
+
           <div>
-            <h3 className="mb-3 text-sm font-bold text-gray-800">სამუშაო საათები</h3>
-            <RichTextDisplay
-              html={c.workHours}
-              className="prose prose-sm max-w-none text-sm text-gray-600 [&_p]:my-0 [&_*]:!leading-snug"
-            />
-            <RichTextDisplay
-              html={c.dayOff}
-              className="prose prose-sm max-w-none text-sm text-gray-600 [&_p]:my-0 [&_*]:!leading-snug mt-1"
-            />
-          </div>
-          <div>
-            <h3 className="mb-3 text-sm font-bold text-gray-800">LIVE კონტაქტი</h3>
-            <button
-              onClick={() => setLocation("/live-contact")}
-              className="flex items-center gap-2 text-sm text-emerald-700 hover:text-emerald-900 transition-colors font-semibold"
-              data-testid="footer-live-contact2"
-            >
-              <MessageCircle className="h-4 w-4 text-emerald-500" />
-              <span className="text-red-500 font-bold">LIVE</span>&nbsp;კონტაქტი
-            </button>
+            <h3 className={sectionTitle}>{titleDot} სამუშაო საათები</h3>
+            <div className="rounded-xl bg-white/60 backdrop-blur-sm p-4 ring-1 ring-purple-100 shadow-sm">
+              <RichTextDisplay
+                html={c.workHours}
+                className="prose prose-sm max-w-none text-sm text-gray-800 font-medium [&_p]:my-0 [&_*]:!leading-relaxed"
+              />
+              <div className="mt-2 pt-2 border-t border-purple-100">
+                <RichTextDisplay
+                  html={c.dayOff}
+                  className="prose prose-sm max-w-none text-xs text-gray-500 italic [&_p]:my-0 [&_*]:!leading-relaxed"
+                />
+              </div>
+            </div>
           </div>
         </div>
-        <div className="mt-6 border-t border-purple-200/50 pt-4 text-center space-y-1">
-          <RegisteredUsersCount />
-          <p className="text-xs text-gray-500">© {new Date().getFullYear()} spiningebi.ge — ყველა უფლება დაცულია</p>
+
+        <div className="mt-10 pt-6 border-t border-purple-200/40 flex flex-col items-center gap-3">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/70 backdrop-blur-sm ring-1 ring-purple-100 shadow-sm">
+            <RegisteredUsersCount />
+          </div>
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span className="inline-block h-1 w-1 rounded-full bg-purple-400" />
+            <span>© {new Date().getFullYear()} <span className="font-semibold text-purple-700">spiningebi.ge</span> — ყველა უფლება დაცულია</span>
+            <span className="inline-block h-1 w-1 rounded-full bg-purple-400" />
+          </div>
         </div>
       </div>
     </footer>
