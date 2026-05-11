@@ -1,5 +1,5 @@
 import { useLocation } from "wouter";
-import { Fish, MapPin, Phone, Mail, Clock, ArrowLeft, ShieldCheck, Truck, Star } from "lucide-react";
+import { Fish, ArrowLeft, ShieldCheck, Truck, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function AboutPage() {
@@ -50,27 +50,6 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-6">
-            <h2 className="mb-4 text-base font-bold text-foreground">საკონტაქტო ინფორმაცია</h2>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Phone className="h-4 w-4 text-primary shrink-0" />
-                <a href="tel:+995599523351" className="hover:text-foreground transition-colors">+995 599 52 33 51</a>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Mail className="h-4 w-4 text-primary shrink-0" />
-                <a href="mailto:spiningebi@gmail.com" className="hover:text-foreground transition-colors">spiningebi@gmail.com</a>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4 text-primary shrink-0" />
-                <span>საქართველო, ქუთაისი</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4 text-primary shrink-0" />
-                <span>კვირის ყველა დღე: 00:00 – 24:00</span>
-              </div>
-            </div>
-          </div>
         </div>
 
         <div className="mt-8 text-center">
