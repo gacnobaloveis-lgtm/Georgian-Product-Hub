@@ -66,7 +66,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState<EditForm>({ fullName: "", city: "", address: "", phone: "" });
-  const [tbcSubmitting, setTbcSubmitting] = useState(false);
+  const [paySubmitting, setPaySubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [flittPay, setFlittPay] = useState<{ orderId: number; amount: number; description: string } | null>(null);
   const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
@@ -221,10 +221,10 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
     }
   }
 
-  async function handleTbcPay() {
+  async function handleFlittPay() {
     if (!profile || !isProfileComplete(profile)) return;
 
-    setTbcSubmitting(true);
+    setPaySubmitting(true);
     const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
     const itemsToOrder = confirmedItemsRef.current;
     const totalAmount = itemsToOrder.reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -257,7 +257,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
 
       if (createdOrderIds.length === 0) {
         toast({ variant: "destructive", title: "შეცდომა", description: "შეკვეთა ვერ შეიქმნა" });
-        setTbcSubmitting(false);
+        setPaySubmitting(false);
         return;
       }
 
@@ -268,11 +268,11 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
       clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
       setSelected(new Set());
       setFlittPay({ orderId: createdOrderIds[0], amount: totalAmount, description });
-      setTbcSubmitting(false);
+      setPaySubmitting(false);
       onOpenChange(false);
     } catch {
       toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
-      setTbcSubmitting(false);
+      setPaySubmitting(false);
     }
   }
 
@@ -545,11 +545,11 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
 
                   <button
                     onClick={() => { confirmedItemsRef.current = [...checkoutItems]; setConfirmOpen(true); }}
-                    disabled={tbcSubmitting}
+                    disabled={paySubmitting}
                     className="min-h-[44px] w-full rounded-md border-2 border-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2"
                     data-testid="button-cart-submit"
                   >
-                    {tbcSubmitting ? (
+                    {paySubmitting ? (
                       <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
                         <Loader2 className="h-4 w-4 animate-spin" /> მიმდინარეობს...
                       </div>
@@ -587,7 +587,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
           <AlertDialogFooter>
             <AlertDialogCancel data-testid="button-cart-confirm-no">არა</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => { setConfirmOpen(false); handleTbcPay(); }}
+              onClick={() => { setConfirmOpen(false); handleFlittPay(); }}
               data-testid="button-cart-confirm-yes"
             >
               კი
