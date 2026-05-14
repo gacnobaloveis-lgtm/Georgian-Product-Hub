@@ -55,7 +55,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [creditSubmitting, setCreditSubmitting] = useState(false);
-  const [tbcSubmitting, setTbcSubmitting] = useState(false);
+  const [paySubmitting, setPaySubmitting] = useState(false);
   const [flittPay, setFlittPay] = useState<{ orderId: number; amount: number; description: string } | null>(null);
   const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
   const [, navigate] = useLocation();
@@ -205,9 +205,9 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
     }
   }
 
-  async function handleTbcPay() {
+  async function handleFlittPay() {
     if (!isAuthenticated || !profile || !profileComplete) return;
-    setTbcSubmitting(true);
+    setPaySubmitting(true);
     try {
       const orderRes = await fetch("/api/orders", {
         method: "POST",
@@ -242,7 +242,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
     } catch {
       toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
     } finally {
-      setTbcSubmitting(false);
+      setPaySubmitting(false);
     }
   }
 
@@ -416,12 +416,12 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
             )}
 
             <button
-              onClick={handleTbcPay}
-              disabled={creditSubmitting || tbcSubmitting || authLoading}
+              onClick={handleFlittPay}
+              disabled={creditSubmitting || paySubmitting || authLoading}
               className="min-h-[44px] w-full rounded-md border-2 border-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2"
-              data-testid="button-tbc-pay"
+              data-testid="button-flitt-pay"
             >
-              {tbcSubmitting ? (
+              {paySubmitting ? (
                 <div className="flex items-center justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
                   <Loader2 className="h-4 w-4 animate-spin" /> მიმდინარეობს...
                 </div>
@@ -447,7 +447,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
                     toast({ variant: "destructive", title: "კრედიტი არასაკმარისია", description: "როგორ დავაგროვო კრედიტი — ნახეთ გზამკვლევში" });
                   }
                 }}
-                disabled={creditSubmitting || tbcSubmitting || authLoading}
+                disabled={creditSubmitting || paySubmitting || authLoading}
                 variant="outline"
                 className="min-h-[44px] w-full border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-900"
                 data-testid="button-order-credit"
