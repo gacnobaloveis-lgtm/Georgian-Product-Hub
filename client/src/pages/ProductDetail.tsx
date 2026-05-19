@@ -820,9 +820,13 @@ function ProductSpecs({ product, className = "" }: { product: Product; className
   if (product.weight) specs.push({ label: "წონა", value: product.weight });
   if (product.length) specs.push({ label: "სიგრძე", value: product.length });
   if (product.dimensions) specs.push({ label: "ზომა", value: product.dimensions });
+  if (typeof product.stock === "number") {
+    specs.push({ label: "მარაგშია", value: product.stock > 0 ? `${product.stock} ცალი` : "ამოწურულია" });
+  }
   if (specs.length === 0) return null;
+  const cols = specs.length >= 4 ? "grid-cols-2 sm:grid-cols-4" : specs.length === 3 ? "grid-cols-3" : specs.length === 2 ? "grid-cols-2" : "grid-cols-1";
   return (
-    <div className={`grid grid-cols-3 gap-2 sm:gap-3 ${className}`} data-testid="product-specs">
+    <div className={`grid ${cols} gap-2 sm:gap-3 ${className}`} data-testid="product-specs">
       {specs.map((s) => (
         <div
           key={s.label}
