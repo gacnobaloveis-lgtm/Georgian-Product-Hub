@@ -1175,13 +1175,17 @@ export async function registerRoutes(
   app.put("/api/admin/ads", requireAdmin, async (req, res) => {
     try {
       const incoming = Array.isArray(req.body?.banners) ? req.body.banners : [];
+      const isSafeImg = (s: string) => /^\/uploads\//.test(s) || /^https?:\/\//i.test(s);
+      const isSafeLink = (s: string) => /^https?:\/\//i.test(s);
       const cleaned = incoming
-        .filter((b: any) => b && typeof b.imageUrl === "string" && b.imageUrl.trim().length > 0)
+        .filter((b: any) => b && typeof b.imageUrl === "string" && isSafeImg(b.imageUrl.trim()))
         .slice(0, 3)
-        .map((b: any) => ({
-          imageUrl: sanitizeString(String(b.imageUrl).trim()),
-          linkUrl: typeof b.linkUrl === "string" && b.linkUrl.trim().length > 0 ? sanitizeString(String(b.linkUrl).trim()) : undefined,
-        }));
+        .map((b: any) => {
+          const img = sanitizeString(String(b.imageUrl).trim());
+          const rawLink = typeof b.linkUrl === "string" ? b.linkUrl.trim() : "";
+          const link = rawLink && isSafeLink(rawLink) ? sanitizeString(rawLink) : undefined;
+          return { imageUrl: img, linkUrl: link };
+        });
       await storage.setSetting("ad_banners", JSON.stringify(cleaned));
       res.json({ ok: true, banners: cleaned });
     } catch (err) {
