@@ -311,6 +311,41 @@
     50% { opacity: 0.4; }
   }
 
+  .ad-marquee-track {
+    animation: adMarquee 18s linear infinite;
+  }
+
+  @keyframes adMarquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  .ad-gradient {
+    background: linear-gradient(110deg, #16a34a 0%, #0891b2 35%, #6366f1 65%, #ec4899 100%);
+    background-size: 220% 220%;
+    animation: adGradient 8s ease infinite;
+  }
+
+  @keyframes adGradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .ad-shine::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: adShine 3.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes adShine {
+    0% { transform: translateX(-100%); }
+    60%, 100% { transform: translateX(100%); }
+  }
+
   /**
    * Using the elevate system.
    * Automatic contrast adjustment.
