@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -194,6 +194,8 @@ export default function ProductDetail() {
   });
 
   const [selectedImage, setSelectedImage] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
   const [showVideo, setShowVideo] = useState(false);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -361,7 +363,28 @@ export default function ProductDetail() {
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:gap-8">
           <div className="space-y-2 sm:space-y-4">
-            <div className="overflow-hidden rounded-lg border border-gray-100 bg-white">
+            <div
+              className="overflow-hidden rounded-lg border border-gray-100 bg-white touch-pan-y select-none"
+              onTouchStart={(e) => {
+                if (showVideo) return;
+                touchStartX.current = e.touches[0].clientX;
+                touchStartY.current = e.touches[0].clientY;
+              }}
+              onTouchEnd={(e) => {
+                if (showVideo || touchStartX.current === null || touchStartY.current === null) return;
+                const dx = e.changedTouches[0].clientX - touchStartX.current;
+                const dy = e.changedTouches[0].clientY - touchStartY.current;
+                touchStartX.current = null;
+                touchStartY.current = null;
+                if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy)) return;
+                if (albumImages.length <= 1) return;
+                if (dx < 0) {
+                  setSelectedImage((i) => (i + 1) % albumImages.length);
+                } else {
+                  setSelectedImage((i) => (i - 1 + albumImages.length) % albumImages.length);
+                }
+              }}
+            >
               {showVideo && youtubeId ? (
                 <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
                   <iframe
