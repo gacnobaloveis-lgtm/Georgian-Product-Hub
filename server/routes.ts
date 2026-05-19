@@ -1448,18 +1448,31 @@ export async function registerRoutes(
     if (!apiKey) return null;
 
     try {
-      const [products, contactPhone, contactEmail, workHours, deliveryInfo] = await Promise.all([
+      const [products, contactPhone, contactEmail, workHours, deliveryInfo, terms, referralCreditRaw, creditToGelRaw] = await Promise.all([
         storage.getProducts(),
         storage.getSetting("contact_phone"),
         storage.getSetting("contact_email"),
         storage.getSetting("contact_work_hours"),
         storage.getSetting("contact_address"),
+        storage.getTermsSections(),
+        storage.getSetting("referral_credit_amount"),
+        storage.getSetting("credit_to_gel"),
       ]);
 
       const phone = contactPhone || "+995 599 52 33 51";
       const email = contactEmail || "spiningebi@gmail.com";
       const hours = workHours || "ორშაბათი - შაბათი: 10:00 - 19:00";
       const addr = deliveryInfo || "თბილისი";
+      const referralCredit = referralCreditRaw || "1";
+      const creditToGel = creditToGelRaw || "1.5";
+
+      const stripHtml = (s: string) =>
+        String(s || "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&[a-z]+;/gi, " ").replace(/\s+/g, " ").trim();
+
+      const termsText = (terms || []).map((t: any) => {
+        const body = stripHtml(t.content || "").substring(0, 700);
+        return `### ${t.title}\n${body}`;
+      }).join("\n\n");
 
       const productList = products.slice(0, 60).map((p: any) => {
         const price = p.discountPrice || p.originalPrice;
@@ -1488,6 +1501,26 @@ export async function registerRoutes(
 - ელფოსტა: ${email}
 - სამუშაო საათები: ${hours}
 - მისამართი: ${addr}
+
+🚚 მიწოდება (საკურიერო მომსახურება):
+- **ქუთაისი:** მიწოდება უფასოა, ახორციელებს უშუალოდ spiningebi.ge-ის ტრანსპორტი
+- **რეგიონების ქალაქები:** 10.50 ლარი
+- **სოფლები:** 15.50 ლარი
+- საკურიერო მომსახურების საფასურს იხდის უშუალოდ **მყიდველი კურიერთან** ჩაბარების მომენტში (პროდუქტის ფასისგან განცალკევებით)
+
+🔄 დაბრუნების პოლიტიკა:
+- მომხმარებელს უფლება აქვს დააბრუნოს ნივთი **14 კალენდარული დღის** განმავლობაში
+- ნივთი უნდა იყოს გამოუყენებელი, თავდაპირველ შეფუთვაში, ყველა ეტიკეტით
+- დაბრუნების ტრანსპორტირების ხარჯი ეკისრება მომხმარებელს (გარდა იმ შემთხვევისა, თუ ნივთი დაზიანებულია ან აღწერას არ შეესაბამება)
+
+🎁 კრედიტების სისტემა (რეფერალური):
+- ყოველი მომხმარებელი იღებს უნიკალურ რეფერალურ კოდს თავის პროფილში
+- როცა ვინმე შენი კოდით დარეგისტრირდება და შეიძენს რამეს — შენ ერიცხება **${referralCredit} კრედიტი**
+- 1 კრედიტი = **${creditToGel} ლარი** (გადახდისას ფასდაკლების სახით გამოიყენება)
+- კრედიტები ავტომატურად ერიცხება და ჩანს მომხმარებლის პროფილში
+
+📋 წესები და პირობები (ოფიციალური დოკუმენტი):
+${termsText}
 
 📦 პროდუქტების სია (მხოლოდ აქედან ისაუბრე):
 ${productList}`;
