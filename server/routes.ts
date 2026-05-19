@@ -1468,6 +1468,73 @@ export async function registerRoutes(
     return data;
   }
 
+  // Delayed-bot-reply machinery: each user msg schedules a bot reply 60s out.
+  // If a human admin replies in that window, the timer is cleared so the bot
+  // never speaks. This emulates the "operator is typing…" pattern in Messenger.
+  const pendingBotReplies = new Map<string, NodeJS.Timeout>();
+  const BOT_REPLY_DELAY_MS = 60 * 1000;
+
+  function cancelPendingBotReply(userId: string) {
+    const t = pendingBotReplies.get(userId);
+    if (t) {
+      clearTimeout(t);
+      pendingBotReplies.delete(userId);
+    }
+  }
+
+  function scheduleDelayedBotReply(userId: string, userMessage: string) {
+    cancelPendingBotReply(userId);
+    const timer = setTimeout(async () => {
+      pendingBotReplies.delete(userId);
+      try {
+        const msgs = await storage.getChatMessages(userId);
+        const lastUser = [...msgs].reverse().find(m => m.senderType === "user");
+        if (!lastUser) return;
+        const lastUserAt = lastUser.createdAt ? new Date(lastUser.createdAt).getTime() : 0;
+        // If admin already replied after the user's last message, stay silent.
+        const adminAfter = msgs.some(m =>
+          m.senderType === "admin" &&
+          m.createdAt &&
+          new Date(m.createdAt).getTime() > lastUserAt
+        );
+        if (adminAfter) return;
+
+        const aiText = await geminiReply(userMessage, msgs, userId);
+        if (!aiText) return;
+
+        await storage.createChatMessage({
+          userId,
+          message: aiText,
+          senderType: "bot",
+          isRead: 0,
+        });
+
+        // Push-notify the user that a reply is waiting.
+        try {
+          const userSubs = await storage.getUserPushSubscriptions(userId);
+          if (userSubs.length > 0) {
+            const payload = JSON.stringify({
+              title: "📩 spiningebi.ge — პასუხი",
+              body: aiText.substring(0, 120),
+              url: "/live-contact",
+              tag: `chat-bot-${Date.now()}`,
+            });
+            for (const sub of userSubs) {
+              webpush.sendNotification(
+                { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+                payload,
+                { urgency: "high", TTL: 60 }
+              ).catch(() => storage.removePushSubscription(sub.endpoint));
+            }
+          }
+        } catch (_) {}
+      } catch (e) {
+        console.error("Delayed bot reply error:", e);
+      }
+    }, BOT_REPLY_DELAY_MS);
+    pendingBotReplies.set(userId, timer);
+  }
+
   async function geminiReply(userMessage: string, history: any[], userId?: string): Promise<string | null> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return null;
@@ -1742,7 +1809,6 @@ ${productList}`;
         return res.status(400).json({ message: "შეტყობინება სავალდებულოა" });
       }
 
-      const existing = await storage.getChatMessages(userId);
       const userMsg = await storage.createChatMessage({
         userId,
         message: message.trim().substring(0, 1000),
@@ -1750,39 +1816,10 @@ ${productList}`;
         isRead: 0,
       });
 
-      // Pause AI bot if a human admin has replied within the last 3 minutes
-      const adminMsgs = existing.filter(m => m.senderType === "admin");
-      const lastAdminMsg = adminMsgs[adminMsgs.length - 1];
-      const adminActive = lastAdminMsg && lastAdminMsg.createdAt
-        ? (Date.now() - new Date(lastAdminMsg.createdAt).getTime()) < 3 * 60 * 1000
-        : false;
-
-      // AI bot reply via Gemini (with full product catalog & strict rules)
-      // — skipped when admin is actively handling the conversation
-      try {
-        const aiText = adminActive ? null : await geminiReply(message.trim(), existing, userId);
-        if (aiText) {
-          await storage.createChatMessage({
-            userId,
-            message: aiText,
-            senderType: "bot",
-            isRead: 0,
-          });
-        } else {
-          // Fallback if Gemini fails or no API key
-          const prevUserMsgs = existing.filter(m => m.senderType === "user");
-          if (prevUserMsgs.length === 0) {
-            await storage.createChatMessage({
-              userId,
-              message: "გმადლობთ კითხვისთვის! spiningebi.ge ადმინისტრატორი უმოკლეს დროში გიპასუხებთ.",
-              senderType: "bot",
-              isRead: 0,
-            });
-          }
-        }
-      } catch (aiErr) {
-        console.error("AI reply error:", aiErr);
-      }
+      // Delayed AI reply: give human admin 60 seconds to respond first.
+      // If admin replies during that window, the pending bot reply is cancelled
+      // (see /api/chat/reply/:userId handler).
+      scheduleDelayedBotReply(userId, message.trim());
 
       // Send push notification to admin subscribers
       try {
@@ -1840,6 +1877,9 @@ ${productList}`;
       if (!message || typeof message !== "string" || !message.trim()) {
         return res.status(400).json({ message: "შეტყობინება სავალდებულოა" });
       }
+      // Admin is handling this conversation — cancel any pending AI reply.
+      cancelPendingBotReply(userId);
+
       const msg = await storage.createChatMessage({
         userId,
         message: message.trim().substring(0, 1000),
