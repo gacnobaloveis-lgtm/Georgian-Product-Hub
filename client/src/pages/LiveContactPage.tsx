@@ -31,7 +31,8 @@ export default function LiveContactPage() {
   const { data: messages = [] } = useQuery<ChatMessage[]>({
     queryKey: ["/api/chat/messages"],
     enabled: isAuthenticated,
-    refetchInterval: 4000,
+    refetchInterval: 10000,
+    refetchIntervalInBackground: false,
   });
 
   useEffect(() => {
