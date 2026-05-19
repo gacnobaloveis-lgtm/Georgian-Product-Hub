@@ -1500,11 +1500,18 @@ export async function registerRoutes(
         if (adminAfter) return;
 
         const aiText = await geminiReply(userMessage, msgs, userId);
-        if (!aiText) return;
+        // Always reply with SOMETHING — if Gemini fails or returns empty, send
+        // a friendly hand-off so the user is never left hanging after 20s.
+        const phoneNum = (await storage.getSetting("contact_phone").catch(() => "")) || "+995 599 52 33 51";
+        const replyText = aiText && aiText.trim().length > 0
+          ? aiText
+          : `მადლობა შეტყობინებისთვის! ჩვენი ცოცხალი ოპერატორი მალე გიპასუხებთ. სასწრაფო შემთხვევაში დარეკეთ: ${phoneNum}`;
+
+        console.log(`[chat-bot] reply for user ${userId}: gemini=${aiText ? "ok" : "fallback"} (${replyText.length} chars)`);
 
         await storage.createChatMessage({
           userId,
-          message: aiText,
+          message: replyText,
           senderType: "bot",
           isRead: 0,
         });
@@ -1515,7 +1522,7 @@ export async function registerRoutes(
           if (userSubs.length > 0) {
             const payload = JSON.stringify({
               title: "📩 spiningebi.ge — პასუხი",
-              body: aiText.substring(0, 120),
+              body: replyText.substring(0, 120),
               url: "/live-contact",
               tag: `chat-bot-${Date.now()}`,
             });
