@@ -722,7 +722,7 @@ function AdBanner() {
         <button
           type="button"
           onClick={() => setInfoOpen(true)}
-          className="ad-shine ad-gradient relative mt-3 sm:mt-4 mx-auto block w-full max-w-xl overflow-hidden rounded-2xl border border-white/20 shadow-lg ring-1 ring-black/5 transition-transform hover:scale-[1.01] active:scale-[0.99] text-left"
+          className="ad-shine ad-gradient relative mt-3 sm:mt-4 block w-full overflow-hidden rounded-2xl border border-white/20 shadow-lg ring-1 ring-black/5 transition-transform hover:scale-[1.01] active:scale-[0.99] text-left"
           data-testid="ad-banner-empty"
         >
           <div className="relative z-[1] flex flex-col items-center gap-1.5 px-4 py-5 sm:py-6 text-white">
@@ -804,7 +804,7 @@ function AdBanner() {
 
   return (
     <div className="mt-3 sm:mt-4 space-y-1.5">
-      <div className="mx-auto max-w-xl overflow-hidden rounded-xl border border-gray-200 bg-gray-50 shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50 shadow-sm">
         <div className="relative aspect-[16/5] w-full">
           {current.linkUrl ? (
             <a href={current.linkUrl} target="_blank" rel="noopener noreferrer sponsored" className="block h-full w-full" data-testid="ad-banner-link">
