@@ -1505,7 +1505,7 @@ export async function registerRoutes(
         const phoneNum = (await storage.getSetting("contact_phone").catch(() => "")) || "+995 599 52 33 51";
         const replyText = aiText && aiText.trim().length > 0
           ? aiText
-          : `მადლობა შეტყობინებისთვის! ჩვენი ცოცხალი ოპერატორი მალე გიპასუხებთ. სასწრაფო შემთხვევაში დარეკეთ: ${phoneNum}`;
+          : `მადლობა შეტყობინებისთვის! ჩვენი ოპერატორი მალე გიპასუხებთ. სასწრაფო შემთხვევაში დარეკეთ: ${phoneNum}`;
 
         console.log(`[chat-bot] reply for user ${userId}: gemini=${aiText ? "ok" : "fallback"} (${replyText.length} chars)`);
 
