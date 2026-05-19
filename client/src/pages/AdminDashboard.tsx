@@ -60,6 +60,9 @@ interface EditFormState {
   albumImages: string[];
   newImageFiles: File[];
   newImagePreviews: string[];
+  weight: string;
+  length: string;
+  dimensions: string;
 }
 
 function ProductRow({ product }: { product: Product }) {
@@ -100,6 +103,9 @@ function ProductRow({ product }: { product: Product }) {
     albumImages: parseAlbum(),
     newImageFiles: [],
     newImagePreviews: [],
+    weight: (product as any).weight || "",
+    length: (product as any).length || "",
+    dimensions: (product as any).dimensions || "",
   });
 
   const [editForm, setEditForm] = useState<EditFormState>(defaultEditState());
@@ -199,6 +205,9 @@ function ProductRow({ product }: { product: Product }) {
     formData.append("colorStock", JSON.stringify(colorStockObj));
     formData.append("youtubeUrl", editForm.youtubeUrl.trim());
     formData.append("albumImages", JSON.stringify(finalAlbum));
+    formData.append("weight", editForm.weight.trim());
+    formData.append("length", editForm.length.trim());
+    formData.append("dimensions", editForm.dimensions.trim());
 
     try {
       await updateMutation.mutateAsync({ id: product.id, formData });
@@ -285,6 +294,33 @@ function ProductRow({ product }: { product: Product }) {
                 onChange={(e) => setEditForm((p) => ({ ...p, stock: e.target.value }))}
                 placeholder="0"
                 data-testid={`input-edit-stock-${product.id}`}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">წონა (გრამი)</label>
+              <Input
+                value={editForm.weight}
+                onChange={(e) => setEditForm((p) => ({ ...p, weight: e.target.value }))}
+                placeholder="მაგ: 250 გრ"
+                data-testid={`input-edit-weight-${product.id}`}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">სიგრძე</label>
+              <Input
+                value={editForm.length}
+                onChange={(e) => setEditForm((p) => ({ ...p, length: e.target.value }))}
+                placeholder="მაგ: 2.4 მ"
+                data-testid={`input-edit-length-${product.id}`}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">ზომა</label>
+              <Input
+                value={editForm.dimensions}
+                onChange={(e) => setEditForm((p) => ({ ...p, dimensions: e.target.value }))}
+                placeholder="მაგ: M / 40×30 სმ"
+                data-testid={`input-edit-dimensions-${product.id}`}
               />
             </div>
             <div className="space-y-2 sm:col-span-2">
