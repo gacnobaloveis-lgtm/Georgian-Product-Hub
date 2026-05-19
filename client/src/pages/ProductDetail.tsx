@@ -670,21 +670,7 @@ export default function ProductDetail() {
           </a>
         )}
 
-        {isAuthenticated && (
-          <CreditPurchaseSection
-            userCredit={userCredit}
-            creditToGel={creditToGel}
-            total={Number(hasDiscount ? product.discountPrice : product.originalPrice) * quantity}
-            productId={product.id}
-            productName={product.name}
-            quantity={quantity}
-            selectedColor={selectedColor}
-            hasColors={hasColors}
-            creditSubmitting={creditSubmitting}
-            setCreditSubmitting={setCreditSubmitting}
-            onClose={() => {}}
-          />
-        )}
+        <AdBanner />
 
         <div className="mt-6 sm:mt-8">
           <Link href="/">
@@ -710,6 +696,67 @@ export default function ProductDetail() {
           onOpenChange={setAuthDialogOpen}
         />
       </div>
+    </div>
+  );
+}
+
+function AdBanner() {
+  const { data: banners } = useQuery<Array<{ imageUrl: string; linkUrl?: string }>>({
+    queryKey: ["/api/ads"],
+    staleTime: 60_000,
+  });
+  const [idx, setIdx] = useState(0);
+  const list = banners || [];
+  useEffect(() => {
+    if (list.length <= 1) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % list.length), 4500);
+    return () => clearInterval(t);
+  }, [list.length]);
+
+  if (list.length === 0) {
+    return (
+      <div className="mt-3 sm:mt-4 flex h-28 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 text-xs sm:text-sm text-gray-400" data-testid="ad-banner-empty">
+        თქვენი რეკლამის ადგილი
+      </div>
+    );
+  }
+
+  const current = list[idx % list.length];
+  const inner = (
+    <img
+      src={current.imageUrl}
+      alt="რეკლამა"
+      className="h-full w-full object-cover transition-opacity duration-500"
+      loading="lazy"
+      data-testid={`ad-banner-img-${idx}`}
+    />
+  );
+
+  return (
+    <div className="mt-3 sm:mt-4 space-y-1.5">
+      <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+        <div className="relative h-32 w-full sm:h-40">
+          {current.linkUrl ? (
+            <a href={current.linkUrl} target="_blank" rel="noopener noreferrer sponsored" className="block h-full w-full" data-testid="ad-banner-link">
+              {inner}
+            </a>
+          ) : inner}
+        </div>
+      </div>
+      {list.length > 1 && (
+        <div className="flex items-center justify-center gap-1.5" data-testid="ad-banner-dots">
+          {list.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setIdx(i)}
+              aria-label={`რეკლამა ${i + 1}`}
+              className={`h-1.5 rounded-full transition-all ${i === idx ? "w-5 bg-green-600" : "w-1.5 bg-gray-300"}`}
+              data-testid={`ad-banner-dot-${i}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
