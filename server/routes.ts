@@ -1715,11 +1715,11 @@ ${productList}`;
         isRead: 0,
       });
 
-      // Pause AI bot if a human admin has replied within the last 15 minutes
+      // Pause AI bot if a human admin has replied within the last 3 minutes
       const adminMsgs = existing.filter(m => m.senderType === "admin");
       const lastAdminMsg = adminMsgs[adminMsgs.length - 1];
       const adminActive = lastAdminMsg && lastAdminMsg.createdAt
-        ? (Date.now() - new Date(lastAdminMsg.createdAt).getTime()) < 15 * 60 * 1000
+        ? (Date.now() - new Date(lastAdminMsg.createdAt).getTime()) < 3 * 60 * 1000
         : false;
 
       // AI bot reply via Gemini (with full product catalog & strict rules)
