@@ -18,6 +18,9 @@ export const products = pgTable("products", {
   soldCount: integer("sold_count").notNull().default(0),
   viewCount: integer("view_count").notNull().default(0),
   shareCount: integer("share_count").notNull().default(0),
+  weight: text("weight"),
+  length: text("length"),
+  dimensions: text("dimensions"),
 });
 
 export const media = pgTable("media", {
