@@ -775,7 +775,7 @@ function AdBanner() {
     <img
       src={current.imageUrl}
       alt="რეკლამა"
-      className="h-full w-full object-cover transition-opacity duration-500"
+      className="block w-full h-auto transition-opacity duration-500"
       loading="lazy"
       data-testid={`ad-banner-img-${idx}`}
     />
@@ -783,18 +783,16 @@ function AdBanner() {
 
   return (
     <div className="mt-3 sm:mt-4 space-y-1.5">
-      <div className="mx-auto max-w-2xl overflow-hidden rounded-xl border border-gray-200 bg-gray-50 shadow-sm">
-        <div className="relative w-full aspect-[16/5]">
-          {current.linkUrl ? (
-            <a href={current.linkUrl} target="_blank" rel="noopener noreferrer sponsored" className="block h-full w-full" data-testid="ad-banner-link">
-              {inner}
-            </a>
-          ) : (
-            <button type="button" onClick={() => setInfoOpen(true)} className="block h-full w-full" data-testid="ad-banner-button">
-              {inner}
-            </button>
-          )}
-        </div>
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50 shadow-sm">
+        {current.linkUrl ? (
+          <a href={current.linkUrl} target="_blank" rel="noopener noreferrer sponsored" className="block w-full" data-testid="ad-banner-link">
+            {inner}
+          </a>
+        ) : (
+          <button type="button" onClick={() => setInfoOpen(true)} className="block w-full" data-testid="ad-banner-button">
+            {inner}
+          </button>
+        )}
       </div>
       {infoDialog}
       {list.length > 1 && (
