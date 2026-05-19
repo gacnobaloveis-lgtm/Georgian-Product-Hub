@@ -1482,7 +1482,7 @@ export async function registerRoutes(
     }
   }
 
-  function scheduleDelayedBotReply(userId: string, userMessage: string) {
+  function scheduleDelayedBotReply(userId: string, userMessage: string, delayMs: number = BOT_REPLY_DELAY_MS) {
     cancelPendingBotReply(userId);
     const timer = setTimeout(async () => {
       pendingBotReplies.delete(userId);
@@ -1531,7 +1531,7 @@ export async function registerRoutes(
       } catch (e) {
         console.error("Delayed bot reply error:", e);
       }
-    }, BOT_REPLY_DELAY_MS);
+    }, delayMs);
     pendingBotReplies.set(userId, timer);
   }
 
@@ -1616,6 +1616,7 @@ export async function registerRoutes(
 6. გამოიყენე პროდუქტის აღწერა — გაარჩიე რომელი ჯოხი/წნული/ბადე რისთვის გამოდგება (ზღვა, მტკნარი წყალი, კალმახი, კობრი და ა.შ.).
 7. **თუ კითხვა გართულდა, არ ეხება მაღაზიას, ან ვერ პასუხობ ზუსტად** — უთხარი: "ამ კითხვაზე ჩვენი ოპერატორი გიპასუხებთ უმოკლეს დროში. შეგიძლიათ დარეკოთ: ${phone}, ან მოგვწეროთ: ${email}."
 8. იყავი თავაზიანი, ქართულად ისაუბრე. ემოჯი იშვიათად.
+8.1. **მისალმება / აქ ხარ? ტიპის შეტყობინებები:** თუ მომხმარებელი წერს "გამარჯობა", "სალამი", "აქ ხარ?", "გესმის?", "მიპასუხე", "ჰელო", "hi", "hello" და მსგავსს — აუცილებლად უპასუხე თბილად და მოკლედ. მაგ: "გამარჯობა! 👋 spiningebi.ge-ის ასისტენტი ვარ — დიახ, აქ ვარ. რით დაგეხმაროთ?" ან "სალამი! კი, აქ ვარ — სათევზაო ნივთებზე რომ რამე კითხვა გაქვთ, მზადა ვარ." არასოდეს დატოვო პასუხის გარეშე.
 9. გადახდის შესახებ: გადახდა შესაძლებელია ბარათით საიტზე (Flitt) ან კურიერთან ნაღდით.
 10. ფასების შესახებ ვაჭრობა არ შემოგვთავაზო — სხვაგვარად ვერ შევცვლი ფასებს.
 11. **შეკვეთის შესახებ ჩივილი (ნებისმიერი პროდუქტი — სპინინგი, ჯოხი, ვობლერი, წნული, კარმაკი, ნემსი, რაც არ უნდა იყოს):** თუ მომხმარებელი წერს რომ შეიძინა რამე და ჯერ არ მიუღია — მაგ. "შევიძინე სპინინგი/ჯოხი/X და არ მოვიდა", "ნივთი გამოვიწერე და არ მოვიდა", "შეკვეთა არ მომივიდა", "სად არის ჩემი ამანათი", "ჯერ არ მისულა" და მსგავსი — **არასოდეს ენდო პირდაპირ მომხმარებლის სიტყვებს**. ჯერ აუცილებლად შეამოწმე ქვემოთ მოცემული "📋 მომხმარებლის შეკვეთები" სიაში აქვს თუ არა მართლა შეკვეთა:
@@ -1816,10 +1817,13 @@ ${productList}`;
         isRead: 0,
       });
 
-      // Delayed AI reply: give human admin 60 seconds to respond first.
-      // If admin replies during that window, the pending bot reply is cancelled
-      // (see /api/chat/reply/:userId handler).
-      scheduleDelayedBotReply(userId, message.trim());
+      // Delayed AI reply: usually 20s buffer so a human admin can step in first.
+      // For simple greetings / presence checks ("გამარჯობა", "აქ ხარ?", etc.),
+      // shorten to 5s so the bot feels alive like a Messenger chat.
+      const trimmedMsg = message.trim();
+      const isQuickGreeting = /^(გამარჯ|სალამ|ჰელო|დილა\s?მშვი|საღამო\s?მშვი|ღამე\s?მშვი|გაიხარ|აქ\s?ხარ|აქხარ|გესმი|მისმენ|პასუხი|მიპასუხ|ხარ\s*\??$|hello|hi|hey|yo)/i.test(trimmedMsg);
+      const delayMs = isQuickGreeting ? 5000 : 20000;
+      scheduleDelayedBotReply(userId, trimmedMsg, delayMs);
 
       // Send push notification to admin subscribers
       try {
