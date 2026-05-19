@@ -1448,7 +1448,7 @@ export async function registerRoutes(
     if (!apiKey) return null;
 
     try {
-      const [products, contactPhone, contactEmail, workHours, deliveryInfo, terms, referralCreditRaw, creditToGelRaw, userOrders] = await Promise.all([
+      const [products, contactPhone, contactEmail, workHours, deliveryInfo, terms, referralCreditRaw, creditToGelRaw, userOrders, adminKb] = await Promise.all([
         storage.getProducts(),
         storage.getSetting("contact_phone"),
         storage.getSetting("contact_email"),
@@ -1458,6 +1458,7 @@ export async function registerRoutes(
         storage.getSetting("referral_credit_amount"),
         storage.getSetting("credit_to_gel"),
         userId ? storage.getOrdersByUser(userId).catch(() => []) : Promise.resolve([] as any[]),
+        storage.getAdminKnowledgeBase(150).catch(() => [] as any[]),
       ]);
 
       const phone = contactPhone || "+995 599 52 33 51";
@@ -1497,6 +1498,15 @@ export async function registerRoutes(
             return `• შეკვეთა #${o.id} — "${o.productName}" × ${o.quantity || 1} — ${o.productPrice}₾ — სტატუსი: ${statusLabel(o.status)} — თარიღი: ${formatDate(o.createdAt)}${days !== null ? ` (${days} დღის წინ)` : ""} — მისამართი: ${o.city}, ${o.address}`;
           }).join("\n")
         : "ამ მომხმარებელს ჯერ არცერთი შეკვეთა არ გაუკეთებია.";
+
+      const kbBlock = (adminKb && adminKb.length > 0)
+        ? adminKb.slice(0, 80).map((kb: any) => {
+            const q = (kb.question || "").replace(/\s+/g, " ").trim().substring(0, 200);
+            const a = (kb.answer || "").replace(/\s+/g, " ").trim().substring(0, 400);
+            if (!a) return "";
+            return q ? `❓ "${q}"\n💬 ადმინი: "${a}"` : `💬 ადმინი: "${a}"`;
+          }).filter(Boolean).join("\n---\n")
+        : "(ჯერ არ არსებობს ცოცხალი მიმოწერა, საიდანაც ვისწავლი.)";
 
       const productList = products.slice(0, 60).map((p: any) => {
         const price = p.discountPrice || p.originalPrice;
@@ -1602,6 +1612,9 @@ ${ordersBlock}
 
 📋 წესები და პირობები (ოფიციალური დოკუმენტი):
 ${termsText}
+
+🧠 ადმინის ცოცხალი ცოდნა (წინა ცოცხალი მიმოწერებიდან ნასწავლი — გამოიყენე ანალოგიურ კითხვებზე პასუხის გასაცემად, განსაკუთრებით სათევზაო რჩევებზე):
+${kbBlock}
 
 📦 პროდუქტების სია (მხოლოდ აქედან ისაუბრე):
 ${productList}`;

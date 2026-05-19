@@ -52,6 +52,7 @@ export interface IStorage {
   getChatMessages(userId: string): Promise<ChatMessage[]>;
   createChatMessage(msg: InsertChatMessage): Promise<ChatMessage>;
   getAllChatConversations(): Promise<{ userId: string; firstName: string | null; lastName: string | null; lastMessage: string; lastAt: Date | null; unread: number }[]>;
+  getAdminKnowledgeBase(limit?: number): Promise<{ question: string | null; answer: string }[]>;
   markChatRead(userId: string): Promise<void>;
   getUnreadCountForUser(userId: string): Promise<number>;
   markAdminMessagesRead(userId: string): Promise<void>;
@@ -342,6 +343,38 @@ export class DatabaseStorage implements IStorage {
       lastMessage: r.last_message,
       lastAt: r.last_at,
       unread: Number(r.unread),
+    }));
+  }
+
+  async getAdminKnowledgeBase(limit: number = 150): Promise<{ question: string | null; answer: string }[]> {
+    // Pull recent admin replies along with the most recent preceding user message
+    // (i.e., what the customer asked right before the admin answered).
+    const result = await db.execute(sql`
+      WITH admin_msgs AS (
+        SELECT id, user_id, message, created_at
+        FROM chat_messages
+        WHERE sender_type = 'admin'
+          AND length(trim(message)) >= 8
+        ORDER BY created_at DESC
+        LIMIT ${limit}
+      )
+      SELECT
+        a.message AS answer,
+        (
+          SELECT u.message
+          FROM chat_messages u
+          WHERE u.user_id = a.user_id
+            AND u.sender_type = 'user'
+            AND u.created_at < a.created_at
+          ORDER BY u.created_at DESC
+          LIMIT 1
+        ) AS question
+      FROM admin_msgs a
+      ORDER BY a.created_at DESC
+    `);
+    return (result.rows as any[]).map(r => ({
+      question: r.question || null,
+      answer: r.answer,
     }));
   }
 
