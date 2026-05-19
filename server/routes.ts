@@ -345,6 +345,9 @@ export async function registerRoutes(
         imageUrl,
         albumImages: JSON.stringify(albumImages),
         categoryId: input.categoryId ? Number(input.categoryId) : null,
+        weight: input.weight ? sanitizeString(input.weight) : null,
+        length: input.length ? sanitizeString(input.length) : null,
+        dimensions: input.dimensions ? sanitizeString(input.dimensions) : null,
       });
       res.status(201).json(product);
 
@@ -463,6 +466,9 @@ export async function registerRoutes(
       if (req.body.colorStock !== undefined) updates.colorStock = req.body.colorStock || "{}";
       if (req.body.youtubeUrl !== undefined) updates.youtubeUrl = req.body.youtubeUrl ? sanitizeString(String(req.body.youtubeUrl)) : null;
       if (req.body.categoryId !== undefined) updates.categoryId = req.body.categoryId ? Number(req.body.categoryId) : null;
+      if (req.body.weight !== undefined) updates.weight = req.body.weight ? sanitizeString(String(req.body.weight)) : null;
+      if (req.body.length !== undefined) updates.length = req.body.length ? sanitizeString(String(req.body.length)) : null;
+      if (req.body.dimensions !== undefined) updates.dimensions = req.body.dimensions ? sanitizeString(String(req.body.dimensions)) : null;
       if (req.body.soldCount !== undefined) updates.soldCount = Number(req.body.soldCount) || 0;
       if (req.body.viewCount !== undefined) updates.viewCount = Number(req.body.viewCount) || 0;
       if (req.body.albumImages !== undefined) {
