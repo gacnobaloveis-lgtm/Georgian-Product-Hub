@@ -751,7 +751,7 @@ function AdBanner() {
     <img
       src={current.imageUrl}
       alt="რეკლამა"
-      className="h-full w-full object-cover transition-opacity duration-500"
+      className="h-full w-full object-contain transition-opacity duration-500"
       loading="lazy"
       data-testid={`ad-banner-img-${idx}`}
     />
@@ -759,8 +759,8 @@ function AdBanner() {
 
   return (
     <div className="mt-3 sm:mt-4 space-y-1.5">
-      <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
-        <div className="relative h-32 w-full sm:h-40">
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50 shadow-sm">
+        <div className="relative aspect-[3/1] w-full">
           {current.linkUrl ? (
             <a href={current.linkUrl} target="_blank" rel="noopener noreferrer sponsored" className="block h-full w-full" data-testid="ad-banner-link">
               {inner}
