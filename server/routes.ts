@@ -1442,6 +1442,119 @@ export async function registerRoutes(
     next();
   }
 
+  // ===== Gemini AI assistant =====
+  async function geminiReply(userMessage: string, history: any[]): Promise<string | null> {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) return null;
+
+    try {
+      const [products, contactPhone, contactEmail, workHours, deliveryInfo] = await Promise.all([
+        storage.getProducts(),
+        storage.getSetting("contact_phone"),
+        storage.getSetting("contact_email"),
+        storage.getSetting("contact_work_hours"),
+        storage.getSetting("contact_address"),
+      ]);
+
+      const phone = contactPhone || "+995 599 52 33 51";
+      const email = contactEmail || "spiningebi@gmail.com";
+      const hours = workHours || "ორშაბათი - შაბათი: 10:00 - 19:00";
+      const addr = deliveryInfo || "თბილისი";
+
+      const productList = products.slice(0, 60).map((p: any) => {
+        const price = p.discountPrice || p.originalPrice;
+        const inStock = (p.stock ?? 0) > 0;
+        const stockStatus = inStock ? `მარაგშია (${p.stock} ც.)` : "ამოწურულია";
+        const desc = String(p.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").substring(0, 220);
+        return `• ${p.name} — ${price}₾ — ${stockStatus}\n  აღწერა: ${desc}`;
+      }).join("\n");
+
+      const systemPrompt = `შენ ხარ spiningebi.ge-ის (ქართული სათევზაო მაღაზია) AI ასისტენტი.
+
+🔒 მკაცრი წესები (აუცილებლად დაიცავი):
+1. პასუხები ძალიან მოკლე — მაქსიმუმ 2-4 წინადადება. არ გადააჭარბო.
+2. **არასოდეს გასცე საიდუმლო ინფორმაცია:** არ ისაუბრო ტექნიკურად როგორ აწყობილია საიტი, რა ბაზაა, რა ფრეიმვორკი. არ თქვა გაყიდვების სტატისტიკა — რამდენი ნივთი იყიდება დღეში/თვეში, რამდენი მომხმარებელია, რა შემოსავალია.
+3. **არასოდეს დაჰპირდე** ფასდაკლებას, საჩუქარს, სპეციალურ პირობებს, ფასის ცვლილებას, მიწოდების ვადის შემცირებას — შენ არ გაქვს ამის უფლება. თუ მომხმარებელი ფასდაკლებას ითხოვს — უთხარი რომ ოპერატორი დაგეკონტაქტებათ.
+4. პროდუქტებზე ისაუბრე **მხოლოდ ქვემოთ მოცემული სიიდან**. არ მოიგონო ფასი, მახასიათებლები ან პროდუქტი რომელიც სიაში არ არის.
+5. **მარაგი ზუსტად:** თუ ნივთი ამოწურულია — აუცილებლად უთხარი "ეს ნივთი ამჟამად ამოწურულია". არასოდეს თქვა რომ მარაგშია თუ რეალურად არ არის.
+6. გამოიყენე პროდუქტის აღწერა — გაარჩიე რომელი ჯოხი/წნული/ბადე რისთვის გამოდგება (ზღვა, მტკნარი წყალი, კალმახი, კობრი და ა.შ.).
+7. **თუ კითხვა გართულდა, არ ეხება მაღაზიას, ან ვერ პასუხობ ზუსტად** — უთხარი: "ამ კითხვაზე ჩვენი ოპერატორი გიპასუხებთ უმოკლეს დროში. შეგიძლიათ დარეკოთ: ${phone}, ან მოგვწეროთ: ${email}."
+8. იყავი თავაზიანი, ქართულად ისაუბრე. ემოჯი იშვიათად.
+9. გადახდის შესახებ: გადახდა შესაძლებელია ბარათით საიტზე (Flitt) ან კურიერთან ნაღდით.
+10. ფასების შესახებ ვაჭრობა არ შემოგვთავაზო — სხვაგვარად ვერ შევცვლი ფასებს.
+
+🏪 მაღაზიის ინფო:
+- ტელეფონი: ${phone}
+- ელფოსტა: ${email}
+- სამუშაო საათები: ${hours}
+- მისამართი: ${addr}
+
+📦 პროდუქტების სია (მხოლოდ აქედან ისაუბრე):
+${productList}`;
+
+      const contents: any[] = [];
+      const recent = history.slice(-6);
+      for (const m of recent) {
+        if (!m.message) continue;
+        contents.push({
+          role: m.senderType === "user" ? "user" : "model",
+          parts: [{ text: String(m.message) }],
+        });
+      }
+      contents.push({ role: "user", parts: [{ text: userMessage }] });
+
+      const body = JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents,
+        generationConfig: { temperature: 0.6, maxOutputTokens: 400 },
+      });
+
+      return await new Promise<string | null>((resolve) => {
+        const req = https.request({
+          hostname: "generativelanguage.googleapis.com",
+          path: `/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(body).toString(),
+          },
+          timeout: 15000,
+        }, (resp) => {
+          let data = "";
+          resp.on("data", (c) => (data += c));
+          resp.on("end", () => {
+            try {
+              const parsed = JSON.parse(data);
+              const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text;
+              if (text && typeof text === "string") {
+                resolve(text.trim().substring(0, 1500));
+              } else {
+                console.error("Gemini empty response:", data.substring(0, 300));
+                resolve(null);
+              }
+            } catch (e) {
+              console.error("Gemini parse error:", data.substring(0, 300));
+              resolve(null);
+            }
+          });
+        });
+        req.on("error", (err) => {
+          console.error("Gemini request error:", err);
+          resolve(null);
+        });
+        req.on("timeout", () => {
+          req.destroy();
+          resolve(null);
+        });
+        req.write(body);
+        req.end();
+      });
+    } catch (err) {
+      console.error("Gemini setup error:", err);
+      return null;
+    }
+  }
+
   // Get current user's chat messages (also marks admin/bot msgs as read)
   app.get("/api/chat/messages", requireAuth, async (req, res) => {
     try {
@@ -1484,15 +1597,30 @@ export async function registerRoutes(
         isRead: 0,
       });
 
-      // Auto bot reply only if this is the first user message
-      const prevUserMsgs = existing.filter(m => m.senderType === "user");
-      if (prevUserMsgs.length === 0) {
-        await storage.createChatMessage({
-          userId,
-          message: "გმადლობთ კითხვისთვის! spiningebi.ge ადმინისტრატორი უმოკლეს დროში გიპასუხებთ.",
-          senderType: "bot",
-          isRead: 0,
-        });
+      // AI bot reply via Gemini (with full product catalog & strict rules)
+      try {
+        const aiText = await geminiReply(message.trim(), existing);
+        if (aiText) {
+          await storage.createChatMessage({
+            userId,
+            message: aiText,
+            senderType: "bot",
+            isRead: 0,
+          });
+        } else {
+          // Fallback if Gemini fails or no API key
+          const prevUserMsgs = existing.filter(m => m.senderType === "user");
+          if (prevUserMsgs.length === 0) {
+            await storage.createChatMessage({
+              userId,
+              message: "გმადლობთ კითხვისთვის! spiningebi.ge ადმინისტრატორი უმოკლეს დროში გიპასუხებთ.",
+              senderType: "bot",
+              isRead: 0,
+            });
+          }
+        }
+      } catch (aiErr) {
+        console.error("AI reply error:", aiErr);
       }
 
       // Send push notification to admin subscribers
