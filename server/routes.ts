@@ -1443,12 +1443,12 @@ export async function registerRoutes(
   }
 
   // ===== Gemini AI assistant =====
-  async function geminiReply(userMessage: string, history: any[]): Promise<string | null> {
+  async function geminiReply(userMessage: string, history: any[], userId?: string): Promise<string | null> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return null;
 
     try {
-      const [products, contactPhone, contactEmail, workHours, deliveryInfo, terms, referralCreditRaw, creditToGelRaw] = await Promise.all([
+      const [products, contactPhone, contactEmail, workHours, deliveryInfo, terms, referralCreditRaw, creditToGelRaw, userOrders] = await Promise.all([
         storage.getProducts(),
         storage.getSetting("contact_phone"),
         storage.getSetting("contact_email"),
@@ -1457,6 +1457,7 @@ export async function registerRoutes(
         storage.getTermsSections(),
         storage.getSetting("referral_credit_amount"),
         storage.getSetting("credit_to_gel"),
+        userId ? storage.getOrdersByUser(userId).catch(() => []) : Promise.resolve([] as any[]),
       ]);
 
       const phone = contactPhone || "+995 599 52 33 51";
@@ -1473,6 +1474,29 @@ export async function registerRoutes(
         const body = stripHtml(t.content || "").substring(0, 700);
         return `### ${t.title}\n${body}`;
       }).join("\n\n");
+
+      const formatDate = (d: any) => {
+        if (!d) return "უცნობია";
+        try { return new Date(d).toLocaleDateString("ka-GE", { year: "numeric", month: "2-digit", day: "2-digit" }); }
+        catch { return String(d); }
+      };
+      const statusLabel = (s: string) => {
+        const map: Record<string, string> = {
+          pending: "მუშავდება",
+          paid: "გადახდილია",
+          shipped: "გაგზავნილია",
+          delivered: "ჩაბარებულია",
+          cancelled: "გაუქმებულია",
+          completed: "დასრულებულია",
+        };
+        return map[s] || s || "უცნობია";
+      };
+      const ordersBlock = (userOrders && userOrders.length > 0)
+        ? userOrders.slice(-10).map((o: any) => {
+            const days = o.createdAt ? Math.floor((Date.now() - new Date(o.createdAt).getTime()) / 86400000) : null;
+            return `• შეკვეთა #${o.id} — "${o.productName}" × ${o.quantity || 1} — ${o.productPrice}₾ — სტატუსი: ${statusLabel(o.status)} — თარიღი: ${formatDate(o.createdAt)}${days !== null ? ` (${days} დღის წინ)` : ""} — მისამართი: ${o.city}, ${o.address}`;
+          }).join("\n")
+        : "ამ მომხმარებელს ჯერ არცერთი შეკვეთა არ გაუკეთებია.";
 
       const productList = products.slice(0, 60).map((p: any) => {
         const price = p.discountPrice || p.originalPrice;
@@ -1495,6 +1519,10 @@ export async function registerRoutes(
 8. იყავი თავაზიანი, ქართულად ისაუბრე. ემოჯი იშვიათად.
 9. გადახდის შესახებ: გადახდა შესაძლებელია ბარათით საიტზე (Flitt) ან კურიერთან ნაღდით.
 10. ფასების შესახებ ვაჭრობა არ შემოგვთავაზო — სხვაგვარად ვერ შევცვლი ფასებს.
+11. **შეკვეთის შესახებ ჩივილი:** თუ მომხმარებელი წერს "ნივთი გამოვიწერე და არ მოვიდა" / "შეკვეთა არ მომივიდა" / "სად არის ჩემი ნივთი" — ჯერ შეამოწმე ქვემოთ მოცემული "📋 მომხმარებლის შეკვეთები" სიაში აქვს თუ არა მართლა შეკვეთა გაკეთებული:
+   • თუ **არცერთი შეკვეთა არ აქვს** — თავაზიანად უთხარი: "ჩვენი სისტემის მიხედვით, თქვენი ანგარიშიდან არცერთი შეკვეთა არ ფიქსირდება. გთხოვთ, შეამოწმოთ თქვენი პროფილი → შეკვეთები. თუ ფიქრობთ რომ შეცდომაა, დარეკეთ: ${phone}".
+   • თუ **აქვს შეკვეთა** — დაასახელე შეკვეთის ნომერი, სტატუსი და თარიღი, შემდეგ უთხარი ცოცხალი ოპერატორის ნომერი: "${phone}". მაგ: "თქვენი შეკვეთა #X (პროდუქტი Y, სტატუსი: გაგზავნილია, თარიღი: ...) უკვე გაგზავნილია. ცოცხალ ოპერატორთან დასაკავშირებლად დარეკეთ: ${phone}".
+   • ნუ აუხსნი, რატომ აგვიანდება — ეს ოპერატორის სამუშაოა.
 
 🏪 მაღაზიის ინფო:
 - ტელეფონი: ${phone}
@@ -1567,6 +1595,9 @@ export async function registerRoutes(
   • ვარციხის ტბები
   • შაორის წყალსაცავი (აქ დიდი ქარიყლაპიები და ქორჭილები გვხვდება)
 - როცა მომხმარებელი იკითხავს "სად მოვიჭიდო ქაშაპი/ქარიყლაპია?" ან მსგავსს — დაასახელე ეს ადგილები და დააკავშირე შესაბამის პროდუქტთან (ჯოხი/ვობლერი/წნული) რომელიც სიაშია მარაგში.
+
+📋 მომხმარებლის შეკვეთები (ცოცხალი მონაცემები ბაზიდან):
+${ordersBlock}
 
 📋 წესები და პირობები (ოფიციალური დოკუმენტი):
 ${termsText}
@@ -1681,7 +1712,7 @@ ${productList}`;
 
       // AI bot reply via Gemini (with full product catalog & strict rules)
       try {
-        const aiText = await geminiReply(message.trim(), existing);
+        const aiText = await geminiReply(message.trim(), existing, userId);
         if (aiText) {
           await storage.createChatMessage({
             userId,
