@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush, ChevronDown, ChevronRight, Archive, FileText, GripVertical, ArrowUp, ArrowDown, MessageCircle, Send, ArrowLeft as ArrowLeftIcon } from "lucide-react";
+import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush, ChevronDown, ChevronRight, Archive, FileText, GripVertical, ArrowUp, ArrowDown, MessageCircle, Send, ArrowLeft as ArrowLeftIcon, Megaphone, Loader2 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories";
@@ -2007,6 +2007,195 @@ function StatusesSection() {
   );
 }
 
+interface AdBannerForm { imageUrl: string; linkUrl: string; }
+
+function AdsManager() {
+  const { toast } = useToast();
+  const { data: serverBanners, isLoading } = useQuery<Array<{ imageUrl: string; linkUrl?: string }>>({
+    queryKey: ["/api/ads"],
+  });
+  const [banners, setBanners] = useState<AdBannerForm[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (serverBanners) {
+      setBanners(serverBanners.map((b) => ({ imageUrl: b.imageUrl, linkUrl: b.linkUrl || "" })));
+    }
+  }, [serverBanners]);
+
+  function updateBanner(idx: number, patch: Partial<AdBannerForm>) {
+    setBanners((prev) => prev.map((b, i) => (i === idx ? { ...b, ...patch } : b)));
+  }
+
+  function addBanner() {
+    if (banners.length >= 3) {
+      toast({ variant: "destructive", title: "ლიმიტი", description: "მაქსიმუმ 3 ბანერი" });
+      return;
+    }
+    setBanners((prev) => [...prev, { imageUrl: "", linkUrl: "" }]);
+  }
+
+  function removeBanner(idx: number) {
+    setBanners((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function moveBanner(idx: number, dir: -1 | 1) {
+    setBanners((prev) => {
+      const next = [...prev];
+      const target = idx + dir;
+      if (target < 0 || target >= next.length) return prev;
+      [next[idx], next[target]] = [next[target], next[idx]];
+      return next;
+    });
+  }
+
+  async function handleUpload(idx: number, file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "მხოლოდ სურათი" });
+      return;
+    }
+    setUploadingIdx(idx);
+    try {
+      const fd = new FormData();
+      fd.append("files", file);
+      const res = await fetch("/api/media/upload", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) throw new Error("ატვირთვა ვერ მოხერხდა");
+      const uploaded = await res.json();
+      const path = Array.isArray(uploaded) && uploaded[0]?.path ? uploaded[0].path : null;
+      if (!path) throw new Error("არასწორი პასუხი");
+      updateBanner(idx, { imageUrl: path });
+    } catch (err) {
+      toast({ variant: "destructive", title: "შეცდომა", description: err instanceof Error ? err.message : "უცნობი შეცდომა" });
+    } finally {
+      setUploadingIdx(null);
+    }
+  }
+
+  async function handleSave() {
+    const cleaned = banners
+      .filter((b) => b.imageUrl.trim().length > 0)
+      .map((b) => ({ imageUrl: b.imageUrl.trim(), linkUrl: b.linkUrl.trim() || undefined }));
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/ads", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ banners: cleaned }),
+      });
+      if (!res.ok) throw new Error("შენახვა ვერ მოხერხდა");
+      await queryClient.invalidateQueries({ queryKey: ["/api/ads"] });
+      toast({ title: "წარმატება", description: `${cleaned.length} ბანერი შენახულია` });
+    } catch (err) {
+      toast({ variant: "destructive", title: "შეცდომა", description: err instanceof Error ? err.message : "უცნობი შეცდომა" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (isLoading) {
+    return <Card><CardContent className="p-6 text-sm text-muted-foreground">იტვირთება...</CardContent></Card>;
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="p-5 space-y-2">
+          <h3 className="text-sm font-semibold flex items-center gap-2">
+            <Megaphone className="h-4 w-4 text-primary" /> სარეკლამო ბანერები
+          </h3>
+          <p className="text-xs text-muted-foreground">
+            მაქსიმუმ 3 ბანერი. პროდუქტის გვერდზე ნაჩვენებია მონაცვლეობით (ყოველ 4.5 წამში). თითო ბანერი = სურათი + არჩევითი ბმული.
+          </p>
+        </CardContent>
+      </Card>
+
+      {banners.length === 0 && (
+        <Card className="border-dashed">
+          <CardContent className="p-8 text-center text-sm text-muted-foreground">
+            ბანერი არ არის. დაამატე პირველი.
+          </CardContent>
+        </Card>
+      )}
+
+      {banners.map((b, idx) => (
+        <Card key={idx} data-testid={`card-ad-banner-${idx}`}>
+          <CardContent className="p-4 sm:p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">ბანერი #{idx + 1}</span>
+              <div className="flex gap-1">
+                <Button type="button" variant="ghost" size="sm" disabled={idx === 0} onClick={() => moveBanner(idx, -1)} data-testid={`button-ad-up-${idx}`}>
+                  <ArrowUp className="h-4 w-4" />
+                </Button>
+                <Button type="button" variant="ghost" size="sm" disabled={idx === banners.length - 1} onClick={() => moveBanner(idx, 1)} data-testid={`button-ad-down-${idx}`}>
+                  <ArrowDown className="h-4 w-4" />
+                </Button>
+                <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => removeBanner(idx)} data-testid={`button-ad-remove-${idx}`}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {b.imageUrl && (
+              <div className="overflow-hidden rounded-lg border">
+                <img src={b.imageUrl} alt={`ბანერი ${idx + 1}`} className="h-32 w-full object-cover" />
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">სურათი</label>
+              <div className="flex gap-2">
+                <Input
+                  value={b.imageUrl}
+                  onChange={(e) => updateBanner(idx, { imageUrl: e.target.value })}
+                  placeholder="/uploads/... ან https://..."
+                  className="flex-1"
+                  data-testid={`input-ad-image-${idx}`}
+                />
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 text-sm hover:bg-accent">
+                  {uploadingIdx === idx ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  <span>ატვირთვა</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleUpload(idx, f);
+                      e.target.value = "";
+                    }}
+                    data-testid={`input-ad-upload-${idx}`}
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">ბმული <span className="text-muted-foreground/70">(არჩევითი)</span></label>
+              <Input
+                value={b.linkUrl}
+                onChange={(e) => updateBanner(idx, { linkUrl: e.target.value })}
+                placeholder="https://example.com"
+                data-testid={`input-ad-link-${idx}`}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" onClick={addBanner} disabled={banners.length >= 3} data-testid="button-add-banner">
+          <Plus className="mr-1 h-4 w-4" /> დამატება ({banners.length}/3)
+        </Button>
+        <Button type="button" onClick={handleSave} disabled={saving} data-testid="button-save-ads">
+          {saving ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> ინახება...</> : <><Check className="mr-1 h-4 w-4" /> შენახვა</>}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function TermsSectionsManager() {
   const { toast } = useToast();
   const { data: sections, isLoading } = useQuery<{ id: number; title: string; content: string; sortOrder: number }[]>({
@@ -2269,7 +2458,7 @@ function TermsSectionsManager() {
 }
 
 
-type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms";
+type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms" | "ads";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>(null);
@@ -2470,6 +2659,29 @@ export default function AdminDashboard() {
     );
   }
 
+  if (activeSection === "ads") {
+    return (
+      <div className="min-h-screen bg-mesh">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+          <AnimatedShell className="space-y-6">
+            <div className="flex items-center justify-between">
+              <TopBar title="ადმინ პანელი" subtitle="სარეკლამო სახლი" />
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setActiveSection(null)} data-testid="button-back">
+                  უკან
+                </Button>
+                <Link href="/">
+                  <Button variant="ghost" size="sm" data-testid="link-homepage">მთავარი</Button>
+                </Link>
+              </div>
+            </div>
+            <AdsManager />
+          </AnimatedShell>
+        </div>
+      </div>
+    );
+  }
+
   if (activeSection === "terms") {
     return (
       <div className="min-h-screen bg-mesh">
@@ -2633,6 +2845,22 @@ export default function AdminDashboard() {
                   </div>
                   <h3 className="text-lg font-semibold">ანალიტიკა</h3>
                   <p className="text-sm text-muted-foreground">ტრაფიკის წყაროები — რომელი საიტებიდან მოდიან ვიზიტორები</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {isFullAdmin && (
+              <Card
+                className="cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-primary/40"
+                onClick={() => setActiveSection("ads")}
+                data-testid="card-section-ads"
+              >
+                <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <Megaphone className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold">სარეკლამო სახლი</h3>
+                  <p className="text-sm text-muted-foreground">პროდუქტის გვერდის სარეკლამო ბანერების მართვა (მაქს 3)</p>
                 </CardContent>
               </Card>
             )}
