@@ -844,7 +844,11 @@ function ProductSpecs({ product, className = "" }: { product: Product; className
   if (product.length) specs.push({ label: "სიგრძე", value: product.length });
   if (product.dimensions) specs.push({ label: "ზომა", value: product.dimensions });
   if (typeof product.stock === "number") {
-    specs.push({ label: "მარაგშია", value: product.stock > 0 ? `${product.stock} ცალი` : "ამოწურულია" });
+    if (product.stock > 0) {
+      specs.push({ label: "მარაგშია", value: `${product.stock} ცალი` });
+    } else {
+      specs.push({ label: "მარაგი", value: "ამოწურულია" });
+    }
   }
   if (specs.length === 0) return null;
   const cols = specs.length >= 4 ? "grid-cols-2 sm:grid-cols-4" : specs.length === 3 ? "grid-cols-3" : specs.length === 2 ? "grid-cols-2" : "grid-cols-1";
