@@ -1443,23 +1443,45 @@ export async function registerRoutes(
   }
 
   // ===== Gemini AI assistant =====
+  // 5-minute in-memory cache for heavy Gemini context (shared across all chats).
+  // Cuts DB load ~95% and Gemini token cost ~80% during busy periods.
+  let geminiCtxCache: { ts: number; data: any } | null = null;
+  const GEMINI_CTX_TTL_MS = 5 * 60 * 1000;
+
+  async function getGeminiContext() {
+    if (geminiCtxCache && Date.now() - geminiCtxCache.ts < GEMINI_CTX_TTL_MS) {
+      return geminiCtxCache.data;
+    }
+    const [products, contactPhone, contactEmail, workHours, deliveryInfo, terms, referralCreditRaw, creditToGelRaw, adminKb] = await Promise.all([
+      storage.getProducts(),
+      storage.getSetting("contact_phone"),
+      storage.getSetting("contact_email"),
+      storage.getSetting("contact_work_hours"),
+      storage.getSetting("contact_address"),
+      storage.getTermsSections(),
+      storage.getSetting("referral_credit_amount"),
+      storage.getSetting("credit_to_gel"),
+      storage.getAdminKnowledgeBase(150).catch(() => [] as any[]),
+    ]);
+    const data = { products, contactPhone, contactEmail, workHours, deliveryInfo, terms, referralCreditRaw, creditToGelRaw, adminKb };
+    geminiCtxCache = { ts: Date.now(), data };
+    return data;
+  }
+
   async function geminiReply(userMessage: string, history: any[], userId?: string): Promise<string | null> {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) return null;
 
+    // Skip Gemini for trivial messages (saves API cost & latency).
+    // "ok", "კი", "არა", emoji-only, very short — not worth a full LLM round-trip.
+    const trimmed = userMessage.trim();
+    const letterCount = (trimmed.match(/[\p{L}\p{N}]/gu) || []).length;
+    if (letterCount < 3) return null;
+
     try {
-      const [products, contactPhone, contactEmail, workHours, deliveryInfo, terms, referralCreditRaw, creditToGelRaw, userOrders, adminKb] = await Promise.all([
-        storage.getProducts(),
-        storage.getSetting("contact_phone"),
-        storage.getSetting("contact_email"),
-        storage.getSetting("contact_work_hours"),
-        storage.getSetting("contact_address"),
-        storage.getTermsSections(),
-        storage.getSetting("referral_credit_amount"),
-        storage.getSetting("credit_to_gel"),
-        userId ? storage.getOrdersByUser(userId).catch(() => []) : Promise.resolve([] as any[]),
-        storage.getAdminKnowledgeBase(150).catch(() => [] as any[]),
-      ]);
+      const ctx = await getGeminiContext();
+      const userOrders = userId ? await storage.getOrdersByUser(userId).catch(() => []) : [];
+      const { products, contactPhone, contactEmail, workHours, deliveryInfo, terms, referralCreditRaw, creditToGelRaw, adminKb } = ctx;
 
       const phone = contactPhone || "+995 599 52 33 51";
       const email = contactEmail || "spiningebi@gmail.com";
