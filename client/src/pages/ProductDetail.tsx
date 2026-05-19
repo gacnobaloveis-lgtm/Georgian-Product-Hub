@@ -7,6 +7,7 @@ import { Link } from "wouter";
 import type { Product } from "@shared/schema";
 import { PurchaseDialog } from "@/components/PurchaseDialog";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
@@ -706,6 +707,7 @@ function AdBanner() {
     staleTime: 60_000,
   });
   const [idx, setIdx] = useState(0);
+  const [infoOpen, setInfoOpen] = useState(false);
   const list = banners || [];
   useEffect(() => {
     if (list.length <= 1) return;
@@ -716,33 +718,76 @@ function AdBanner() {
   if (list.length === 0) {
     const marqueeText = "თქვენი რეკლამა აქ • მიაღწიე ათასობით მეთევზეს • spiningebi.ge • დაგვიკავშირდი • ";
     return (
-      <a
-        href="https://wa.me/995599523351?text=%E1%83%92%E1%83%90%E1%83%9B%E1%83%90%E1%83%A0%E1%83%AF%E1%83%9D%E1%83%91%E1%83%90%E1%83%97%2C%20%E1%83%9B%E1%83%90%E1%83%98%E1%83%9C%E1%83%A2%E1%83%94%E1%83%A0%E1%83%94%E1%83%A1%E1%83%94%E1%83%91%E1%83%A1%20%E1%83%A0%E1%83%94%E1%83%99%E1%83%9A%E1%83%90%E1%83%9B%E1%83%90"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="ad-shine ad-gradient relative mt-3 sm:mt-4 block overflow-hidden rounded-2xl border border-white/20 shadow-lg ring-1 ring-black/5 transition-transform hover:scale-[1.01] active:scale-[0.99]"
-        data-testid="ad-banner-empty"
-      >
-        <div className="relative z-[1] flex flex-col items-center gap-1.5 px-4 py-5 sm:py-6 text-white">
-          <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-white/95">
-            <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-white"></span>
-            სარეკლამო სივრცე
-            <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-white"></span>
-          </div>
-          <div className="text-lg sm:text-2xl font-extrabold drop-shadow-sm">
-            ⚡ თქვენი რეკლამა აქ ⚡
-          </div>
-          <div className="relative w-full overflow-hidden">
-            <div className="ad-marquee-track flex w-max whitespace-nowrap text-[11px] sm:text-sm font-semibold text-white/95">
-              <span className="px-2">{marqueeText.repeat(3)}</span>
-              <span className="px-2">{marqueeText.repeat(3)}</span>
+      <>
+        <button
+          type="button"
+          onClick={() => setInfoOpen(true)}
+          className="ad-shine ad-gradient relative mt-3 sm:mt-4 mx-auto block w-full max-w-xl overflow-hidden rounded-2xl border border-white/20 shadow-lg ring-1 ring-black/5 transition-transform hover:scale-[1.01] active:scale-[0.99] text-left"
+          data-testid="ad-banner-empty"
+        >
+          <div className="relative z-[1] flex flex-col items-center gap-1.5 px-4 py-5 sm:py-6 text-white">
+            <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-white/95">
+              <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-white"></span>
+              სარეკლამო სივრცე
+              <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-white"></span>
+            </div>
+            <div className="text-lg sm:text-2xl font-extrabold drop-shadow-sm text-center">
+              ⚡ თქვენი რეკლამა აქ ⚡
+            </div>
+            <div className="relative w-full overflow-hidden">
+              <div className="ad-marquee-track flex w-max whitespace-nowrap text-[11px] sm:text-sm font-semibold text-white/95">
+                <span className="px-2">{marqueeText.repeat(3)}</span>
+                <span className="px-2">{marqueeText.repeat(3)}</span>
+              </div>
+            </div>
+            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] sm:text-xs font-bold backdrop-blur-sm">
+              📞 დააწკაპე დეტალებისთვის →
             </div>
           </div>
-          <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] sm:text-xs font-bold backdrop-blur-sm">
-            📞 დაჯავშნე ადგილი →
-          </div>
-        </div>
-      </a>
+        </button>
+
+        <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+          <DialogContent className="max-w-md" data-testid="dialog-ad-info">
+            <DialogHeader>
+              <DialogTitle className="text-center text-xl">📣 სარეკლამო სივრცე</DialogTitle>
+              <DialogDescription className="sr-only">სარეკლამო ადგილის შესახებ ინფორმაცია</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 text-[15px] leading-relaxed text-gray-700">
+              <p>
+                <span className="font-semibold">მეგობარო!</span> 👋
+              </p>
+              <p>
+                თქვენ ახლა იმყოფებით <span className="font-semibold text-green-700">spiningebi.ge</span>-ის თავისუფალ სარეკლამო გვერდზე.
+              </p>
+              <p>
+                აქ შეგიძლიათ განათავსოთ თქვენი სარეკლამო ბანერი. თუ გაქვთ <span className="font-semibold">მაღაზია</span> ან <span className="font-semibold">ონლაინ გაყიდვების გვერდი</span> — ჩვენ დაგიმზადებთ პროფესიონალურ სარეკლამო ბანერებს და განვათავსებთ ჩვენს გვერდზე.
+              </p>
+              <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-amber-900">
+                💰 <span className="font-bold">ძალიან შეღავათიან ფასებში!</span>
+              </p>
+              <p className="text-center">
+                დაგვიკავშირდით ტელეფონის ნომერზე:
+              </p>
+              <a
+                href="tel:+995599523351"
+                className="flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-3 text-lg font-bold text-white shadow-md hover:bg-green-700 transition-colors"
+                data-testid="link-ad-call"
+              >
+                📞 +995 599 52 33 51
+              </a>
+              <a
+                href="https://wa.me/995599523351?text=%E1%83%92%E1%83%90%E1%83%9B%E1%83%90%E1%83%A0%E1%83%AF%E1%83%9D%E1%83%91%E1%83%90%E1%83%97%2C%20%E1%83%9B%E1%83%90%E1%83%98%E1%83%9C%E1%83%A2%E1%83%94%E1%83%A0%E1%83%94%E1%83%A1%E1%83%94%E1%83%91%E1%83%A1%20%E1%83%A0%E1%83%94%E1%83%99%E1%83%9A%E1%83%90%E1%83%9B%E1%83%90%20spiningebi.ge-%E1%83%96%E1%83%94"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2.5 text-base font-semibold text-green-700 hover:bg-green-50 transition-colors"
+                data-testid="link-ad-whatsapp"
+              >
+                💬 WhatsApp-ით მოწერა
+              </a>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
