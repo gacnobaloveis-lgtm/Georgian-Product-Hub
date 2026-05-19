@@ -28,6 +28,9 @@ interface FormState {
   stock: string;
   youtubeUrl: string;
   colors: ColorEntry[];
+  weight: string;
+  length: string;
+  dimensions: string;
 }
 
 const emptyForm: FormState = {
@@ -38,6 +41,9 @@ const emptyForm: FormState = {
   stock: "",
   youtubeUrl: "",
   colors: [],
+  weight: "",
+  length: "",
+  dimensions: "",
 };
 
 export default function AdminAddProduct() {
@@ -112,6 +118,9 @@ export default function AdminAddProduct() {
       if (selectedCategoryId) {
         formData.append("categoryId", selectedCategoryId);
       }
+      if (form.weight.trim()) formData.append("weight", form.weight.trim());
+      if (form.length.trim()) formData.append("length", form.length.trim());
+      if (form.dimensions.trim()) formData.append("dimensions", form.dimensions.trim());
 
       const created = await createMutation.mutateAsync(formData);
       toast({ title: "წარმატება", description: `პროდუქტი "${created.name}" დაემატა.` });
@@ -169,6 +178,21 @@ export default function AdminAddProduct() {
                 <div className="space-y-2">
                   <label htmlFor="stock" className="text-sm font-medium">რაოდენობა</label>
                   <Input id="stock" type="number" value={form.stock} onChange={(e) => setField("stock", e.target.value)} placeholder="0" data-testid="input-stock" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="space-y-2">
+                  <label htmlFor="weight" className="text-sm font-medium">წონა (გრამი) <span className="text-muted-foreground text-xs">(არჩევითი)</span></label>
+                  <Input id="weight" value={form.weight} onChange={(e) => setField("weight", e.target.value)} placeholder="მაგ: 250 გრ" data-testid="input-weight" />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="length" className="text-sm font-medium">სიგრძე <span className="text-muted-foreground text-xs">(არჩევითი)</span></label>
+                  <Input id="length" value={form.length} onChange={(e) => setField("length", e.target.value)} placeholder="მაგ: 2.4 მ" data-testid="input-length" />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="dimensions" className="text-sm font-medium">ზომა <span className="text-muted-foreground text-xs">(არჩევითი)</span></label>
+                  <Input id="dimensions" value={form.dimensions} onChange={(e) => setField("dimensions", e.target.value)} placeholder="მაგ: M / 40×30 სმ" data-testid="input-dimensions" />
                 </div>
               </div>
 
