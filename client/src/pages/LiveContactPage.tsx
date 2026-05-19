@@ -25,6 +25,8 @@ export default function LiveContactPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [operatorTyping, setOperatorTyping] = useState(false);
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const userName = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || "მომხმარებელი" : "";
 
@@ -51,8 +53,29 @@ export default function LiveContactPage() {
         return [...old, newMsg];
       });
       queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
+      // Show "operator is typing…" indicator for up to 65s (matches server's 60s bot delay)
+      setOperatorTyping(true);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => setOperatorTyping(false), 65000);
     },
   });
+
+  // Hide typing indicator as soon as a new admin/bot reply arrives.
+  useEffect(() => {
+    if (!operatorTyping || messages.length === 0) return;
+    const lastUserIdx = [...messages].reverse().findIndex((m) => m.senderType === "user");
+    if (lastUserIdx === -1) return;
+    const lastUserPos = messages.length - 1 - lastUserIdx;
+    const hasReplyAfter = messages.slice(lastUserPos + 1).some((m) => m.senderType !== "user");
+    if (hasReplyAfter) {
+      setOperatorTyping(false);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    }
+  }, [messages, operatorTyping]);
+
+  useEffect(() => () => {
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+  }, []);
 
   function scrollToBottom(smooth = true) {
     const container = messagesContainerRef.current;
@@ -240,6 +263,22 @@ export default function LiveContactPage() {
                   </div>
                   <div className="h-7 w-7 shrink-0 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-bold text-primary">
                     {(user?.firstName?.[0] || "მ").toUpperCase()}
+                  </div>
+                </div>
+              )}
+
+              {operatorTyping && !sendMutation.isPending && (
+                <div className="flex items-end gap-2" data-testid="indicator-operator-typing">
+                  <div className="h-7 w-7 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                    SP
+                  </div>
+                  <div className="max-w-[75%]">
+                    <p className="text-[11px] text-muted-foreground mb-1">spiningebi.ge წერს...</p>
+                    <div className="rounded-2xl rounded-bl-sm bg-white border border-emerald-100 px-4 py-3 shadow-sm inline-flex items-center gap-1">
+                      <span className="block h-2 w-2 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="block h-2 w-2 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="block h-2 w-2 rounded-full bg-emerald-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </div>
                   </div>
                 </div>
               )}
