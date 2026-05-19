@@ -506,7 +506,7 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            <ProductSpecs product={product} className="hidden lg:grid mt-3" />
+            <ProductSpecs product={product} stockOverride={totalStock} className="hidden lg:grid mt-3" />
           </div>
         </div>
 
@@ -622,7 +622,7 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        <ProductSpecs product={product} className="lg:hidden mt-3" />
+        <ProductSpecs product={product} stockOverride={totalStock} className="lg:hidden mt-3" />
 
         <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4">
           <button
@@ -838,14 +838,15 @@ function AdBanner() {
   );
 }
 
-function ProductSpecs({ product, className = "" }: { product: Product; className?: string }) {
+function ProductSpecs({ product, stockOverride, className = "" }: { product: Product; stockOverride?: number; className?: string }) {
   const specs: { label: string; value: string }[] = [];
   if (product.weight) specs.push({ label: "წონა", value: product.weight });
   if (product.length) specs.push({ label: "სიგრძე", value: product.length });
   if (product.dimensions) specs.push({ label: "ზომა", value: product.dimensions });
-  if (typeof product.stock === "number") {
-    if (product.stock > 0) {
-      specs.push({ label: "მარაგშია", value: `${product.stock} ცალი` });
+  const effStock = typeof stockOverride === "number" ? stockOverride : product.stock;
+  if (typeof effStock === "number") {
+    if (effStock > 0) {
+      specs.push({ label: "მარაგშია", value: `${effStock} ცალი` });
     } else {
       specs.push({ label: "მარაგი", value: "ამოწურულია" });
     }
