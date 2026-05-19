@@ -18,6 +18,9 @@ export const api = {
         shippingPrice: z.union([z.string(), z.number()]).optional().transform(v => v ? String(v) : undefined),
         stock: z.union([z.string(), z.number()]).transform(v => Number(v) || 0),
         categoryId: z.union([z.string(), z.number()]).optional().transform(v => v ? Number(v) : undefined),
+        weight: z.string().optional(),
+        length: z.string().optional(),
+        dimensions: z.string().optional(),
       }),
       responses: {
         201: z.custom<typeof products.$inferSelect>(),
