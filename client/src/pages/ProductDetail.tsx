@@ -481,6 +481,8 @@ export default function ProductDetail() {
                 </button>
               </div>
             </div>
+
+            <ProductSpecs product={product} className="hidden lg:grid mt-3" />
           </div>
         </div>
 
@@ -596,6 +598,8 @@ export default function ProductDetail() {
           </div>
         </div>
 
+        <ProductSpecs product={product} className="lg:hidden mt-3" />
+
         <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4">
           <button
             onClick={() => {
@@ -706,6 +710,28 @@ export default function ProductDetail() {
           onOpenChange={setAuthDialogOpen}
         />
       </div>
+    </div>
+  );
+}
+
+function ProductSpecs({ product, className = "" }: { product: Product; className?: string }) {
+  const specs: { label: string; value: string }[] = [];
+  if (product.weight) specs.push({ label: "წონა", value: product.weight });
+  if (product.length) specs.push({ label: "სიგრძე", value: product.length });
+  if (product.dimensions) specs.push({ label: "ზომა", value: product.dimensions });
+  if (specs.length === 0) return null;
+  return (
+    <div className={`grid grid-cols-3 gap-2 sm:gap-3 ${className}`} data-testid="product-specs">
+      {specs.map((s) => (
+        <div
+          key={s.label}
+          className="rounded-xl border border-gray-200 bg-gray-50/70 px-2.5 py-2 text-center"
+          data-testid={`spec-${s.label}`}
+        >
+          <div className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-gray-500">{s.label}</div>
+          <div className="mt-0.5 text-xs sm:text-sm font-semibold text-gray-800 break-words">{s.value}</div>
+        </div>
+      ))}
     </div>
   );
 }
