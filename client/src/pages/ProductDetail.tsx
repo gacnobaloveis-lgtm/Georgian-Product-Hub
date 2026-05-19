@@ -775,7 +775,7 @@ function AdBanner() {
     <img
       src={current.imageUrl}
       alt="რეკლამა"
-      className="block w-full h-auto transition-opacity duration-500"
+      className="block w-full h-auto sm:max-h-44 md:max-h-48 lg:max-h-52 sm:w-auto sm:mx-auto transition-opacity duration-500"
       loading="lazy"
       data-testid={`ad-banner-img-${idx}`}
     />
