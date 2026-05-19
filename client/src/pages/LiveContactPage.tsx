@@ -84,8 +84,11 @@ export default function LiveContactPage() {
   }
 
   useEffect(() => {
-    scrollToBottom(true);
-  }, [messages]);
+    // Wait for the DOM to render new bubbles (and the typing indicator)
+    // before scrolling, so the latest reply is always in view automatically.
+    const id = setTimeout(() => scrollToBottom(true), 80);
+    return () => clearTimeout(id);
+  }, [messages, operatorTyping]);
 
   useEffect(() => {
     scrollToBottom(false);
