@@ -715,6 +715,26 @@ function AdBanner() {
     return () => clearInterval(t);
   }, [list.length]);
 
+  const infoDialog = (
+    <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+      <DialogContent className="max-w-md" data-testid="dialog-ad-info">
+        <DialogHeader>
+          <DialogTitle className="text-center text-xl">📣 სარეკლამო სივრცე</DialogTitle>
+          <DialogDescription className="sr-only">სარეკლამო ადგილის შესახებ ინფორმაცია</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 text-[15px] leading-relaxed text-gray-700">
+          <p><span className="font-semibold">მეგობარო!</span> 👋</p>
+          <p>თქვენ ახლა იმყოფებით <span className="font-semibold text-green-700">spiningebi.ge</span>-ის თავისუფალ სარეკლამო გვერდზე.</p>
+          <p>აქ შეგიძლიათ განათავსოთ თქვენი სარეკლამო ბანერი. თუ გაქვთ <span className="font-semibold">მაღაზია</span> ან <span className="font-semibold">ონლაინ გაყიდვების გვერდი</span> — ჩვენ დაგიმზადებთ პროფესიონალურ სარეკლამო ბანერებს და განვათავსებთ ჩვენს გვერდზე.</p>
+          <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-amber-900">💰 <span className="font-bold">ძალიან შეღავათიან ფასებში!</span></p>
+          <p className="text-center">დაგვიკავშირდით ტელეფონის ნომერზე:</p>
+          <a href="tel:+995599523351" className="flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-3 text-lg font-bold text-white shadow-md hover:bg-green-700 transition-colors" data-testid="link-ad-call">📞 +995 599 52 33 51</a>
+          <a href="https://wa.me/995599523351?text=%E1%83%92%E1%83%90%E1%83%9B%E1%83%90%E1%83%A0%E1%83%AF%E1%83%9D%E1%83%91%E1%83%90%E1%83%97%2C%20%E1%83%9B%E1%83%90%E1%83%98%E1%83%9C%E1%83%A2%E1%83%94%E1%83%A0%E1%83%94%E1%83%A1%E1%83%94%E1%83%91%E1%83%A1%20%E1%83%A0%E1%83%94%E1%83%99%E1%83%9A%E1%83%90%E1%83%9B%E1%83%90%20spiningebi.ge-%E1%83%96%E1%83%94" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2.5 text-base font-semibold text-green-700 hover:bg-green-50 transition-colors" data-testid="link-ad-whatsapp">💬 WhatsApp-ით მოწერა</a>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   if (list.length === 0) {
     const marqueeText = "თქვენი რეკლამა აქ • მიაღწიე ათასობით მეთევზეს • spiningebi.ge • დაგვიკავშირდი • ";
     return (
@@ -745,48 +765,7 @@ function AdBanner() {
             </div>
           </div>
         </button>
-
-        <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
-          <DialogContent className="max-w-md" data-testid="dialog-ad-info">
-            <DialogHeader>
-              <DialogTitle className="text-center text-xl">📣 სარეკლამო სივრცე</DialogTitle>
-              <DialogDescription className="sr-only">სარეკლამო ადგილის შესახებ ინფორმაცია</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3 text-[15px] leading-relaxed text-gray-700">
-              <p>
-                <span className="font-semibold">მეგობარო!</span> 👋
-              </p>
-              <p>
-                თქვენ ახლა იმყოფებით <span className="font-semibold text-green-700">spiningebi.ge</span>-ის თავისუფალ სარეკლამო გვერდზე.
-              </p>
-              <p>
-                აქ შეგიძლიათ განათავსოთ თქვენი სარეკლამო ბანერი. თუ გაქვთ <span className="font-semibold">მაღაზია</span> ან <span className="font-semibold">ონლაინ გაყიდვების გვერდი</span> — ჩვენ დაგიმზადებთ პროფესიონალურ სარეკლამო ბანერებს და განვათავსებთ ჩვენს გვერდზე.
-              </p>
-              <p className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-amber-900">
-                💰 <span className="font-bold">ძალიან შეღავათიან ფასებში!</span>
-              </p>
-              <p className="text-center">
-                დაგვიკავშირდით ტელეფონის ნომერზე:
-              </p>
-              <a
-                href="tel:+995599523351"
-                className="flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-3 text-lg font-bold text-white shadow-md hover:bg-green-700 transition-colors"
-                data-testid="link-ad-call"
-              >
-                📞 +995 599 52 33 51
-              </a>
-              <a
-                href="https://wa.me/995599523351?text=%E1%83%92%E1%83%90%E1%83%9B%E1%83%90%E1%83%A0%E1%83%AF%E1%83%9D%E1%83%91%E1%83%90%E1%83%97%2C%20%E1%83%9B%E1%83%90%E1%83%98%E1%83%9C%E1%83%A2%E1%83%94%E1%83%A0%E1%83%94%E1%83%A1%E1%83%94%E1%83%91%E1%83%A1%20%E1%83%A0%E1%83%94%E1%83%99%E1%83%9A%E1%83%90%E1%83%9B%E1%83%90%20spiningebi.ge-%E1%83%96%E1%83%94"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl border-2 border-green-600 px-4 py-2.5 text-base font-semibold text-green-700 hover:bg-green-50 transition-colors"
-                data-testid="link-ad-whatsapp"
-              >
-                💬 WhatsApp-ით მოწერა
-              </a>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {infoDialog}
       </>
     );
   }
@@ -805,14 +784,19 @@ function AdBanner() {
   return (
     <div className="mt-3 sm:mt-4 space-y-1.5">
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50 shadow-sm">
-        <div className="relative aspect-[16/5] w-full">
+        <div className="relative w-full h-24 sm:h-32 md:h-36 lg:h-40">
           {current.linkUrl ? (
             <a href={current.linkUrl} target="_blank" rel="noopener noreferrer sponsored" className="block h-full w-full" data-testid="ad-banner-link">
               {inner}
             </a>
-          ) : inner}
+          ) : (
+            <button type="button" onClick={() => setInfoOpen(true)} className="block h-full w-full" data-testid="ad-banner-button">
+              {inner}
+            </button>
+          )}
         </div>
       </div>
+      {infoDialog}
       {list.length > 1 && (
         <div className="flex items-center justify-center gap-1.5" data-testid="ad-banner-dots">
           {list.map((_, i) => (
