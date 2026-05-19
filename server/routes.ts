@@ -1149,6 +1149,47 @@ export async function registerRoutes(
     }
   });
 
+  // ─── Ad banners (სარეკლამო სახლი) ───
+  app.get("/api/ads", async (_req, res) => {
+    try {
+      const raw = await storage.getSetting("ad_banners");
+      let banners: Array<{ imageUrl: string; linkUrl?: string }> = [];
+      try {
+        const parsed = JSON.parse(raw || "[]");
+        if (Array.isArray(parsed)) {
+          banners = parsed
+            .filter((b: any) => b && typeof b.imageUrl === "string" && b.imageUrl.trim().length > 0)
+            .slice(0, 3)
+            .map((b: any) => ({
+              imageUrl: String(b.imageUrl),
+              linkUrl: typeof b.linkUrl === "string" && b.linkUrl.trim().length > 0 ? String(b.linkUrl) : undefined,
+            }));
+        }
+      } catch {}
+      res.json(banners);
+    } catch {
+      res.json([]);
+    }
+  });
+
+  app.put("/api/admin/ads", requireAdmin, async (req, res) => {
+    try {
+      const incoming = Array.isArray(req.body?.banners) ? req.body.banners : [];
+      const cleaned = incoming
+        .filter((b: any) => b && typeof b.imageUrl === "string" && b.imageUrl.trim().length > 0)
+        .slice(0, 3)
+        .map((b: any) => ({
+          imageUrl: sanitizeString(String(b.imageUrl).trim()),
+          linkUrl: typeof b.linkUrl === "string" && b.linkUrl.trim().length > 0 ? sanitizeString(String(b.linkUrl).trim()) : undefined,
+        }));
+      await storage.setSetting("ad_banners", JSON.stringify(cleaned));
+      res.json({ ok: true, banners: cleaned });
+    } catch (err) {
+      console.error("Ads update error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
   app.get("/api/contact-info", async (_req, res) => {
     try {
       const phone = await storage.getSetting("contact_phone") || "+995 599 52 33 51";
