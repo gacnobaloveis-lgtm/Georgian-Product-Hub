@@ -714,10 +714,35 @@ function AdBanner() {
   }, [list.length]);
 
   if (list.length === 0) {
+    const marqueeText = "თქვენი რეკლამა აქ • მიაღწიე ათასობით მეთევზეს • spiningebi.ge • დაგვიკავშირდი • ";
     return (
-      <div className="mt-3 sm:mt-4 flex h-28 items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 text-xs sm:text-sm text-gray-400" data-testid="ad-banner-empty">
-        თქვენი რეკლამის ადგილი
-      </div>
+      <a
+        href="https://wa.me/995599523351?text=%E1%83%92%E1%83%90%E1%83%9B%E1%83%90%E1%83%A0%E1%83%AF%E1%83%9D%E1%83%91%E1%83%90%E1%83%97%2C%20%E1%83%9B%E1%83%90%E1%83%98%E1%83%9C%E1%83%A2%E1%83%94%E1%83%A0%E1%83%94%E1%83%A1%E1%83%94%E1%83%91%E1%83%A1%20%E1%83%A0%E1%83%94%E1%83%99%E1%83%9A%E1%83%90%E1%83%9B%E1%83%90"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="ad-shine ad-gradient relative mt-3 sm:mt-4 block overflow-hidden rounded-2xl border border-white/20 shadow-lg ring-1 ring-black/5 transition-transform hover:scale-[1.01] active:scale-[0.99]"
+        data-testid="ad-banner-empty"
+      >
+        <div className="relative z-[1] flex flex-col items-center gap-1.5 px-4 py-5 sm:py-6 text-white">
+          <div className="flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-white/95">
+            <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-white"></span>
+            სარეკლამო სივრცე
+            <span className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-white"></span>
+          </div>
+          <div className="text-lg sm:text-2xl font-extrabold drop-shadow-sm">
+            ⚡ თქვენი რეკლამა აქ ⚡
+          </div>
+          <div className="relative w-full overflow-hidden">
+            <div className="ad-marquee-track flex w-max whitespace-nowrap text-[11px] sm:text-sm font-semibold text-white/95">
+              <span className="px-2">{marqueeText.repeat(3)}</span>
+              <span className="px-2">{marqueeText.repeat(3)}</span>
+            </div>
+          </div>
+          <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[11px] sm:text-xs font-bold backdrop-blur-sm">
+            📞 დაჯავშნე ადგილი →
+          </div>
+        </div>
+      </a>
     );
   }
 
