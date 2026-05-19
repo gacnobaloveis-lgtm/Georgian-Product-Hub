@@ -53,10 +53,10 @@ export default function LiveContactPage() {
         return [...old, newMsg];
       });
       queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] });
-      // Show "operator is typing…" indicator for up to 65s (matches server's 60s bot delay)
+      // Show "operator is typing…" indicator for up to 25s (matches server's 20s bot delay)
       setOperatorTyping(true);
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-      typingTimerRef.current = setTimeout(() => setOperatorTyping(false), 65000);
+      typingTimerRef.current = setTimeout(() => setOperatorTyping(false), 25000);
     },
   });
 
