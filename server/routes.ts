@@ -1620,7 +1620,11 @@ ${productList}`;
       const body = JSON.stringify({
         system_instruction: { parts: [{ text: systemPrompt }] },
         contents,
-        generationConfig: { temperature: 0.6, maxOutputTokens: 400 },
+        generationConfig: {
+          temperature: 0.6,
+          maxOutputTokens: 800,
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       });
 
       return await new Promise<string | null>((resolve) => {
