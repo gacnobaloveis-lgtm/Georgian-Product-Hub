@@ -1011,7 +1011,8 @@ export async function registerRoutes(
   app.get("/api/credit-info", async (_req, res) => {
     try {
       const creditToGel = await storage.getSetting("credit_to_gel") || "1";
-      res.json({ credit_to_gel: creditToGel });
+      const creditVideoUrl = await storage.getSetting("credit_video_url") || "";
+      res.json({ credit_to_gel: creditToGel, credit_video_url: creditVideoUrl });
     } catch (err) {
       console.error("Credit info error:", err);
       res.status(500).json({ message: "შეცდომა" });
@@ -1076,7 +1077,7 @@ export async function registerRoutes(
 
   app.put("/api/admin/settings", requireAdminOnly, async (req, res) => {
     try {
-      const { referral_credit_amount, credit_to_gel } = req.body;
+      const { referral_credit_amount, credit_to_gel, credit_video_url } = req.body;
       if (referral_credit_amount !== undefined) {
         const val = Number(referral_credit_amount);
         if (isNaN(val) || val < 0) {
@@ -1090,6 +1091,13 @@ export async function registerRoutes(
           return res.status(400).json({ message: "არასწორი კრედიტის კურსი" });
         }
         await storage.setSetting("credit_to_gel", String(val));
+      }
+      if (credit_video_url !== undefined) {
+        const v = String(credit_video_url || "").trim();
+        if (v && !/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(v)) {
+          return res.status(400).json({ message: "მხოლოდ YouTube ბმული დაშვებულია" });
+        }
+        await storage.setSetting("credit_video_url", v);
       }
       res.json({ success: true });
     } catch (err) {
