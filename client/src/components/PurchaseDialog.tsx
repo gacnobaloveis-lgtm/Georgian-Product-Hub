@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Loader2, ShoppingBag, AlertCircle, Pencil, Check, Coins } from "lucide-react";
 import { SiVisa, SiMastercard } from "react-icons/si";
 import { queryClient } from "@/lib/queryClient";
+import { InsufficientCreditDialog } from "@/components/InsufficientCreditDialog";
 
 const GEORGIAN_CITIES = [
   "თბილისი", "ქუთაისი", "ბათუმი", "რუსთავი", "ფოთი", "ზუგდიდი",
@@ -66,6 +67,8 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
   const [editForm, setEditForm] = useState<EditForm>({ fullName: "", city: "", address: "", phone: "" });
   const [userCredit, setUserCredit] = useState(0);
   const [creditToGel, setCreditToGel] = useState(1);
+  const [creditVideoUrl, setCreditVideoUrl] = useState("");
+  const [insufficientCreditOpen, setInsufficientCreditOpen] = useState(false);
 
   const unitPrice = Number(productPrice);
   const total = unitPrice * quantity;
@@ -87,6 +90,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
           }
           setUserCredit(Number(profileData?.myCredit || 0));
           setCreditToGel(Number(creditInfo?.credit_to_gel || 1));
+          setCreditVideoUrl(String(creditInfo?.credit_video_url || ""));
         })
         .catch(() => {})
         .finally(() => setProfileLoading(false));
@@ -444,7 +448,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
                   if (hasEnoughCredit) {
                     handleCreditPurchase();
                   } else {
-                    toast({ variant: "destructive", title: "კრედიტი არასაკმარისია", description: "როგორ დავაგროვო კრედიტი — ნახეთ გზამკვლევში" });
+                    setInsufficientCreditOpen(true);
                   }
                 }}
                 disabled={creditSubmitting || paySubmitting || authLoading}
@@ -464,6 +468,13 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
         )}
       </DialogContent>
     </Dialog>
+    <InsufficientCreditDialog
+      open={insufficientCreditOpen}
+      onOpenChange={setInsufficientCreditOpen}
+      userCredit={userCredit}
+      creditNeeded={creditNeeded}
+      videoUrl={creditVideoUrl}
+    />
     </>
   );
 }
