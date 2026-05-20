@@ -1069,7 +1069,8 @@ export async function registerRoutes(
     try {
       const creditAmount = await storage.getSetting("referral_credit_amount") || "5";
       const creditToGel = await storage.getSetting("credit_to_gel") || "1";
-      res.json({ referral_credit_amount: creditAmount, credit_to_gel: creditToGel });
+      const creditVideoUrl = await storage.getSetting("credit_video_url") || "";
+      res.json({ referral_credit_amount: creditAmount, credit_to_gel: creditToGel, credit_video_url: creditVideoUrl });
     } catch (err) {
       res.status(500).json({ message: "შეცდომა" });
     }
