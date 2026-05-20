@@ -2196,6 +2196,124 @@ function AdsManager() {
   );
 }
 
+function TutorialsManager() {
+  const { toast } = useToast();
+  const { data: settings, isLoading } = useQuery<{ credit_video_url?: string }>({
+    queryKey: ["/api/admin/settings"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/settings", { credentials: "include" });
+      if (!res.ok) throw new Error("შეცდომა");
+      return res.json();
+    },
+  });
+
+  const [creditVideoUrl, setCreditVideoUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (settings) setCreditVideoUrl(settings.credit_video_url || "");
+  }, [settings]);
+
+  function getYouTubeId(url: string): string | null {
+    if (!url) return null;
+    const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return m ? m[1] : null;
+  }
+
+  const previewId = getYouTubeId(creditVideoUrl);
+
+  async function handleSave() {
+    const trimmed = creditVideoUrl.trim();
+    if (trimmed && !/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(trimmed)) {
+      toast({ variant: "destructive", title: "შეცდომა", description: "გთხოვთ ჩასვათ YouTube ბმული" });
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ credit_video_url: trimmed }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast({ variant: "destructive", title: "შეცდომა", description: data.message || "ვერ შეინახა" });
+        return;
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/credit-info"] });
+      toast({ title: "შენახულია", description: "ბმული წარმატებით განახლდა" });
+    } catch {
+      toast({ variant: "destructive", title: "კავშირის შეცდომა" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (isLoading) {
+    return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="space-y-4 p-6">
+          <div>
+            <h3 className="text-base font-semibold">როგორ დავაგროვო კრედიტი</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              ეს ვიდეო გამოჩნდება მომხმარებლისთვის როდესაც კრედიტი არასაკმარისია შეძენისთვის.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium">YouTube ბმული</label>
+            <Input
+              value={creditVideoUrl}
+              onChange={e => setCreditVideoUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              data-testid="input-credit-video-url"
+            />
+            <p className="text-[11px] text-muted-foreground">
+              მაგ: https://www.youtube.com/watch?v=XXXXXXXXXXX ან https://youtu.be/XXXXXXXXXXX
+            </p>
+          </div>
+
+          {previewId && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">პრევიუ</label>
+              <div className="relative w-full overflow-hidden rounded-md border" style={{ paddingBottom: "56.25%" }}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${previewId}?rel=0`}
+                  title="პრევიუ"
+                  allowFullScreen
+                  className="absolute inset-0 h-full w-full"
+                  data-testid="iframe-tutorial-preview"
+                />
+              </div>
+            </div>
+          )}
+
+          {creditVideoUrl && !previewId && (
+            <p className="text-xs text-red-600">⚠️ ეს არ ჰგავს სწორ YouTube ბმულს</p>
+          )}
+
+          <div className="flex gap-2">
+            <Button onClick={handleSave} disabled={saving} data-testid="button-save-tutorial">
+              {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> ინახება...</> : <><Check className="mr-2 h-4 w-4" /> შენახვა</>}
+            </Button>
+            {creditVideoUrl && (
+              <Button variant="outline" onClick={() => setCreditVideoUrl("")} data-testid="button-clear-tutorial">
+                გასუფთავება
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function TermsSectionsManager() {
   const { toast } = useToast();
   const { data: sections, isLoading } = useQuery<{ id: number; title: string; content: string; sortOrder: number }[]>({
@@ -2458,7 +2576,7 @@ function TermsSectionsManager() {
 }
 
 
-type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms" | "ads";
+type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms" | "ads" | "tutorials";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>(null);
@@ -2682,6 +2800,29 @@ export default function AdminDashboard() {
     );
   }
 
+  if (activeSection === "tutorials") {
+    return (
+      <div className="min-h-screen bg-mesh">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+          <AnimatedShell className="space-y-6">
+            <div className="flex items-center justify-between">
+              <TopBar title="ადმინ პანელი" subtitle="ტუტორიალები" />
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setActiveSection(null)} data-testid="button-back">
+                  უკან
+                </Button>
+                <Link href="/">
+                  <Button variant="ghost" size="sm" data-testid="link-homepage">მთავარი</Button>
+                </Link>
+              </div>
+            </div>
+            <TutorialsManager />
+          </AnimatedShell>
+        </div>
+      </div>
+    );
+  }
+
   if (activeSection === "terms") {
     return (
       <div className="min-h-screen bg-mesh">
@@ -2877,6 +3018,22 @@ export default function AdminDashboard() {
                   </div>
                   <h3 className="text-lg font-semibold">წესები & პირობები</h3>
                   <p className="text-sm text-muted-foreground">წესებისა და პირობების სექციების მართვა</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {isFullAdmin && (
+              <Card
+                className="cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-primary/40"
+                onClick={() => setActiveSection("tutorials")}
+                data-testid="card-section-tutorials"
+              >
+                <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <FileText className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold">ტუტორიალები</h3>
+                  <p className="text-sm text-muted-foreground">YouTube ვიდეო გაკვეთილების ბმულები</p>
                 </CardContent>
               </Card>
             )}
