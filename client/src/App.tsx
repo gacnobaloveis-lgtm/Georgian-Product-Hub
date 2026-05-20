@@ -20,6 +20,7 @@ import { CartContext, useCartProvider } from "@/hooks/use-cart";
 import { AdminChatWidget } from "@/components/AdminChatWidget";
 import { BroadcastNotification } from "@/components/BroadcastNotification";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
+import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
 import { useEffect } from "react";
 
 function useOnlinePing() {
@@ -70,6 +71,7 @@ function App() {
           <AdminChatWidget />
           <BroadcastNotification />
           <PWAInstallBanner />
+          <MaintenanceOverlay />
           <Toaster />
         </TooltipProvider>
       </CartContext.Provider>
