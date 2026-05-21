@@ -535,8 +535,8 @@ function MobileBottomNav({
         className={`flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-xs font-bold transition-colors ${!selectedCategory ? "text-primary" : "text-muted-foreground"}`}
         data-testid="nav-home"
       >
-        <Home className="h-5 w-5" />
-        <span>მთავარი</span>
+        <Home className="h-5 w-5 text-emerald-400" />
+        <span className="text-emerald-400">მთავარი</span>
       </button>
       <button
         onClick={onCategoriesOpen}
@@ -990,8 +990,8 @@ export default function HomePage() {
           <div className="flex items-center gap-0.5 shrink-0">
             <button onClick={handleGoHome} data-testid="link-nav-home"
               className={`flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-all whitespace-nowrap ${!selectedCategory ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-muted hover:text-primary"}`}>
-              <Home className="h-4 w-4 shrink-0" />
-              მთავარი
+              <Home className="h-4 w-4 shrink-0 text-emerald-400" />
+              <span className="text-emerald-400">მთავარი</span>
             </button>
             <button onClick={() => setGuideOpen(true)} data-testid="link-nav-guide"
               className="flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold text-foreground/70 hover:bg-muted hover:text-primary transition-all whitespace-nowrap">
