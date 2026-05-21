@@ -183,17 +183,18 @@ function SiteFooter() {
       </div>
 
       {/* ===== DESKTOP / TABLET FOOTER ===== */}
-      <div className="relative overflow-hidden hidden sm:block" data-testid="footer-desktop">
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <img
-            src={desktopFooterBg}
-            alt=""
-            className="h-full w-full object-cover object-top"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/55 to-slate-900/80" />
-        </div>
+      <div
+        className="relative overflow-hidden hidden sm:block"
+        data-testid="footer-desktop"
+        style={{
+          backgroundImage: `url(${mountainSceneBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "right center",
+          backgroundRepeat: "no-repeat",
+          backgroundAttachment: typeof window !== "undefined" && window.innerWidth >= 768 ? "fixed" : "scroll",
+        }}
+      >
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-900/55 to-slate-950/80" />
 
         <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8 text-white">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
