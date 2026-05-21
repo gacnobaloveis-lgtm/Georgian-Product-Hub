@@ -420,22 +420,22 @@ export default function ProductDetail() {
           </div>
 
           <div className="space-y-2 sm:space-y-5">
-            <h1 className="text-base font-bold text-gray-900 sm:text-2xl lg:text-3xl" data-testid="text-product-name">
+            <h1 className="text-base font-bold text-white sm:text-2xl lg:text-3xl" data-testid="text-product-name">
               {product.name}
             </h1>
 
             <div className="space-y-1" data-testid="text-product-price">
               {hasDiscount ? (
                 <div className="flex flex-wrap items-baseline gap-1 sm:gap-3">
-                  <span className="text-lg font-bold text-gray-900 sm:text-3xl">
+                  <span className="text-lg font-bold text-white sm:text-3xl">
                     {formatPrice(product.discountPrice)}
                   </span>
-                  <span className="text-xs text-white/50 line-through sm:text-lg">
+                  <span className="text-xs text-red-400 line-through sm:text-lg">
                     {formatPrice(product.originalPrice)}
                   </span>
                 </div>
               ) : (
-                <span className="text-lg font-bold text-gray-900 sm:text-3xl">
+                <span className="text-lg font-bold text-white sm:text-3xl">
                   {formatPrice(product.originalPrice)}
                 </span>
               )}
