@@ -15,7 +15,7 @@ import { queryClient } from "@/lib/queryClient";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const PAGE_BG_STYLE: React.CSSProperties = {
-  backgroundImage: `linear-gradient(rgba(2, 6, 23, 0.55), rgba(2, 6, 23, 0.65)), url(${mountainSceneBg})`,
+  backgroundImage: `linear-gradient(rgba(2, 6, 23, 0.25), rgba(2, 6, 23, 0.35)), url(${mountainSceneBg})`,
   backgroundSize: "cover",
   backgroundPosition: "right center",
   backgroundAttachment: typeof window !== "undefined" && window.innerWidth >= 768 ? "fixed" : "scroll",
