@@ -430,7 +430,7 @@ export default function ProductDetail() {
                   <span className="text-lg font-bold text-gray-900 sm:text-3xl">
                     {formatPrice(product.discountPrice)}
                   </span>
-                  <span className="text-xs text-gray-400 line-through sm:text-lg">
+                  <span className="text-xs text-white/50 line-through sm:text-lg">
                     {formatPrice(product.originalPrice)}
                   </span>
                 </div>
