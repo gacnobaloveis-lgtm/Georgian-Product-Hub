@@ -265,7 +265,7 @@ export default function ProductDetail() {
     return (
       <div className="min-h-screen" style={PAGE_BG_STYLE}>
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="rounded-2xl bg-white/95 backdrop-blur-md shadow-xl p-6 grid grid-cols-2 gap-4 lg:gap-8">
+          <div className="rounded-2xl bg-white/55 backdrop-blur-xl shadow-xl p-6 grid grid-cols-2 gap-4 lg:gap-8">
             <Skeleton className="aspect-square w-full rounded-lg" />
             <div className="space-y-4">
               <Skeleton className="h-8 w-3/4" />
@@ -282,7 +282,7 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={PAGE_BG_STYLE}>
-        <div className="text-center rounded-2xl bg-white/95 backdrop-blur-md shadow-xl px-8 py-10">
+        <div className="text-center rounded-2xl bg-white/55 backdrop-blur-xl shadow-xl px-8 py-10">
           <p className="text-lg text-gray-700">პროდუქტი ვერ მოიძებნა</p>
           <Link href="/" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-900" data-testid="link-back-home">მთავარზე დაბრუნება</Link>
         </div>
@@ -360,7 +360,7 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen" style={PAGE_BG_STYLE}>
       <div className="mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
-        <div className="rounded-2xl bg-white/95 backdrop-blur-md shadow-xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <div className="rounded-2xl bg-white/55 backdrop-blur-xl shadow-xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="mb-4 sm:mb-6">
           <nav className="flex items-center gap-2 text-xs sm:text-sm" data-testid="breadcrumb">
             <Link href="/" className="flex items-center gap-1.5 font-bold text-gray-700 hover:text-primary" data-testid="link-breadcrumb-home">
