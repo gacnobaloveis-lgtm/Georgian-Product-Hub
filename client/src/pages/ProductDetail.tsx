@@ -480,7 +480,7 @@ export default function ProductDetail() {
             )}
 
             <div className="hidden lg:flex items-center gap-4 mt-2">
-              <label className="text-sm font-medium text-gray-700">რაოდენობა:</label>
+              <label className="text-sm font-medium text-white">რაოდენობა:</label>
               <div className="flex items-center rounded-xl border border-gray-200">
                 <button
                   type="button"
@@ -596,7 +596,7 @@ export default function ProductDetail() {
         )}
 
         <div className="mt-3 sm:mt-4 flex items-center gap-4 lg:hidden">
-          <label className="text-sm font-medium text-gray-700">რაოდენობა:</label>
+          <label className="text-sm font-medium text-white">რაოდენობა:</label>
           <div className="flex items-center rounded-xl border border-gray-200">
             <button
               type="button"
