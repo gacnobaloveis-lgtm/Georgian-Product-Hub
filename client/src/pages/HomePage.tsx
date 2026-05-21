@@ -960,21 +960,29 @@ export default function HomePage() {
         </div>
       </div>
 
+      <div className="relative overflow-hidden md:mb-10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${mountainSceneBg})` }}
+        />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-900/55 to-slate-950/75" />
+
       {/* Mobile-only online counter */}
       {displayOnline !== null && (
-        <div className="md:hidden flex justify-center py-1" data-testid="badge-online-count-mobile">
-          <div className="flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5">
+        <div className="relative md:hidden flex justify-center py-1" data-testid="badge-online-count-mobile">
+          <div className="flex items-center gap-1.5 rounded-full border border-red-300/50 bg-red-500/20 backdrop-blur-sm px-3 py-1.5">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
             </span>
-            <span className="text-xs font-semibold text-red-700">ახლა საიტზეა {displayOnline} ვიზიტორი</span>
+            <span className="text-xs font-semibold text-red-100">ახლა საიტზეა {displayOnline} ვიზიტორი</span>
           </div>
         </div>
       )}
 
-      <div className="mx-auto hidden max-w-6xl px-4 pb-4 pt-3 sm:px-6 md:block lg:px-8">
-        <nav className="flex items-center justify-between rounded-2xl bg-white/80 backdrop-blur-sm border border-purple-200/60 shadow-sm px-4 py-2.5">
+      <div className="relative mx-auto hidden max-w-6xl px-4 pb-4 pt-3 sm:px-6 md:block lg:px-8">
+        <nav className="flex items-center justify-between rounded-2xl bg-slate-950/45 backdrop-blur-md border border-emerald-400/25 shadow-lg px-4 py-2.5">
           <div className="flex items-center gap-0.5 shrink-0">
             <button onClick={handleGoHome} data-testid="link-nav-home"
               className={`flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-[13px] font-semibold transition-all whitespace-nowrap ${!selectedCategory ? "bg-primary/10 text-primary" : "text-foreground/70 hover:bg-muted hover:text-primary"}`}>
@@ -1052,13 +1060,6 @@ export default function HomePage() {
         </nav>
       </div>
 
-      <div className="relative overflow-hidden md:mb-10">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${mountainSceneBg})` }}
-        />
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-900/55 to-slate-950/75" />
         <div className="relative mx-auto max-w-6xl px-3 pt-4 pb-6 sm:px-6 sm:py-8 lg:px-8 lg:pt-6">
           <div className="flex flex-col gap-4 md:gap-6 lg:flex-row lg:items-start lg:gap-6">
             <aside className="hidden w-full shrink-0 lg:sticky lg:top-6 lg:block lg:w-64 lg:self-start lg:mt-10">
