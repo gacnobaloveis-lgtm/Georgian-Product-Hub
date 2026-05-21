@@ -14,6 +14,14 @@ import { User, MapPin, Phone, Mail, ShoppingBag, ChevronDown, ChevronUp, ArrowLe
 import { Link, useLocation } from "wouter";
 import type { Order } from "@shared/models/auth";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
+import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
+
+const PAGE_BG_STYLE: React.CSSProperties = {
+  backgroundImage: `linear-gradient(rgba(2, 6, 23, 0.55), rgba(2, 6, 23, 0.65)), url(${mountainSceneBg})`,
+  backgroundSize: "cover",
+  backgroundPosition: "right center",
+  backgroundAttachment: "fixed",
+};
 
 function CreditRateInfo() {
   const { data } = useQuery<{ credit_to_gel: string }>({
@@ -163,7 +171,7 @@ export default function MyProfile() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-mesh">
+      <div className="min-h-screen" style={PAGE_BG_STYLE}>
         <TopBar />
         <div className="mx-auto max-w-2xl px-4 py-10">
           <Skeleton className="h-64 w-full rounded-xl" />
@@ -174,7 +182,7 @@ export default function MyProfile() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-mesh">
+      <div className="min-h-screen" style={PAGE_BG_STYLE}>
         <TopBar />
         <div className="mx-auto max-w-2xl px-4 py-10">
           <GlassPanel className="p-8 text-center">
@@ -199,7 +207,7 @@ export default function MyProfile() {
   }
 
   return (
-    <div className="min-h-screen bg-mesh">
+    <div className="min-h-screen" style={PAGE_BG_STYLE}>
       <TopBar />
       <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
         <AnimatedShell className="space-y-4 sm:space-y-6">
@@ -447,7 +455,7 @@ export default function MyProfile() {
               />
               {/* Sheet */}
               <div
-                className="relative z-10 bg-background rounded-2xl shadow-2xl w-full max-w-md max-h-[75vh] flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-200"
+                className="relative z-10 bg-white/85 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md max-h-[75vh] flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-200"
                 data-testid="sheet-orders"
               >
                 {/* Header */}
