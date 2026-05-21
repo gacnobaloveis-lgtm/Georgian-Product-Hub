@@ -902,9 +902,9 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-mesh pb-20 md:pb-0">
+    <div className="min-h-screen bg-slate-950 pb-20 md:pb-0">
       <div
-        className="relative mb-1 aspect-[2/1] w-full overflow-hidden rounded-none sm:mb-8 sm:aspect-[5/1] sm:rounded-b-2xl lg:aspect-[7.5/1]"
+        className="relative aspect-[2/1] w-full overflow-hidden rounded-none sm:aspect-[5/1] lg:aspect-[7.5/1]"
       >
         {HERO_SLIDES.map((slide, idx) => (
           <picture key={idx}>
@@ -960,7 +960,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="relative md:mb-10">
+      <div className="relative">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-cover bg-right"
