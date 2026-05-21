@@ -608,23 +608,23 @@ function CategoryDrawer({
 }) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl px-0">
+      <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl px-0 border-emerald-400/20" style={{ backgroundImage: `linear-gradient(rgba(2,6,23,0.78), rgba(2,6,23,0.85)), url(${mountainSceneBg})`, backgroundSize: "cover", backgroundPosition: "right center" }}>
         <SheetHeader className="px-5 pb-3">
           <div className="flex items-center gap-3">
-            <button onClick={() => onOpenChange(false)} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted transition-colors" data-testid="button-categories-back">
+            <button onClick={() => onOpenChange(false)} className="flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors" data-testid="button-categories-back">
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <SheetTitle className="text-lg font-bold">კატეგორიები</SheetTitle>
+            <SheetTitle className="text-lg font-bold text-white">კატეგორიები</SheetTitle>
           </div>
-          <SheetDescription className="text-sm text-muted-foreground">აირჩიეთ კატეგორია პროდუქციის სანახავად</SheetDescription>
+          <SheetDescription className="text-sm text-emerald-100/70">აირჩიეთ კატეგორია პროდუქციის სანახავად</SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto px-4 pb-6">
           <button
             onClick={() => { onGoHome(); onOpenChange(false); }}
             className={`flex min-h-[44px] w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-base font-medium transition-colors ${
               !selectedCategory
-                ? "bg-primary/10 text-primary font-semibold"
-                : "text-foreground hover:bg-muted"
+                ? "bg-emerald-500/20 text-emerald-300 font-semibold ring-1 ring-emerald-400/40"
+                : "text-emerald-50 hover:bg-emerald-500/15 hover:text-emerald-200"
             }`}
             data-testid="drawer-cat-all"
           >
@@ -641,12 +641,12 @@ function CategoryDrawer({
                   onClick={() => { onCategoryClick(cat); onOpenChange(false); }}
                   className={`flex min-h-[44px] w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-base font-medium transition-colors ${
                     isActive
-                      ? "bg-primary/10 text-primary font-semibold"
-                      : "text-foreground hover:bg-muted"
+                      ? "bg-emerald-500/20 text-emerald-300 font-semibold ring-1 ring-emerald-400/40"
+                      : "text-emerald-50 hover:bg-emerald-500/15 hover:text-emerald-200"
                   }`}
                   data-testid={`drawer-cat-${cat.id}`}
                 >
-                  {icon ? <img src={icon} alt="" className={`${cat.name === "სპინინგის კოჭები" ? "h-9 w-9" : "h-7 w-7"} shrink-0 object-contain`} /> : cat.icon ? <LucideIcon name={cat.icon} className="h-5 w-5 shrink-0" /> : null}
+                  {icon ? <img src={icon} alt="" className={`${cat.name === "სპინინგის კოჭები" ? "h-9 w-9" : "h-7 w-7"} shrink-0 object-contain drop-shadow`} /> : cat.icon ? <LucideIcon name={cat.icon} className="h-5 w-5 shrink-0" /> : null}
                   {cat.name}
                 </button>
               );
@@ -680,30 +680,30 @@ function SearchDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="top" className="h-[85vh] px-0">
+      <SheetContent side="top" className="h-[85vh] px-0 border-emerald-400/20" style={{ backgroundImage: `linear-gradient(rgba(2,6,23,0.78), rgba(2,6,23,0.85)), url(${mountainSceneBg})`, backgroundSize: "cover", backgroundPosition: "right center" }}>
         <SheetHeader className="px-5 pb-2">
           <div className="flex items-center gap-3">
-            <button onClick={() => onOpenChange(false)} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-muted transition-colors" data-testid="button-search-back">
+            <button onClick={() => onOpenChange(false)} className="flex h-8 w-8 items-center justify-center rounded-full text-white hover:bg-white/10 transition-colors" data-testid="button-search-back">
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <SheetTitle className="text-lg font-bold">ძებნა</SheetTitle>
+            <SheetTitle className="text-lg font-bold text-white">ძებნა</SheetTitle>
           </div>
-          <SheetDescription className="text-sm text-muted-foreground">მოძებნეთ კატალოგში</SheetDescription>
+          <SheetDescription className="text-sm text-emerald-100/70">მოძებნეთ კატალოგში</SheetDescription>
         </SheetHeader>
         <div className="px-4 pb-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-200/70" />
             <input
               type="search"
               placeholder="მოძებნე..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="min-h-[44px] w-full rounded-xl border border-input bg-background pl-10 pr-4 text-base outline-none ring-ring focus:ring-2"
+              className="min-h-[44px] w-full rounded-xl border border-emerald-400/30 bg-slate-950/50 text-white placeholder:text-emerald-100/40 pl-10 pr-4 text-base outline-none focus:ring-2 focus:ring-emerald-400/50 backdrop-blur-md"
               autoFocus
               data-testid="input-search"
             />
             {query && (
-              <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" data-testid="button-clear-search">
+              <button onClick={() => setQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-200/70" data-testid="button-clear-search">
                 <X className="h-4 w-4" />
               </button>
             )}
@@ -711,9 +711,9 @@ function SearchDrawer({
         </div>
         <div className="flex-1 overflow-y-auto px-4 pb-6">
           {query.trim().length === 0 ? (
-            <p className="pt-6 text-center text-sm text-muted-foreground">ჩაწერეთ სახელი ძებნისთვის</p>
+            <p className="pt-6 text-center text-sm text-emerald-100/70">ჩაწერეთ სახელი ძებნისთვის</p>
           ) : filtered.length === 0 ? (
-            <p className="pt-6 text-center text-sm text-muted-foreground">არაფერი მოიძებნა</p>
+            <p className="pt-6 text-center text-sm text-emerald-100/70">არაფერი მოიძებნა</p>
           ) : (
             <div className="grid grid-cols-2 gap-3">
               {filtered.map((product) => (
