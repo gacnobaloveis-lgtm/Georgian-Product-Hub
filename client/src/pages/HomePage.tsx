@@ -529,7 +529,7 @@ function MobileBottomNav({
   chatUnreadCount: number;
 }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-border bg-card/95 backdrop-blur-md md:hidden" style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom)" }} data-testid="mobile-bottom-nav">
+    <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around border-t border-emerald-400/20 bg-slate-950/55 backdrop-blur-md md:hidden text-white" style={{ height: "56px", paddingBottom: "env(safe-area-inset-bottom)" }} data-testid="mobile-bottom-nav">
       <button
         onClick={onGoHome}
         className={`flex min-h-[40px] flex-1 flex-col items-center justify-center gap-0.5 text-xs font-bold transition-colors ${!selectedCategory ? "text-primary" : "text-muted-foreground"}`}
