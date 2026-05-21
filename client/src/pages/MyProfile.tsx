@@ -185,10 +185,10 @@ export default function MyProfile() {
       <div className="min-h-screen" style={PAGE_BG_STYLE}>
         <TopBar />
         <div className="mx-auto max-w-2xl px-4 py-10">
-          <GlassPanel className="p-8 text-center">
-            <User className="mx-auto h-12 w-12 text-muted-foreground/40" />
+          <GlassPanel className="!bg-slate-950/50 !border-emerald-400/25 text-white p-8 text-center">
+            <User className="mx-auto h-12 w-12 text-white/65/40" />
             <h2 className="mt-4 text-lg font-semibold">ავტორიზაცია</h2>
-            <p className="mt-2 text-sm text-muted-foreground">პროფილის სანახავად საჭიროა ავტორიზაცია</p>
+            <p className="mt-2 text-sm text-white/65">პროფილის სანახავად საჭიროა ავტორიზაცია</p>
             <button
               onClick={() => setAuthDialogOpen(true)}
               className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
@@ -212,24 +212,24 @@ export default function MyProfile() {
       <div className="mx-auto max-w-2xl px-4 py-6 sm:py-10">
         <AnimatedShell className="space-y-4 sm:space-y-6">
           <Link href="/">
-            <button className="flex items-center gap-1.5 text-sm font-semibold text-green-700 hover:text-green-900 transition-colors" data-testid="link-back-home">
+            <button className="flex items-center gap-1.5 text-sm font-semibold text-emerald-300 hover:text-emerald-200 transition-colors" data-testid="link-back-home">
               <ArrowLeft className="h-4 w-4" />
               მთავარზე დაბრუნება
             </button>
           </Link>
 
-          <GlassPanel className="p-5 sm:p-7">
+          <GlassPanel className="!bg-slate-950/50 !border-emerald-400/25 text-white p-5 sm:p-7">
             <div className="flex items-center gap-3 mb-5">
               {profile?.profileImageUrl ? (
                 <img src={profile.profileImageUrl} alt="" className="h-14 w-14 rounded-full object-cover border-2 border-primary/20" />
               ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-emerald-400">
                   {(profile?.firstName?.[0] || user?.firstName?.[0] || "?").toUpperCase()}
                 </div>
               )}
               <div>
                 <h1 className="text-xl font-bold" data-testid="text-profile-title">ჩემი პროფილი</h1>
-                <p className="text-sm text-muted-foreground">{profile?.email || user?.email || ""}</p>
+                <p className="text-sm text-white/65">{profile?.email || user?.email || ""}</p>
               </div>
             </div>
 
@@ -239,10 +239,10 @@ export default function MyProfile() {
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="flex items-start gap-3 rounded-lg border border-muted bg-muted/20 p-3">
-                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+                  <Mail className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground">ელ.ფოსტა (Google)</p>
+                    <p className="text-xs text-white/65">ელ.ფოსტა (Google)</p>
                     <p className="font-medium" data-testid="text-profile-email">
                       {profile?.email || "არ არის მითითებული"}
                     </p>
@@ -253,13 +253,13 @@ export default function MyProfile() {
             )}
           </GlassPanel>
 
-          <GlassPanel className="p-5 sm:p-7">
+          <GlassPanel className="!bg-slate-950/50 !border-emerald-400/25 text-white p-5 sm:p-7">
             <div className="space-y-3">
-              <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-3">
-                <Wallet className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+              <div className="flex items-start gap-3 rounded-lg border border-emerald-400/30 bg-emerald-500/15 p-3">
+                <Wallet className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs text-muted-foreground">ჩემი კრედიტი</p>
-                  <p className="text-lg font-bold text-green-600" data-testid="text-profile-credit">
+                  <p className="text-xs text-white/65">ჩემი კრედიტი</p>
+                  <p className="text-lg font-bold text-emerald-300" data-testid="text-profile-credit">
                     ₾{Number(profile?.myCredit || 0).toFixed(2)}
                   </p>
                   <CreditRateInfo />
@@ -271,22 +271,22 @@ export default function MyProfile() {
 
           {/* Push notification settings — hidden when denied or unsupported */}
           {pushStatus !== "unsupported" && pushStatus !== "denied" && pushStatus !== "checking" && (
-            <GlassPanel className="p-5 sm:p-7">
+            <GlassPanel className="!bg-slate-950/50 !border-emerald-400/25 text-white p-5 sm:p-7">
               <h2 className="text-base font-semibold flex items-center gap-2 mb-4">
-                <Bell className="h-4 w-4 text-primary" />
+                <Bell className="h-4 w-4 text-emerald-400" />
                 შეტყობინებები
               </h2>
               {pushStatus === "granted" ? (
-                <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3">
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-green-600" />
+                <div className="flex items-center gap-3 rounded-lg border border-emerald-400/30 bg-emerald-500/15 p-3">
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-300" />
                   <div>
-                    <p className="text-sm font-medium text-green-800" data-testid="text-push-status">შეტყობინებები ჩართულია</p>
-                    <p className="text-xs text-green-600">მიიღებ push შეტყობინებებს აქციებსა და სიახლეებზე</p>
+                    <p className="text-sm font-medium text-emerald-200" data-testid="text-push-status">შეტყობინებები ჩართულია</p>
+                    <p className="text-xs text-emerald-300">მიიღებ push შეტყობინებებს აქციებსა და სიახლეებზე</p>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">ჩართე push შეტყობინებები — მიიღე სიახლეები და აქციები app-ის გარეშეც</p>
+                  <p className="text-sm text-white/65">ჩართე push შეტყობინებები — მიიღე სიახლეები და აქციები app-ის გარეშეც</p>
                   <Button
                     onClick={handleEnablePush}
                     disabled={pushStatus === "saving"}
@@ -301,10 +301,10 @@ export default function MyProfile() {
             </GlassPanel>
           )}
 
-          <GlassPanel className="p-5 sm:p-7">
+          <GlassPanel className="!bg-slate-950/50 !border-emerald-400/25 text-white p-5 sm:p-7">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" />
+                <MapPin className="h-4 w-4 text-emerald-400" />
                 მიწოდების მონაცემები
               </h2>
               {hasDetails && !editing && (
@@ -318,7 +318,7 @@ export default function MyProfile() {
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium">სახელი</label>
+                    <label className="text-xs font-medium text-white/80">სახელი</label>
                     <Input
                       value={form.firstName}
                       onChange={e => setForm(p => ({ ...p, firstName: e.target.value }))}
@@ -328,7 +328,7 @@ export default function MyProfile() {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium">გვარი</label>
+                    <label className="text-xs font-medium text-white/80">გვარი</label>
                     <Input
                       value={form.lastName}
                       onChange={e => setForm(p => ({ ...p, lastName: e.target.value }))}
@@ -340,12 +340,12 @@ export default function MyProfile() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium">ქვეყანა</label>
-                  <Input value="საქართველო" disabled className="min-h-[44px] bg-muted" />
+                  <label className="text-xs font-medium text-white/80">ქვეყანა</label>
+                  <Input value="საქართველო" disabled className="min-h-[44px] bg-white/5 text-white border-white/10" />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium">ქალაქი</label>
+                  <label className="text-xs font-medium text-white/80">ქალაქი</label>
                   <Select value={form.city} onValueChange={v => setForm(p => ({ ...p, city: v }))}>
                     <SelectTrigger className="min-h-[44px]" data-testid="select-profile-city">
                       <SelectValue placeholder="აირჩიეთ ქალაქი" />
@@ -359,7 +359,7 @@ export default function MyProfile() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium">მისამართი (ქუჩა, ბინა, რაიონი, სოფელი)</label>
+                  <label className="text-xs font-medium text-white/80">მისამართი (ქუჩა, ბინა, რაიონი, სოფელი)</label>
                   <Input
                     value={form.address}
                     onChange={e => setForm(p => ({ ...p, address: e.target.value }))}
@@ -370,7 +370,7 @@ export default function MyProfile() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium">ტელეფონის ნომერი</label>
+                  <label className="text-xs font-medium text-white/80">ტელეფონის ნომერი</label>
                   <Input
                     value={form.phone}
                     onChange={e => setForm(p => ({ ...p, phone: e.target.value }))}
@@ -393,30 +393,30 @@ export default function MyProfile() {
               </div>
             ) : (
               <div className="space-y-3">
-                <div className="flex items-start gap-3 rounded-lg border border-muted bg-muted/20 p-3">
-                  <User className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+                  <User className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground">სახელი, გვარი</p>
+                    <p className="text-xs text-white/65">სახელი, გვარი</p>
                     <p className="font-medium" data-testid="text-profile-fullname">
                       {[profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || "—"}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 rounded-lg border border-muted bg-muted/20 p-3">
-                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+                  <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground">ქვეყანა, ქალაქი, მისამართი</p>
+                    <p className="text-xs text-white/65">ქვეყანა, ქალაქი, მისამართი</p>
                     <p className="font-medium" data-testid="text-profile-address">
                       საქართველო, {[profile?.city, profile?.address].filter(Boolean).join(", ")}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 rounded-lg border border-muted bg-muted/20 p-3">
-                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <div className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+                  <Phone className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs text-muted-foreground">ტელეფონი</p>
+                    <p className="text-xs text-white/65">ტელეფონი</p>
                     <p className="font-medium" data-testid="text-profile-phone">
                       {profile?.phone || "—"}
                     </p>
@@ -426,22 +426,22 @@ export default function MyProfile() {
             )}
           </GlassPanel>
 
-          <GlassPanel className="overflow-hidden">
+          <GlassPanel className="!bg-slate-950/50 !border-emerald-400/25 text-white overflow-hidden">
             <button
               onClick={() => setOrdersOpen(true)}
-              className="flex w-full items-center justify-between p-5 sm:p-7 text-left hover:bg-muted/30 transition-colors"
+              className="flex w-full items-center justify-between p-5 sm:p-7 text-left hover:bg-white/10 transition-colors"
               data-testid="button-toggle-orders"
             >
               <div className="flex items-center gap-2">
-                <ShoppingBag className="h-5 w-5 text-primary" />
+                <ShoppingBag className="h-5 w-5 text-emerald-400" />
                 <span className="text-base font-semibold">შეძენილი ნივთები</span>
                 {myOrders && myOrders.length > 0 && (
-                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary" data-testid="text-orders-count">
+                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-emerald-400" data-testid="text-orders-count">
                     {myOrders.length}
                   </span>
                 )}
               </div>
-              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              <ChevronUp className="h-5 w-5 text-white/65" />
             </button>
           </GlassPanel>
 
@@ -459,22 +459,22 @@ export default function MyProfile() {
                 data-testid="sheet-orders"
               >
                 {/* Header */}
-                <div className="flex items-center justify-between px-5 py-4 border-b border-muted">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
                   <div className="flex items-center gap-2">
-                    <ShoppingBag className="h-5 w-5 text-primary" />
+                    <ShoppingBag className="h-5 w-5 text-emerald-400" />
                     <span className="text-base font-semibold">შეძენილი ნივთები</span>
                     {myOrders && myOrders.length > 0 && (
-                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-emerald-400">
                         {myOrders.length}
                       </span>
                     )}
                   </div>
                   <button
                     onClick={() => setOrdersOpen(false)}
-                    className="rounded-full p-1.5 hover:bg-muted transition-colors"
+                    className="rounded-full p-1.5 hover:bg-white/10 transition-colors"
                     data-testid="button-close-orders-sheet"
                   >
-                    <X className="h-5 w-5 text-muted-foreground" />
+                    <X className="h-5 w-5 text-white/65" />
                   </button>
                 </div>
 
@@ -487,14 +487,14 @@ export default function MyProfile() {
                     </>
                   ) : !myOrders || myOrders.length === 0 ? (
                     <div className="py-10 text-center">
-                      <Package className="mx-auto h-10 w-10 text-muted-foreground/30" />
-                      <p className="mt-2 text-sm text-muted-foreground">ჯერ არაფერი გიყიდიათ</p>
+                      <Package className="mx-auto h-10 w-10 text-white/65/30" />
+                      <p className="mt-2 text-sm text-white/65">ჯერ არაფერი გიყიდიათ</p>
                     </div>
                   ) : (
                     myOrders.map((order, i) => (
                       <div
                         key={order.id}
-                        className="rounded-lg border border-muted bg-muted/20 p-3 sm:p-4 cursor-pointer hover:border-primary/40 hover:bg-muted/40 transition-colors"
+                        className="rounded-lg border border-white/10 bg-white/5 p-3 sm:p-4 cursor-pointer hover:border-primary/40 hover:bg-white/10/40 transition-colors"
                         data-testid={`card-order-${i}`}
                         onClick={() => { setOrdersOpen(false); setLocation(`/product/${order.productId}`); }}
                       >
@@ -503,13 +503,13 @@ export default function MyProfile() {
                             <div className="flex items-center gap-1.5">
                               <p className="font-medium text-sm sm:text-base" data-testid={`text-order-name-${i}`}>
                                 {order.selectedColor && (
-                                  <span className="text-primary">{order.selectedColor} </span>
+                                  <span className="text-emerald-400">{order.selectedColor} </span>
                                 )}
                                 {order.productName}
                               </p>
-                              <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />
+                              <ExternalLink className="h-3 w-3 text-white/65 shrink-0" />
                             </div>
-                            <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                            <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-white/65">
                               <span data-testid={`text-order-qty-${i}`}>{order.quantity} ც.</span>
                               <span data-testid={`text-order-price-${i}`} className="font-semibold text-foreground">
                                 ₾{parseFloat(order.productPrice).toFixed(2)}
@@ -524,8 +524,8 @@ export default function MyProfile() {
                             </div>
                           </div>
                           <span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium inline-flex items-center gap-1 ${
-                            order.status === "shipped" ? "bg-green-50 text-green-700" :
-                            order.status === "completed" ? "bg-green-50 text-green-700" :
+                            order.status === "shipped" ? "bg-emerald-500/15 text-green-700" :
+                            order.status === "completed" ? "bg-emerald-500/15 text-green-700" :
                             order.status === "cancelled" ? "bg-red-50 text-red-700" :
                             "bg-yellow-50 text-yellow-700"
                           }`} data-testid={`text-order-status-${i}`}>
