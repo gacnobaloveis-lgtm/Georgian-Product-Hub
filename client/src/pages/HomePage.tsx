@@ -963,7 +963,7 @@ export default function HomePage() {
       <div className="relative overflow-hidden md:mb-10">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 bg-cover bg-center"
+          className="pointer-events-none absolute inset-0 bg-cover bg-right"
           style={{ backgroundImage: `url(${mountainSceneBg})` }}
         />
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-900/55 to-slate-950/75" />
