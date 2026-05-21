@@ -1188,53 +1188,60 @@ export default function HomePage() {
       />
 
       <Dialog open={guideOpen} onOpenChange={setGuideOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent
+          className="max-w-lg max-h-[85vh] overflow-y-auto border-white/15 text-white"
+          style={{
+            backgroundImage: `linear-gradient(rgba(2,6,23,0.82), rgba(2,6,23,0.88)), url(${mountainSceneBg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "right center",
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="sr-only">გზამკვლევი</DialogTitle>
             <DialogDescription className="sr-only">ინფორმაცია</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-2">
-            <div className="rounded-xl border border-muted overflow-hidden">
+            <div className="rounded-xl border border-white/15 bg-white/5 backdrop-blur-md overflow-hidden">
               <button
                 type="button"
                 onClick={() => setGuideSiteOpen(!guideSiteOpen)}
-                className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-muted/30 transition-colors"
+                className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-white/5 transition-colors"
                 data-testid="button-guide-site"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-                    <BookOpen className="h-4.5 w-4.5 text-primary" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/20">
+                    <BookOpen className="h-4.5 w-4.5 text-emerald-300" />
                   </div>
-                  <span className="text-sm font-bold">როგორ მუშაობს ჩვენი საიტი</span>
+                  <span className="text-sm font-bold text-white">როგორ მუშაობს ჩვენი საიტი</span>
                 </div>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${guideSiteOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`h-4 w-4 text-white/60 transition-transform ${guideSiteOpen ? "rotate-180" : ""}`} />
               </button>
               {guideSiteOpen && (
-                <div className="space-y-3 border-t border-muted px-4 pb-4 pt-3">
-                  <div className="rounded-lg border border-muted bg-muted/20 p-3">
-                    <h4 className="mb-1 text-sm font-bold flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">1</span>
+                <div className="space-y-3 border-t border-white/10 px-4 pb-4 pt-3">
+                  <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-3">
+                    <h4 className="mb-1 text-sm font-bold flex items-center gap-2 text-white">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">1</span>
                       აირჩიეთ კატალოგიდან
                     </h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-xs text-white/75 leading-relaxed">
                       დაათვალიერეთ ჩვენი პროდუქტები კატეგორიებით ან მოძებნეთ საძიებო ველით. დააჭირეთ პროდუქტის სურათს დეტალური ინფორმაციისთვის.
                     </p>
                   </div>
-                  <div className="rounded-lg border border-muted bg-muted/20 p-3">
-                    <h4 className="mb-1 text-sm font-bold flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">2</span>
+                  <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-3">
+                    <h4 className="mb-1 text-sm font-bold flex items-center gap-2 text-white">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">2</span>
                       შეუკვეთეთ
                     </h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-xs text-white/75 leading-relaxed">
                       პროდუქტის გვერდზე დააჭირეთ "ყიდვა" ღილაკს, აირჩიეთ ფერი და რაოდენობა, შეავსეთ მისამართი და ტელეფონის ნომერი. შეკვეთა გაიგზავნება ავტომატურად.
                     </p>
                   </div>
-                  <div className="rounded-lg border border-muted bg-muted/20 p-3">
-                    <h4 className="mb-1 text-sm font-bold flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">3</span>
+                  <div className="rounded-lg border border-white/10 bg-white/5 backdrop-blur-sm p-3">
+                    <h4 className="mb-1 text-sm font-bold flex items-center gap-2 text-white">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">3</span>
                       პროფილი და შეკვეთები
                     </h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                    <p className="text-xs text-white/75 leading-relaxed">
                       პროფილის გვერდზე ნახავთ თქვენს მონაცემებს, შეკვეთების ისტორიას და დაგროვილ კრედიტს. პროფილში შეგიძლიათ შეცვალოთ მისამართი და ტელეფონის ნომერი.
                     </p>
                   </div>
@@ -1242,58 +1249,58 @@ export default function HomePage() {
               )}
             </div>
 
-            <div className="rounded-xl border border-muted overflow-hidden">
+            <div className="rounded-xl border border-white/15 bg-white/5 backdrop-blur-md overflow-hidden">
               <button
                 type="button"
                 onClick={() => setGuideCreditOpen(!guideCreditOpen)}
-                className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-muted/30 transition-colors"
+                className="flex w-full items-center justify-between gap-3 p-4 text-left hover:bg-white/5 transition-colors"
                 data-testid="button-guide-credit"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(255,107,53,0.1)" }}>
-                    <Gift className="h-4.5 w-4.5" style={{ color: "#FF6B35" }} />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full" style={{ backgroundColor: "rgba(255,107,53,0.2)" }}>
+                    <Gift className="h-4.5 w-4.5" style={{ color: "#FFB088" }} />
                   </div>
-                  <span className="text-sm font-bold">როგორ დავაგროვოთ კრედიტი</span>
+                  <span className="text-sm font-bold text-white">როგორ დავაგროვოთ კრედიტი</span>
                 </div>
-                <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${guideCreditOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`h-4 w-4 text-white/60 transition-transform ${guideCreditOpen ? "rotate-180" : ""}`} />
               </button>
               {guideCreditOpen && (
-                <div className="space-y-3 border-t border-muted px-4 pb-4 pt-3">
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
-                    <h4 className="mb-1 text-sm font-bold" style={{ color: "#FF6B35" }}>გააზიარეთ</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                <div className="space-y-3 border-t border-white/10 px-4 pb-4 pt-3">
+                  <div className="rounded-lg border border-orange-400/30 bg-orange-500/10 backdrop-blur-sm p-3">
+                    <h4 className="mb-1 text-sm font-bold" style={{ color: "#FFB088" }}>გააზიარეთ</h4>
+                    <p className="text-xs text-white/75 leading-relaxed">
                       აირჩიეთ ნებისმიერი პროდუქტი ჩვენს საიტზე და დააჭირეთ ღილაკს "გააზიარე Facebook-ზე".
                     </p>
                   </div>
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
-                    <h4 className="mb-1 text-sm font-bold" style={{ color: "#FF6B35" }}>მოიწვიეთ მეთევზეები</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                  <div className="rounded-lg border border-orange-400/30 bg-orange-500/10 backdrop-blur-sm p-3">
+                    <h4 className="mb-1 text-sm font-bold" style={{ color: "#FFB088" }}>მოიწვიეთ მეთევზეები</h4>
+                    <p className="text-xs text-white/75 leading-relaxed">
                       გააზიარეთ ბმული თქვენს კედელზე ან თემატურ სათევზაო ჯგუფებში.
                     </p>
                   </div>
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
-                    <h4 className="mb-1 text-sm font-bold" style={{ color: "#FF6B35" }}>დააგროვეთ</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                  <div className="rounded-lg border border-orange-400/30 bg-orange-500/10 backdrop-blur-sm p-3">
+                    <h4 className="mb-1 text-sm font-bold" style={{ color: "#FFB088" }}>დააგროვეთ</h4>
+                    <p className="text-xs text-white/75 leading-relaxed">
                       ყოველ ჯერზე, როცა ვინმე თქვენი ბმულით შემოვა და შეიძენს ნივთს (ნებისმიერი ღირებულების), თქვენს პირად პროფილში, სექციაში "ჩემი კრედიტი", ავტომატურად დაგერიცხებათ 1.50 ლარი.
                     </p>
                   </div>
-                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-                    <h4 className="mb-1 text-sm font-bold text-blue-700">🛒 როგორ გამოვიყენოთ კრედიტი?</h4>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
+                  <div className="rounded-lg border border-blue-400/30 bg-blue-500/10 backdrop-blur-sm p-3">
+                    <h4 className="mb-1 text-sm font-bold text-blue-200">🛒 როგორ გამოვიყენოთ კრედიტი?</h4>
+                    <p className="text-xs text-white/75 leading-relaxed">
                       როდესაც დააგროვებთ სასურველი ნივთის შესაბამის კრედიტს, შეკვეთის გაფორმებისას აირჩიეთ "კრედიტით გადახდა". თქვენ ნივთს მიიღებთ სრულიად უფასოდ!
                     </p>
                   </div>
-                  <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-                    <h4 className="mb-1.5 text-sm font-bold text-red-700">⚠️ მნიშვნელოვანი წესები</h4>
-                    <ul className="space-y-1.5 text-xs text-muted-foreground leading-relaxed">
-                      <li><span className="font-semibold text-foreground">მხოლოდ ნივთები:</span> ვირტუალური კრედიტის გამოყენება შესაძლებელია მხოლოდ საიტზე არსებული პროდუქციის შესაძენად.</li>
-                      <li><span className="font-semibold text-foreground">არ გადაიცვლება ფულზე:</span> დაგროვილი კრედიტების განაღდება ან რეალურ ფულში გადაცვლა არ ხდება.</li>
-                      <li><span className="font-semibold text-foreground">სამართლიანი თამაში:</span> კრედიტი ირიცხება მხოლოდ რეალურ გაყიდვაზე. საკუთარი რეფერალური ბმულით ნივთის შეძენა არ დაიშვება.</li>
+                  <div className="rounded-lg border border-red-400/30 bg-red-500/10 backdrop-blur-sm p-3">
+                    <h4 className="mb-1.5 text-sm font-bold text-red-200">⚠️ მნიშვნელოვანი წესები</h4>
+                    <ul className="space-y-1.5 text-xs text-white/75 leading-relaxed">
+                      <li><span className="font-semibold text-white">მხოლოდ ნივთები:</span> ვირტუალური კრედიტის გამოყენება შესაძლებელია მხოლოდ საიტზე არსებული პროდუქციის შესაძენად.</li>
+                      <li><span className="font-semibold text-white">არ გადაიცვლება ფულზე:</span> დაგროვილი კრედიტების განაღდება ან რეალურ ფულში გადაცვლა არ ხდება.</li>
+                      <li><span className="font-semibold text-white">სამართლიანი თამაში:</span> კრედიტი ირიცხება მხოლოდ რეალურ გაყიდვაზე. საკუთარი რეფერალური ბმულით ნივთის შეძენა არ დაიშვება.</li>
                     </ul>
                   </div>
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-3">
-                    <h4 className="mb-1.5 text-sm font-bold text-green-700">💡 რჩევები მეტი კრედიტისთვის</h4>
-                    <ul className="space-y-1.5 text-xs text-muted-foreground leading-relaxed">
+                  <div className="rounded-lg border border-green-400/30 bg-green-500/10 backdrop-blur-sm p-3">
+                    <h4 className="mb-1.5 text-sm font-bold text-green-200">💡 რჩევები მეტი კრედიტისთვის</h4>
+                    <ul className="space-y-1.5 text-xs text-white/75 leading-relaxed">
                       <li>გააზიარეთ ნივთები იმ ჯგუფებში, სადაც მეთევზეები კონკრეტულ რჩევებს ეძებენ.</li>
                       <li>დაურთეთ თქვენი პირადი რეკომენდაცია გაზიარებულ პოსტს — რეალურ გამოცდილებას უფრო მეტი ადამიანი ენდობა!</li>
                     </ul>
