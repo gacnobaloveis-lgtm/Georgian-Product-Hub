@@ -15,6 +15,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import type { TermsSection } from "@shared/schema";
 import RichTextDisplay from "@/components/RichTextDisplay";
+import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
 
 async function attemptPushSubscription(
   onResult?: (ok: boolean, msg: string) => void
@@ -308,7 +309,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto border-emerald-400/20 text-white" style={{ backgroundImage: `linear-gradient(rgba(2,6,23,0.82), rgba(2,6,23,0.88)), url(${mountainSceneBg})`, backgroundSize: "cover", backgroundPosition: "right center" }}>
         <DialogHeader>
           <DialogTitle className="text-center text-lg" data-testid="text-auth-title">
             {forgotMode ? "პაროლის აღდგენა" : mode === "login" ? "შესვლა" : "რეგისტრაცია"}
