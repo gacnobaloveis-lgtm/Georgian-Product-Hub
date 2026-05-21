@@ -450,12 +450,12 @@ export default function MyProfile() {
             <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 sm:pt-16">
               {/* Backdrop */}
               <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                className="absolute inset-0 bg-black/20"
                 onClick={() => setOrdersOpen(false)}
               />
               {/* Sheet */}
               <div
-                className="relative z-10 bg-white/85 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-md max-h-[75vh] flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-200"
+                className="relative z-10 bg-emerald-500/5 backdrop-blur-sm border border-emerald-400/25 text-white rounded-2xl shadow-2xl w-full max-w-md max-h-[75vh] flex flex-col animate-in slide-in-from-bottom-4 fade-in duration-200"
                 data-testid="sheet-orders"
               >
                 {/* Header */}
