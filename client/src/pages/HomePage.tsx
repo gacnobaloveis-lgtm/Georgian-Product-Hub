@@ -35,6 +35,7 @@ import spinnerIcon from "@assets/image_1776965581799.png";
 import vestIcon from "@assets/image_1776966819348.png";
 import fishermanLogo from "@assets/spiningebi_logo.png";
 import eyeIconPath from "@assets/image_1777053072588.png";
+import mobileFooterBg from "@assets/690814979_2185444182251201_1788998078963550236_n_1779374232358.jpg";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 import RichTextDisplay from "@/components/RichTextDisplay";
 
@@ -50,14 +51,148 @@ function SiteFooter() {
   const itemRow = "group flex items-center gap-3 text-sm text-gray-700 hover:text-purple-700 transition-all duration-200";
   const iconBadge = "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-purple-100 group-hover:ring-purple-300 group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200";
   return (
-    <footer
-      className="relative mt-12 overflow-hidden"
-      style={{
-        background:
-          "linear-gradient(135deg, #f5f0ff 0%, #eef6fb 50%, #fef4f9 100%)",
-      }}
-      data-testid="footer"
-    >
+    <footer className="mt-12" data-testid="footer">
+      {/* ===== MOBILE FOOTER ===== */}
+      <div className="relative sm:hidden overflow-hidden" data-testid="footer-mobile">
+        {/* Background image */}
+        <div className="absolute inset-0">
+          <img
+            src={mobileFooterBg}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/55 to-slate-900/80" />
+        </div>
+
+        <div className="relative px-5 pt-8 pb-6 space-y-5 text-white">
+          {/* Title */}
+          <h3 className="text-2xl font-bold tracking-tight" data-testid="footer-mobile-title">
+            საკონტაქტო ინფორმაცია
+          </h3>
+
+          {/* Contact rows */}
+          <ul className="space-y-3.5">
+            <li>
+              <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="flex items-center gap-3" data-testid="footer-mobile-phone">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow-lg">
+                  <Phone className="h-5 w-5 text-white" />
+                </span>
+                <span className="text-base font-medium text-white">{c.phone}</span>
+              </a>
+            </li>
+            <li>
+              <a href={`mailto:${c.email}`} className="flex items-center gap-3" data-testid="footer-mobile-email">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow-lg">
+                  <Mail className="h-5 w-5 text-white" />
+                </span>
+                <span className="text-base font-medium text-white truncate">{c.email}</span>
+              </a>
+            </li>
+            <li>
+              <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3" data-testid="footer-mobile-whatsapp">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow-lg">
+                  <MessageCircle className="h-5 w-5 text-white" />
+                </span>
+                <span className="text-base font-medium text-white">WhatsApp</span>
+              </a>
+            </li>
+            <li>
+              <button
+                onClick={() => setLocation("/live-contact")}
+                className="flex items-center gap-3 w-full text-left"
+                data-testid="footer-mobile-live"
+              >
+                <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow-lg">
+                  <MessageCircle className="h-5 w-5 text-white" />
+                  <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-emerald-600 animate-pulse" />
+                </span>
+                <span className="text-base font-medium">
+                  <span className="text-red-400 font-bold">LIVE</span>
+                  <span className="text-white"> კონტაქტი</span>
+                </span>
+              </button>
+            </li>
+          </ul>
+
+          {/* Address card */}
+          <div className="rounded-2xl bg-emerald-950/70 backdrop-blur-sm border border-emerald-700/40 p-4 shadow-lg">
+            <div className="flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                <MapPin className="h-5 w-5 text-white" />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white mb-1">მისამართი</p>
+                <RichTextDisplay
+                  html={c.address}
+                  className="prose prose-sm max-w-none text-sm text-emerald-50/90 [&_p]:my-0 [&_*]:!leading-relaxed"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Links card — terms */}
+          <button
+            onClick={() => setLocation("/terms")}
+            className="w-full rounded-2xl bg-emerald-950/70 backdrop-blur-sm border border-emerald-700/40 p-4 shadow-lg flex items-center gap-3 text-left active:scale-[0.99] transition-transform"
+            data-testid="footer-mobile-terms"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+              <ScrollText className="h-5 w-5 text-white" />
+            </span>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-white">ბმულები</p>
+              <p className="text-sm text-emerald-50/90">წესები და პირობები</p>
+            </div>
+            <span className="text-emerald-300 text-xl leading-none">›</span>
+          </button>
+
+          {/* About card */}
+          <button
+            onClick={() => setLocation("/about")}
+            className="w-full rounded-2xl bg-emerald-950/70 backdrop-blur-sm border border-emerald-700/40 p-4 shadow-lg flex items-center gap-3 text-left active:scale-[0.99] transition-transform"
+            data-testid="footer-mobile-about"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+              <Info className="h-5 w-5 text-white" />
+            </span>
+            <div className="flex-1">
+              <p className="text-base font-bold text-white">ჩვენს შესახებ</p>
+            </div>
+            <span className="text-emerald-300 text-xl leading-none">›</span>
+          </button>
+
+          {/* Work hours card */}
+          <div className="rounded-2xl bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 p-4 shadow-lg overflow-hidden relative">
+            <div className="relative z-10 pr-12">
+              <p className="text-base font-bold text-white">სამუშაო საათები</p>
+              <RichTextDisplay
+                html={c.workHours}
+                className="prose prose-sm max-w-none text-sm text-slate-200 mt-0.5 [&_p]:my-0 [&_*]:!leading-relaxed"
+              />
+              <div className="mt-2 h-0.5 w-32 rounded-full bg-gradient-to-r from-sky-400 to-cyan-300" />
+            </div>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300/70 text-3xl">🎣</div>
+          </div>
+
+          {/* Footer mini */}
+          <div className="pt-2 flex flex-col items-center gap-2 text-center">
+            <RegisteredUsersCount />
+            <p className="text-[11px] text-white/70">
+              © {new Date().getFullYear()} <span className="font-semibold text-emerald-300">spiningebi.ge</span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== DESKTOP / TABLET FOOTER ===== */}
+      <div
+        className="relative overflow-hidden hidden sm:block"
+        style={{
+          background:
+            "linear-gradient(135deg, #f5f0ff 0%, #eef6fb 50%, #fef4f9 100%)",
+        }}
+      >
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-emerald-500" />
       <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-purple-200/30 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-pink-200/30 blur-3xl" />
@@ -179,6 +314,7 @@ function SiteFooter() {
             <span className="inline-block h-1 w-1 rounded-full bg-purple-400" />
           </div>
         </div>
+      </div>
       </div>
     </footer>
   );
