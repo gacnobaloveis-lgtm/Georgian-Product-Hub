@@ -158,17 +158,17 @@ function SiteFooter() {
             </li>
           </ul>
 
-          {/* Work hours card */}
-          <div className="rounded-xl bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 px-3 py-2.5 shadow overflow-hidden relative">
-            <div className="relative z-10 pr-9">
-              <p className="text-sm font-bold text-white">სამუშაო საათები</p>
+          {/* Work hours — transparent like the other rows */}
+          <div className="flex items-start gap-2.5 pt-1">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow mt-0.5 text-sm">🎣</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-white">სამუშაო საათები</p>
               <RichTextDisplay
                 html={c.workHours}
-                className="prose prose-sm max-w-none text-xs text-slate-200 [&_p]:my-0 [&_*]:!leading-snug"
+                className="prose prose-sm max-w-none text-xs text-white [&_p]:my-0 [&_*]:!leading-snug [&_*]:!text-white"
               />
               <div className="mt-1.5 h-0.5 w-24 rounded-full bg-gradient-to-r from-sky-400 to-cyan-300" />
             </div>
-            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 text-cyan-300/70 text-2xl">🎣</div>
           </div>
 
           {/* Footer mini */}
@@ -279,8 +279,9 @@ function SiteFooter() {
             {/* Column 4 — Work hours */}
             <div>
               <h3 className="text-base font-bold tracking-tight text-white mb-4">სამუშაო საათები</h3>
-              <div className="rounded-xl bg-slate-900/70 backdrop-blur-sm border border-slate-700/40 p-4 shadow relative overflow-hidden">
-                <div className="relative z-10 pr-10">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow mt-0.5 text-base">🎣</span>
+                <div className="flex-1 min-w-0">
                   <RichTextDisplay
                     html={c.workHours}
                     className="prose prose-sm max-w-none text-sm text-white font-medium [&_p]:my-0 [&_*]:!leading-snug [&_*]:!text-white"
@@ -288,10 +289,9 @@ function SiteFooter() {
                   <div className="mt-2 h-0.5 w-24 rounded-full bg-gradient-to-r from-sky-400 to-cyan-300" />
                   <RichTextDisplay
                     html={c.dayOff}
-                    className="prose prose-sm max-w-none text-xs text-slate-200 italic mt-1.5 [&_p]:my-0 [&_*]:!leading-snug"
+                    className="prose prose-sm max-w-none text-xs text-white/85 italic mt-1.5 [&_p]:my-0 [&_*]:!leading-snug [&_*]:!text-white/85"
                   />
                 </div>
-                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300/70 text-3xl">🎣</div>
               </div>
             </div>
           </div>
