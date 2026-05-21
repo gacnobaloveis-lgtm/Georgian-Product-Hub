@@ -115,52 +115,41 @@ function SiteFooter() {
             </li>
           </ul>
 
-          {/* Address card */}
-          <div className="rounded-xl bg-emerald-950/70 backdrop-blur-sm border border-emerald-700/40 px-3 py-2.5 shadow">
-            <div className="flex items-start gap-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+          {/* Address / Terms / About — single row of icons */}
+          <div className="flex items-start justify-around gap-2 pt-1">
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.address.replace(/<[^>]*>/g, ""))}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-1.5 flex-1 min-w-0"
+              data-testid="footer-mobile-address"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
                 <MapPin className="h-4 w-4 text-white" />
               </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-white">მისამართი</p>
-                <RichTextDisplay
-                  html={c.address}
-                  className="prose prose-sm max-w-none text-xs text-emerald-50/90 [&_p]:my-0 [&_*]:!leading-snug"
-                />
-              </div>
-            </div>
+              <span className="text-[11px] font-semibold text-white text-center leading-tight">მისამართი</span>
+            </a>
+            <button
+              onClick={() => setLocation("/terms")}
+              className="flex flex-col items-center gap-1.5 flex-1 min-w-0 active:scale-95 transition-transform"
+              data-testid="footer-mobile-terms"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                <ScrollText className="h-4 w-4 text-white" />
+              </span>
+              <span className="text-[11px] font-semibold text-white text-center leading-tight">ბმულები</span>
+            </button>
+            <button
+              onClick={() => setLocation("/about")}
+              className="flex flex-col items-center gap-1.5 flex-1 min-w-0 active:scale-95 transition-transform"
+              data-testid="footer-mobile-about"
+            >
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                <Info className="h-4 w-4 text-white" />
+              </span>
+              <span className="text-[11px] font-semibold text-white text-center leading-tight">ჩვენს შესახებ</span>
+            </button>
           </div>
-
-          {/* Links card — terms */}
-          <button
-            onClick={() => setLocation("/terms")}
-            className="w-full rounded-xl bg-emerald-950/70 backdrop-blur-sm border border-emerald-700/40 px-3 py-2.5 shadow flex items-center gap-2.5 text-left active:scale-[0.99] transition-transform"
-            data-testid="footer-mobile-terms"
-          >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
-              <ScrollText className="h-4 w-4 text-white" />
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold text-white">ბმულები</p>
-              <p className="text-xs text-emerald-50/90">წესები და პირობები</p>
-            </div>
-            <span className="text-emerald-300 text-lg leading-none">›</span>
-          </button>
-
-          {/* About card */}
-          <button
-            onClick={() => setLocation("/about")}
-            className="w-full rounded-xl bg-emerald-950/70 backdrop-blur-sm border border-emerald-700/40 px-3 py-2.5 shadow flex items-center gap-2.5 text-left active:scale-[0.99] transition-transform"
-            data-testid="footer-mobile-about"
-          >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
-              <Info className="h-4 w-4 text-white" />
-            </span>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-white">ჩვენს შესახებ</p>
-            </div>
-            <span className="text-emerald-300 text-lg leading-none">›</span>
-          </button>
 
           {/* Work hours card */}
           <div className="rounded-xl bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 px-3 py-2.5 shadow overflow-hidden relative">
