@@ -272,7 +272,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
       onGoOrders={() => { setPaymentSuccessOpen(false); navigate("/profile?orders=open"); }}
     />
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md border-emerald-400/20 text-white" style={{ backgroundImage: `linear-gradient(rgba(2,6,23,0.82), rgba(2,6,23,0.88)), url(${mountainSceneBg})`, backgroundSize: "cover", backgroundPosition: "right center" }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShoppingBag className="h-5 w-5 text-primary" />

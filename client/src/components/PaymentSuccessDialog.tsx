@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingBag, Home } from "lucide-react";
+import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
 
 interface PaymentSuccessDialogProps {
   open: boolean;
@@ -12,7 +13,8 @@ export function PaymentSuccessDialog({ open, onGoHome, onGoOrders }: PaymentSucc
   return (
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
-        className="sm:max-w-sm p-6 text-center"
+        className="sm:max-w-sm p-6 text-center border-emerald-400/20 text-white"
+        style={{ backgroundImage: `linear-gradient(rgba(2,6,23,0.82), rgba(2,6,23,0.88)), url(${mountainSceneBg})`, backgroundSize: "cover", backgroundPosition: "right center" }}
         data-testid="dialog-payment-success"
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}

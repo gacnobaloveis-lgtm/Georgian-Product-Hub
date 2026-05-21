@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Coins, AlertCircle, PlayCircle } from "lucide-react";
 import { Link } from "wouter";
+import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
 
 interface Props {
   open: boolean;
@@ -22,7 +23,7 @@ export function InsufficientCreditDialog({ open, onOpenChange, userCredit, credi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg" data-testid="dialog-insufficient-credit">
+      <DialogContent className="max-w-lg border-emerald-400/20 text-white" data-testid="dialog-insufficient-credit" style={{ backgroundImage: `linear-gradient(rgba(2,6,23,0.82), rgba(2,6,23,0.88)), url(${mountainSceneBg})`, backgroundSize: "cover", backgroundPosition: "right center" }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <AlertCircle className="h-6 w-6 text-amber-600" />
