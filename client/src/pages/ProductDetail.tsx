@@ -17,7 +17,7 @@ import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_177
 const PAGE_BG_STYLE: React.CSSProperties = {
   backgroundImage: `linear-gradient(rgba(2, 6, 23, 0.55), rgba(2, 6, 23, 0.65)), url(${mountainSceneBg})`,
   backgroundSize: "cover",
-  backgroundPosition: "center",
+  backgroundPosition: "right center",
   backgroundAttachment: "fixed",
 };
 
