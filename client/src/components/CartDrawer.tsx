@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { FlittPaymentDialog } from "@/components/FlittPaymentDialog";
 import { PaymentSuccessDialog } from "@/components/PaymentSuccessDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
+import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const DIALOG_BG_STYLE: React.CSSProperties = {
   backgroundImage: `linear-gradient(rgba(2,6,23,0.78), rgba(2,6,23,0.85)), url(${mountainSceneBg})`,

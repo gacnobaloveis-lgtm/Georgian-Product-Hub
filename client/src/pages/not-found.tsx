@@ -1,12 +1,12 @@
 import { AlertCircle, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
-import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
+import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const PAGE_BG_STYLE: React.CSSProperties = {
   backgroundImage: `linear-gradient(rgba(2, 6, 23, 0.55), rgba(2, 6, 23, 0.65)), url(${mountainSceneBg})`,
   backgroundSize: "cover",
   backgroundPosition: "right center",
-  backgroundAttachment: "fixed",
+  backgroundAttachment: typeof window !== "undefined" && window.innerWidth >= 768 ? "fixed" : "scroll",
 };
 
 export default function NotFound() {

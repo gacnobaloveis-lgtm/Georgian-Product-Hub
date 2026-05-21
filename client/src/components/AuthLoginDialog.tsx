@@ -15,7 +15,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import type { TermsSection } from "@shared/schema";
 import RichTextDisplay from "@/components/RichTextDisplay";
-import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
+import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 async function attemptPushSubscription(
   onResult?: (ok: boolean, msg: string) => void

@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ShoppingBag, Home } from "lucide-react";
-import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
+import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 interface PaymentSuccessDialogProps {
   open: boolean;
