@@ -37,6 +37,7 @@ import fishermanLogo from "@assets/spiningebi_logo.png";
 import eyeIconPath from "@assets/image_1777053072588.png";
 import mobileFooterBg from "@assets/690814979_2185444182251201_1788998078963550236_n_1779374232358.jpg";
 import desktopFooterBg from "@assets/ChatGPT_Image_May_21,_2026,_07_04_25_PM_1779375895205.png";
+import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 import RichTextDisplay from "@/components/RichTextDisplay";
 
@@ -422,9 +423,9 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
 
   return (
     <Link href={`/product/${product.id}`}>
-      <Card className="cursor-pointer border-card-border bg-card transition-shadow hover:shadow-lg" onClick={handleClick} data-testid={`card-product-${product.id}`}>
+      <Card className="cursor-pointer border border-emerald-400/25 bg-slate-950/45 text-emerald-50 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all hover:bg-slate-950/55 hover:border-emerald-300/40 hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.7)]" onClick={handleClick} data-testid={`card-product-${product.id}`}>
         <CardContent className="p-2 sm:p-3">
-          <div className="relative mb-2 aspect-square overflow-hidden rounded-md bg-muted" data-testid={`img-product-main-${product.id}`}>
+          <div className="relative mb-2 aspect-square overflow-hidden rounded-md bg-slate-900/30" data-testid={`img-product-main-${product.id}`}>
             <ImgWithFallback
               src={mainImage || undefined}
               alt={product.name}
@@ -437,17 +438,17 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
               </span>
             )}
             {(product.soldCount ?? 0) > 0 && (
-              <span className="absolute bottom-1.5 right-1.5 z-10 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700 shadow" data-testid={`text-sold-${product.id}`}>
+              <span className="absolute bottom-1.5 right-1.5 z-10 rounded bg-emerald-500/90 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow" data-testid={`text-sold-${product.id}`}>
                 გაიყიდა {product.soldCount} ც
               </span>
             )}
           </div>
 
           <div className="mt-1 flex items-center justify-between gap-1">
-            <h3 className="truncate text-xs font-semibold leading-tight sm:text-sm" data-testid={`text-product-name-${product.id}`}>
+            <h3 className="truncate text-xs font-semibold leading-tight text-white sm:text-sm" data-testid={`text-product-name-${product.id}`}>
               {product.name}
             </h3>
-            <div className="flex shrink-0 items-center gap-1 rounded bg-white px-1.5 py-0.5 shadow-sm border border-muted" data-testid={`text-views-${product.id}`}>
+            <div className="flex shrink-0 items-center gap-1 rounded bg-white/90 px-1.5 py-0.5 shadow-sm border border-white/70" data-testid={`text-views-${product.id}`}>
               <img src={eyeIconPath} alt="" className="h-3 w-3 rotate-180" />
               <span className="text-[10px] font-semibold text-black">{formatViews(product.viewCount ?? 0)}</span>
             </div>
@@ -456,15 +457,15 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             {hasDiscount ? (
               <>
-                <span className="text-xs font-bold text-foreground sm:text-sm" data-testid={`text-price-discount-${product.id}`}>
+                <span className="text-xs font-bold text-emerald-300 sm:text-sm" data-testid={`text-price-discount-${product.id}`}>
                   {formatPrice(product.discountPrice)}
                 </span>
-                <span className="text-[10px] text-muted-foreground line-through sm:text-xs" data-testid={`text-price-original-${product.id}`}>
+                <span className="text-[10px] text-emerald-100/60 line-through sm:text-xs" data-testid={`text-price-original-${product.id}`}>
                   {formatPrice(product.originalPrice)}
                 </span>
               </>
             ) : (
-              <span className="text-xs font-bold text-foreground sm:text-sm" data-testid={`text-price-${product.id}`}>
+              <span className="text-xs font-bold text-emerald-300 sm:text-sm" data-testid={`text-price-${product.id}`}>
                 {formatPrice(product.originalPrice)}
               </span>
             )}
@@ -476,11 +477,11 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
             data-testid={`button-share-${product.id}`}
           >
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold sm:text-xs" style={{ color: "#7C3AED" }}>დააგროვე კრედიტი</span>
-              <Coins className="h-3.5 w-3.5 shrink-0" style={{ color: "#B8860B", fill: "#DAA520" }} />
-              <Send className="h-3 w-3 shrink-0" style={{ color: "#7C3AED" }} />
+              <span className="text-[10px] font-bold sm:text-xs text-violet-300">დააგროვე კრედიტი</span>
+              <Coins className="h-3.5 w-3.5 shrink-0" style={{ color: "#FDE68A", fill: "#F59E0B" }} />
+              <Send className="h-3 w-3 shrink-0 text-violet-300" />
             </div>
-            <span className="text-[9px] text-gray-500 sm:text-[10px]" data-testid={`text-share-count-${product.id}`}>
+            <span className="text-[9px] text-emerald-100/60 sm:text-[10px]" data-testid={`text-share-count-${product.id}`}>
               გადაზიარდა {product.shareCount ?? 0} ჯერ
             </span>
           </button>
@@ -1051,73 +1052,81 @@ export default function HomePage() {
         </nav>
       </div>
 
-      <div className="mx-auto max-w-6xl px-3 pt-1 pb-3 sm:px-6 sm:py-6 md:mb-10 lg:px-8 lg:pt-0 lg:-mt-4">
-        <div className="flex flex-col gap-4 md:gap-6 lg:flex-row lg:items-start lg:gap-6">
-          <aside className="hidden w-full shrink-0 lg:sticky lg:top-6 lg:block lg:w-64 lg:self-start lg:mt-10">
-            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-              <h3 className="mb-4 flex items-center gap-2.5 text-base font-bold text-foreground">
-                <ShoppingBag className="h-5 w-5 text-primary" />
-                კატალოგი
-              </h3>
-              {categories && categories.length > 0 ? (
-                <nav className="space-y-1.5" data-testid="sidebar-categories">
-                  {categories.map((cat) => {
-                    const icon = getCategoryIcon(cat.name);
-                    const isActive = selectedCategory?.id === cat.id;
-                    return (
-                      <button
-                        key={cat.id}
-                        onClick={() => handleCategoryClick(cat)}
-                        className={`flex min-h-[44px] w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-base font-medium transition-colors ${
-                          isActive
-                            ? "bg-primary/10 text-primary font-semibold"
-                            : "text-foreground hover:bg-[#f0ecf6] hover:text-primary"
-                        }`}
-                        data-testid={`sidebar-item-${cat.id}`}
-                      >
-                        {icon ? (
-                          <img src={icon} alt="" className="h-7 w-7 shrink-0 object-contain" />
-                        ) : cat.icon ? (
-                          <LucideIcon name={cat.icon} className="h-5 w-5 shrink-0" />
-                        ) : null}
-                        {cat.name}
-                      </button>
-                    );
-                  })}
-                </nav>
-              ) : (
-                <p className="text-sm text-muted-foreground">კატეგორიები ჯერ არ არის</p>
-              )}
-            </div>
-          </aside>
+      <div className="relative overflow-hidden md:mb-10">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${mountainSceneBg})` }}
+        />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-900/55 to-slate-950/75" />
+        <div className="relative mx-auto max-w-6xl px-3 pt-4 pb-6 sm:px-6 sm:py-8 lg:px-8 lg:pt-6">
+          <div className="flex flex-col gap-4 md:gap-6 lg:flex-row lg:items-start lg:gap-6">
+            <aside className="hidden w-full shrink-0 lg:sticky lg:top-6 lg:block lg:w-64 lg:self-start lg:mt-10">
+              <div className="rounded-xl border border-emerald-400/25 bg-slate-950/45 p-5 shadow-lg backdrop-blur-md">
+                <h3 className="mb-4 flex items-center gap-2.5 text-base font-bold text-white">
+                  <ShoppingBag className="h-5 w-5 text-emerald-400" />
+                  კატალოგი
+                </h3>
+                {categories && categories.length > 0 ? (
+                  <nav className="space-y-1.5" data-testid="sidebar-categories">
+                    {categories.map((cat) => {
+                      const icon = getCategoryIcon(cat.name);
+                      const isActive = selectedCategory?.id === cat.id;
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => handleCategoryClick(cat)}
+                          className={`flex min-h-[44px] w-full items-center gap-3 rounded-lg px-4 py-2.5 text-left text-base font-medium transition-colors ${
+                            isActive
+                              ? "bg-emerald-500/20 text-emerald-300 font-semibold ring-1 ring-emerald-400/40"
+                              : "text-emerald-50 hover:bg-emerald-500/15 hover:text-emerald-200"
+                          }`}
+                          data-testid={`sidebar-item-${cat.id}`}
+                        >
+                          {icon ? (
+                            <img src={icon} alt="" className="h-7 w-7 shrink-0 object-contain drop-shadow" />
+                          ) : cat.icon ? (
+                            <LucideIcon name={cat.icon} className="h-5 w-5 shrink-0" />
+                          ) : null}
+                          {cat.name}
+                        </button>
+                      );
+                    })}
+                  </nav>
+                ) : (
+                  <p className="text-sm text-emerald-100/70">კატეგორიები ჯერ არ არის</p>
+                )}
+              </div>
+            </aside>
 
-          <div className="flex-1 min-w-0">
-            <AnimatedShell>
-              {selectedCategory ? (
-                <>
-                  <div className="flex items-center gap-3 mb-3">
-                    {getCategoryIcon(selectedCategory.name) ? (
-                      <img src={getCategoryIcon(selectedCategory.name)!} alt="" className="h-7 w-7 object-contain sm:h-8 sm:w-8" />
-                    ) : selectedCategory.icon ? (
-                      <LucideIcon name={selectedCategory.icon} className="h-6 w-6 text-primary" />
-                    ) : null}
-                    <h2 className="text-lg font-bold text-foreground sm:text-xl">{selectedCategory.name}</h2>
-                  </div>
-                  {renderProductGrid(categoryProducts, isCategoryLoading, "ამ კატეგორიაში პროდუქტები ჯერ არ არის")}
-                </>
-              ) : (
-                <>
-                  <h2 className="mb-3 text-center text-lg font-bold text-foreground sm:text-xl" data-testid="text-section-title"><span className="text-red-600">TOP</span>-გაყიდვადი პროდუქცია</h2>
-                  {renderProductGrid(
-                    products
-                      ? [...products].sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0)).slice(0, 16)
-                      : undefined,
-                    isLoading,
-                    "პროდუქტები ჯერ არ არის დამატებული"
-                  )}
-                </>
-              )}
-            </AnimatedShell>
+            <div className="flex-1 min-w-0">
+              <AnimatedShell>
+                {selectedCategory ? (
+                  <>
+                    <div className="flex items-center gap-3 mb-3">
+                      {getCategoryIcon(selectedCategory.name) ? (
+                        <img src={getCategoryIcon(selectedCategory.name)!} alt="" className="h-7 w-7 object-contain sm:h-8 sm:w-8 drop-shadow" />
+                      ) : selectedCategory.icon ? (
+                        <LucideIcon name={selectedCategory.icon} className="h-6 w-6 text-emerald-400" />
+                      ) : null}
+                      <h2 className="text-lg font-bold text-white drop-shadow sm:text-xl">{selectedCategory.name}</h2>
+                    </div>
+                    {renderProductGrid(categoryProducts, isCategoryLoading, "ამ კატეგორიაში პროდუქტები ჯერ არ არის")}
+                  </>
+                ) : (
+                  <>
+                    <h2 className="mb-3 text-center text-lg font-bold text-white drop-shadow-lg sm:text-xl" data-testid="text-section-title"><span className="text-red-500">TOP</span>-გაყიდვადი პროდუქცია</h2>
+                    {renderProductGrid(
+                      products
+                        ? [...products].sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0)).slice(0, 16)
+                        : undefined,
+                      isLoading,
+                      "პროდუქტები ჯერ არ არის დამატებული"
+                    )}
+                  </>
+                )}
+              </AnimatedShell>
+            </div>
           </div>
         </div>
       </div>
