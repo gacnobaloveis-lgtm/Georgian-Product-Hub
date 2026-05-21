@@ -284,7 +284,7 @@ export default function ProductDetail() {
       <div className="flex min-h-screen items-center justify-center" style={PAGE_BG_STYLE}>
         <div className="text-center rounded-2xl bg-white/25 backdrop-blur-md shadow-xl px-8 py-10">
           <p className="text-lg text-gray-700">პროდუქტი ვერ მოიძებნა</p>
-          <Link href="/" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-900" data-testid="link-back-home">მთავარზე დაბრუნება</Link>
+          <Link href="/" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-emerald-400 hover:text-emerald-300" data-testid="link-back-home">მთავარზე დაბრუნება</Link>
         </div>
       </div>
     );
@@ -443,7 +443,7 @@ export default function ProductDetail() {
 
             <hr className="hidden border-gray-100 lg:block" />
 
-            <div className="hidden lg:block prose prose-sm max-w-none text-base text-emerald-200 font-medium [text-shadow:_0_1px_3px_rgb(0_0_0_/_70%)]" data-testid="text-product-description-desktop">
+            <div className="hidden lg:block prose prose-sm max-w-none text-base text-emerald-400 font-medium [text-shadow:_0_1px_3px_rgb(0_0_0_/_70%)]" data-testid="text-product-description-desktop">
               {product.description.split("\n").map((line, i) => (
                 <p key={i} className="mb-1">{line}</p>
               ))}
@@ -559,7 +559,7 @@ export default function ProductDetail() {
           </div>
         )}
 
-        <div className="prose prose-sm max-w-none text-xs text-emerald-200 font-medium sm:text-base [text-shadow:_0_1px_3px_rgb(0_0_0_/_70%)] mt-3 sm:mt-4 lg:hidden" data-testid="text-product-description">
+        <div className="prose prose-sm max-w-none text-xs text-emerald-400 font-medium sm:text-base [text-shadow:_0_1px_3px_rgb(0_0_0_/_70%)] mt-3 sm:mt-4 lg:hidden" data-testid="text-product-description">
           {product.description.split("\n").map((line, i) => (
             <p key={i} className="mb-1">{line}</p>
           ))}
@@ -707,7 +707,7 @@ export default function ProductDetail() {
 
         <div className="mt-6 sm:mt-8">
           <Link href="/">
-            <button className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-green-700 hover:text-green-900" data-testid="link-back">
+            <button className="inline-flex min-h-[44px] items-center gap-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300" data-testid="link-back">
               <ArrowLeft className="h-4 w-4" />
               უკან დაბრუნება
             </button>
