@@ -363,7 +363,7 @@ export default function ProductDetail() {
         <div className="rounded-2xl bg-emerald-500/5 backdrop-blur-sm border border-emerald-400/25 text-white px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="mb-4 sm:mb-6">
           <nav className="flex items-center gap-2 text-xs sm:text-sm" data-testid="breadcrumb">
-            <Link href="/" className="flex items-center gap-1.5 font-bold text-gray-700 hover:text-primary" data-testid="link-breadcrumb-home">
+            <Link href="/" className="flex items-center gap-1.5 font-bold text-emerald-400 hover:text-emerald-300" data-testid="link-breadcrumb-home">
               <Home className="h-4 w-4" />
               მთავარი
             </Link>
