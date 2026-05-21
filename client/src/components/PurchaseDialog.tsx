@@ -18,6 +18,7 @@ import { Loader2, ShoppingBag, AlertCircle, Pencil, Check, Coins } from "lucide-
 import { SiVisa, SiMastercard } from "react-icons/si";
 import { queryClient } from "@/lib/queryClient";
 import { InsufficientCreditDialog } from "@/components/InsufficientCreditDialog";
+import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const GEORGIAN_CITIES = [
   "თბილისი", "ქუთაისი", "ბათუმი", "რუსთავი", "ფოთი", "ზუგდიდი",
