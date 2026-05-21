@@ -377,7 +377,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
           <div className="space-y-3">
             <div className="rounded-lg border border-muted bg-muted/20 p-3 space-y-2">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-muted-foreground">მიწოდების ინფორმაცია</span>
+                <span className="text-xs font-medium text-white">მიწოდების ინფორმაცია</span>
                 <button
                   type="button"
                   onClick={() => startEditing(profile)}
@@ -390,19 +390,19 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
               </div>
               <div className="space-y-1.5">
                 <div className="flex justify-between">
-                  <span className="text-xs text-muted-foreground">სახელი და გვარი</span>
+                  <span className="text-xs text-white">სახელი და გვარი</span>
                   <span className="text-sm font-medium" data-testid="text-order-fullname">{fullName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-xs text-muted-foreground">ქალაქი</span>
+                  <span className="text-xs text-white">ქალაქი</span>
                   <span className="text-sm font-medium" data-testid="text-order-city">{profile?.city}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-xs text-muted-foreground">მისამართი</span>
+                  <span className="text-xs text-white">მისამართი</span>
                   <span className="text-sm font-medium" data-testid="text-order-address">{profile?.address}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-xs text-muted-foreground">ტელეფონი</span>
+                  <span className="text-xs text-white">ტელეფონი</span>
                   <span className="text-sm font-medium" data-testid="text-order-phone">{profile?.phone}</span>
                 </div>
               </div>
