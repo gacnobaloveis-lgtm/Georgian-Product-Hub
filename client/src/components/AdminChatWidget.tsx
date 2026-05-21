@@ -292,7 +292,7 @@ export function AdminChatWidget() {
       {open && <div className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm" onClick={handleClose} />}
 
       {open && (
-        <div className="fixed bottom-0 right-0 z-50 flex flex-col w-full sm:w-[420px] sm:bottom-6 sm:right-6 sm:rounded-2xl overflow-hidden shadow-2xl border border-border bg-white"
+        <div className="fixed bottom-0 right-0 z-50 flex flex-col w-full sm:w-[420px] sm:bottom-6 sm:right-6 sm:rounded-2xl overflow-hidden shadow-2xl border border-emerald-400/25 bg-slate-950/85 backdrop-blur-xl text-white"
           style={{ height: "min(85vh, 680px)" }}
         >
           {/* Header */}
@@ -381,7 +381,7 @@ export function AdminChatWidget() {
                                 : isAdminMsg ? "bg-emerald-600 text-white rounded-br-sm"
                                   : "bg-blue-50 border border-blue-100 rounded-bl-sm text-blue-800"
                             }`}>{msg.message}</div>
-                            <p className={`text-[10px] text-muted-foreground mt-0.5 ${isUser ? "" : "text-right"}`}>
+                            <p className={`text-[10px] text-white/65 mt-0.5 ${isUser ? "" : "text-right"}`}>
                               {fmtTime(msg.createdAt)}
                             </p>
                           </div>
@@ -408,7 +408,7 @@ export function AdminChatWidget() {
                         const cnt = pushStats?.byUser?.[selectedUserId] ?? 0;
                         return cnt > 0 ? (
                           <button onClick={() => handleTestPush(selectedUserId)}
-                            className="flex items-center gap-1 text-[10px] text-emerald-600 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded-full px-2 py-0.5 transition-colors"
+                            className="flex items-center gap-1 text-[10px] text-emerald-300 hover:text-emerald-200 bg-emerald-500/15 hover:bg-emerald-500/25 rounded-full px-2 py-0.5 transition-colors"
                             title="ტესტ push გაგზავნა"
                             data-testid="button-test-push"
                           >
@@ -427,12 +427,12 @@ export function AdminChatWidget() {
                       )}
                     </div>
                   )}
-                  <div className="flex items-end gap-2 p-3 border-t border-border shrink-0 bg-white">
+                  <div className="flex items-end gap-2 p-3 border-t border-white/10 shrink-0 bg-slate-950/60 backdrop-blur-md">
                     <textarea
                       value={replyText} onChange={(e) => setReplyText(e.target.value)}
                       onKeyDown={handleKeyDown} placeholder="პასუხი... (Enter — გაგზავნა)"
                       rows={2}
-                      className="flex-1 resize-none rounded-xl border border-border bg-gray-50 px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
+                      className="flex-1 resize-none rounded-xl border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
                       data-testid="input-widget-reply"
                     />
                     <Button onClick={handleSend} disabled={!replyText.trim() || replyMutation.isPending}
@@ -456,14 +456,14 @@ export function AdminChatWidget() {
                     </div>
                   )}
                   {pushSupported && subscribed && (
-                    <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center gap-2">
+                    <div className="mx-3 mt-3 px-3 py-2 rounded-lg bg-emerald-500/15 border border-emerald-400/30 flex items-center gap-2">
                       <Bell className="h-4 w-4 text-emerald-600 shrink-0" />
                       <p className="text-xs text-emerald-700">ზარი ჩართულია — ჩახ. ჩანართზეც გაისმება</p>
                     </div>
                   )}
                   <div className="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-0">
                     {conversations.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+                      <div className="flex flex-col items-center justify-center h-full gap-3 text-white/65">
                         <MessageCircle className="h-8 w-8 opacity-30" />
                         <p className="text-sm">შეტყობინებები არ არის</p>
                       </div>
@@ -481,7 +481,7 @@ export function AdminChatWidget() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-1">
-                            <span className="font-semibold text-sm text-foreground truncate">
+                            <span className="font-semibold text-sm text-white truncate">
                               {conv.firstName || ""} {conv.lastName || ""}
                             </span>
                             <div className="flex items-center gap-1.5 shrink-0">
@@ -493,7 +493,7 @@ export function AdminChatWidget() {
                               ) : (
                                 <BellOff className="h-3 w-3 text-gray-300" title="Push subscription არ აქვს" />
                               )}
-                              {conv.lastAt && <span className="text-[10px] text-muted-foreground">{fmtTime(conv.lastAt)}</span>}
+                              {conv.lastAt && <span className="text-[10px] text-white/65">{fmtTime(conv.lastAt)}</span>}
                               {conv.unread > 0 && (
                                 <span className="flex h-5 min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
                                   {conv.unread}
@@ -501,11 +501,11 @@ export function AdminChatWidget() {
                               )}
                             </div>
                           </div>
-                          <p className={`text-xs truncate mt-0.5 ${conv.unread > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                          <p className={`text-xs truncate mt-0.5 ${conv.unread > 0 ? "font-medium text-white" : "text-white/65"}`}>
                             {conv.lastMessage}
                           </p>
                         </div>
-                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <ChevronRight className="h-3.5 w-3.5 text-white/65 shrink-0" />
                       </button>
                     );
                     })}
@@ -516,12 +516,12 @@ export function AdminChatWidget() {
               /* ── Broadcast Tab ──────────────────────────────── */
               <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
                 {/* Form */}
-                <div className="p-3 space-y-2 border-b border-border bg-gray-50 shrink-0">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">ახალი Broadcast</p>
+                <div className="p-3 space-y-2 border-b border-white/10 bg-slate-900/40 shrink-0">
+                  <p className="text-xs font-semibold text-white/65 uppercase tracking-wide">ახალი Broadcast</p>
 
                   {/* Product picker */}
                   <div className="space-y-1">
-                    <p className="text-[11px] text-muted-foreground">პროდუქტი (სურათის ჩასასმელად):</p>
+                    <p className="text-[11px] text-white/65">პროდუქტი (სურათის ჩასასმელად):</p>
                     <div className="flex gap-1.5 overflow-x-auto pb-1">
                       {products.slice(0, 10).map((p) => (
                         <button key={p.id} onClick={() => handleSelectProduct(p)}
@@ -543,32 +543,32 @@ export function AdminChatWidget() {
                   <input
                     value={bcTitle} onChange={(e) => setBcTitle(e.target.value)}
                     placeholder="სათაური *"
-                    className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full rounded-lg border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
                     data-testid="input-broadcast-title"
                   />
                   <textarea
                     value={bcBody} onChange={(e) => setBcBody(e.target.value)}
                     placeholder="ტექსტი *"
                     rows={2}
-                    className="w-full resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
+                    className="w-full resize-none rounded-lg border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
                     data-testid="input-broadcast-body"
                   />
                   <div className="flex gap-2">
                     <div className="relative flex-1">
-                      <Link2 className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Link2 className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/65" />
                       <input
                         value={bcUrl} onChange={(e) => setBcUrl(e.target.value)}
                         placeholder="ლინკი (url)"
-                        className="w-full rounded-lg border border-border bg-white pl-8 pr-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
+                        className="w-full rounded-lg border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 pl-8 pr-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
                         data-testid="input-broadcast-url"
                       />
                     </div>
                     <div className="relative flex-1">
-                      <ImageIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <ImageIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/65" />
                       <input
                         value={bcImageUrl} onChange={(e) => setBcImageUrl(e.target.value)}
                         placeholder="სურათის url"
-                        className="w-full rounded-lg border border-border bg-white pl-8 pr-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
+                        className="w-full rounded-lg border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 pl-8 pr-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
                         data-testid="input-broadcast-image"
                       />
                     </div>
@@ -576,7 +576,7 @@ export function AdminChatWidget() {
 
                   {/* Preview */}
                   {bcImageUrl && (
-                    <div className="rounded-lg overflow-hidden border border-border">
+                    <div className="rounded-lg overflow-hidden border border-white/10">
                       <img src={bcImageUrl} alt="preview" className="w-full h-28 object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                     </div>
                   )}
@@ -597,27 +597,27 @@ export function AdminChatWidget() {
 
                 {/* Past broadcasts */}
                 <div className="flex-1 p-3 space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">გაგზავნილი</p>
+                  <p className="text-xs font-semibold text-white/65 uppercase tracking-wide">გაგზავნილი</p>
                   {broadcasts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-8 gap-2 text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center py-8 gap-2 text-white/65">
                       <Megaphone className="h-7 w-7 opacity-30" />
                       <p className="text-xs">გაგზავნილი Broadcast არ არის</p>
                     </div>
                   ) : broadcasts.map((b) => (
-                    <div key={b.id} className="flex gap-3 rounded-xl border border-border bg-white p-3">
+                    <div key={b.id} className="flex gap-3 rounded-xl border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 p-3">
                       {b.imageUrl && (
                         <img src={b.imageUrl} alt={b.title} className="w-14 h-14 rounded-lg object-cover shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm truncate">{b.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{b.body}</p>
+                        <p className="text-xs text-white/65 truncate">{b.body}</p>
                         {b.url && <p className="text-[10px] text-emerald-600 truncate mt-0.5">{b.url}</p>}
-                        <p className="text-[10px] text-muted-foreground mt-1">{fmtTime(b.createdAt)}</p>
+                        <p className="text-[10px] text-white/65 mt-1">{fmtTime(b.createdAt)}</p>
                       </div>
                       <button
                         onClick={() => deleteBroadcastMutation.mutate(b.id)}
                         disabled={deleteBroadcastMutation.isPending}
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-red-50 text-muted-foreground hover:text-red-500 transition-colors"
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full hover:bg-red-500/15 text-white/65 hover:text-red-300 transition-colors"
                         data-testid={`button-broadcast-delete-${b.id}`}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
