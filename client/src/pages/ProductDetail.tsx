@@ -12,6 +12,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
 import { queryClient } from "@/lib/queryClient";
+import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
+
+const PAGE_BG_STYLE: React.CSSProperties = {
+  backgroundImage: `linear-gradient(rgba(2, 6, 23, 0.55), rgba(2, 6, 23, 0.65)), url(${mountainSceneBg})`,
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundAttachment: "fixed",
+};
 
 const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' fill='%23f1f5f9'%3E%3Crect width='600' height='400'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='18' fill='%2394a3b8'%3E%E1%83%A1%E1%83%A3%E1%83%A0%E1%83%90%E1%83%97%E1%83%98 %E1%83%90%E1%83%A0 %E1%83%90%E1%83%A0%E1%83%98%E1%83%A1%3C/text%3E%3C/svg%3E";
 
@@ -255,9 +263,9 @@ export default function ProductDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen" style={PAGE_BG_STYLE}>
         <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-4 lg:gap-8">
+          <div className="rounded-2xl bg-white/95 backdrop-blur-md shadow-xl p-6 grid grid-cols-2 gap-4 lg:gap-8">
             <Skeleton className="aspect-square w-full rounded-lg" />
             <div className="space-y-4">
               <Skeleton className="h-8 w-3/4" />
@@ -273,9 +281,9 @@ export default function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white">
-        <div className="text-center">
-          <p className="text-lg text-gray-500">პროდუქტი ვერ მოიძებნა</p>
+      <div className="flex min-h-screen items-center justify-center" style={PAGE_BG_STYLE}>
+        <div className="text-center rounded-2xl bg-white/95 backdrop-blur-md shadow-xl px-8 py-10">
+          <p className="text-lg text-gray-700">პროდუქტი ვერ მოიძებნა</p>
           <Link href="/" className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-green-700 hover:text-green-900" data-testid="link-back-home">მთავარზე დაბრუნება</Link>
         </div>
       </div>
@@ -350,8 +358,9 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen" style={PAGE_BG_STYLE}>
       <div className="mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+        <div className="rounded-2xl bg-white/95 backdrop-blur-md shadow-xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="mb-4 sm:mb-6">
           <nav className="flex items-center gap-2 text-xs sm:text-sm" data-testid="breadcrumb">
             <Link href="/" className="flex items-center gap-1.5 font-bold text-gray-700 hover:text-primary" data-testid="link-breadcrumb-home">
@@ -703,6 +712,7 @@ export default function ProductDetail() {
               უკან დაბრუნება
             </button>
           </Link>
+        </div>
         </div>
 
         <PurchaseDialog
