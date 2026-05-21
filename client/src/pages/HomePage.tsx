@@ -960,12 +960,16 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="relative">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-cover bg-right"
-          style={{ backgroundImage: `url(${mountainSceneBg})` }}
-        />
+      <div
+        className="relative"
+        style={{
+          backgroundImage: `url(${mountainSceneBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "right center",
+          backgroundRepeat: "no-repeat",
+          backgroundAttachment: typeof window !== "undefined" && window.innerWidth >= 768 ? "fixed" : "scroll",
+        }}
+      >
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-900/55 to-slate-950/75" />
 
       {/* Mobile-only online counter */}
