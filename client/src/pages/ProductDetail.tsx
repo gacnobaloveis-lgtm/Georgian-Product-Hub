@@ -443,7 +443,7 @@ export default function ProductDetail() {
 
             <hr className="hidden border-gray-100 lg:block" />
 
-            <div className="hidden lg:block prose prose-sm max-w-none text-base text-gray-800" data-testid="text-product-description-desktop">
+            <div className="hidden lg:block prose prose-sm max-w-none text-base text-emerald-200 font-medium [text-shadow:_0_1px_3px_rgb(0_0_0_/_70%)]" data-testid="text-product-description-desktop">
               {product.description.split("\n").map((line, i) => (
                 <p key={i} className="mb-1">{line}</p>
               ))}
@@ -559,7 +559,7 @@ export default function ProductDetail() {
           </div>
         )}
 
-        <div className="prose prose-sm max-w-none text-xs text-gray-800 sm:text-base mt-3 sm:mt-4 lg:hidden" data-testid="text-product-description">
+        <div className="prose prose-sm max-w-none text-xs text-emerald-200 font-medium sm:text-base [text-shadow:_0_1px_3px_rgb(0_0_0_/_70%)] mt-3 sm:mt-4 lg:hidden" data-testid="text-product-description">
           {product.description.split("\n").map((line, i) => (
             <p key={i} className="mb-1">{line}</p>
           ))}
