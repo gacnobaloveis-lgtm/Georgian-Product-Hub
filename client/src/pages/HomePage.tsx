@@ -960,7 +960,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden md:mb-10">
+      <div className="relative md:mb-10">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-cover bg-right"
