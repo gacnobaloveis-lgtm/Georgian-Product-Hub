@@ -178,7 +178,7 @@ export default function LiveContactPage() {
             </div>
             <div className="max-w-[75%]">
               <p className="text-[11px] text-white/65 mb-1">spiningebi.ge</p>
-              <div className="rounded-2xl rounded-bl-sm bg-white border border-purple-100 px-4 py-2.5 shadow-sm">
+              <div className="rounded-2xl rounded-bl-sm bg-slate-900/60 border border-white/15 backdrop-blur-md px-4 py-2.5 shadow-sm">
                 <p className="text-sm text-white/90">
                   გამარჯობა! მოგესალმებათ spiningebi.ge ადმინისტრატორი. დასვით თქვენი შეკითხვა, სიამოვნებით დაგეხმარებით! 🎣
                 </p>
