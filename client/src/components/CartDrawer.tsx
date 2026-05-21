@@ -3,6 +3,13 @@ import { useLocation } from "wouter";
 import { FlittPaymentDialog } from "@/components/FlittPaymentDialog";
 import { PaymentSuccessDialog } from "@/components/PaymentSuccessDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import mountainSceneBg from "@assets/ChatGPT_Image_May_21,_2026,_07_23_57_PM_1779377134814.png";
+
+const DIALOG_BG_STYLE: React.CSSProperties = {
+  backgroundImage: `linear-gradient(rgba(2,6,23,0.78), rgba(2,6,23,0.85)), url(${mountainSceneBg})`,
+  backgroundSize: "cover",
+  backgroundPosition: "right center",
+};
 import { Button } from "@/components/ui/button";
 import { useCart, CartItem } from "@/hooks/use-cart";
 import { useAuth } from "@/hooks/use-auth";
@@ -282,7 +289,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   return (
     <>
       <Sheet open={open} onOpenChange={(v) => { if (!v) { setCheckoutMode(false); setSelected(new Set()); } onOpenChange(v); }}>
-        <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl px-0 flex flex-col">
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl px-0 flex flex-col border-emerald-400/20 text-white" style={DIALOG_BG_STYLE}>
           <SheetHeader className="px-5 pb-3 shrink-0">
             <div className="flex items-center gap-3">
               {checkoutMode ? (
