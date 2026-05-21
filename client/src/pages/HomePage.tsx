@@ -36,6 +36,7 @@ import vestIcon from "@assets/image_1776966819348.png";
 import fishermanLogo from "@assets/spiningebi_logo.png";
 import eyeIconPath from "@assets/image_1777053072588.png";
 import mobileFooterBg from "@assets/690814979_2185444182251201_1788998078963550236_n_1779374232358.jpg";
+import desktopFooterBg from "@assets/ChatGPT_Image_May_21,_2026,_07_04_25_PM_1779375895205.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 import RichTextDisplay from "@/components/RichTextDisplay";
 
@@ -181,135 +182,127 @@ function SiteFooter() {
       </div>
 
       {/* ===== DESKTOP / TABLET FOOTER ===== */}
-      <div
-        className="relative overflow-hidden hidden sm:block"
-        style={{
-          background:
-            "linear-gradient(135deg, #f5f0ff 0%, #eef6fb 50%, #fef4f9 100%)",
-        }}
-      >
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-purple-500 via-pink-500 to-emerald-500" />
-      <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-purple-200/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-pink-200/30 blur-3xl" />
+      <div className="relative overflow-hidden hidden sm:block" data-testid="footer-desktop">
+        {/* Background image */}
+        <div className="absolute inset-0">
+          <img
+            src={desktopFooterBg}
+            alt=""
+            className="h-full w-full object-cover"
+            loading="lazy"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/55 to-slate-900/80" />
+        </div>
 
-      <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <h3 className={sectionTitle}>{titleDot} საკონტაქტო ინფორმაცია</h3>
-            <ul className="space-y-3">
-              <li>
-                <a href={`tel:${c.phone.replace(/\s/g, "")}`} className={itemRow} data-testid="footer-phone">
-                  <span className={iconBadge}>
-                    <Phone className="h-4 w-4 text-purple-600" />
-                  </span>
-                  <span className="font-medium">{c.phone}</span>
-                </a>
-              </li>
-              <li>
-                <a href={`mailto:${c.email}`} className={itemRow} data-testid="footer-email">
-                  <span className={iconBadge}>
-                    <Mail className="h-4 w-4 text-pink-600" />
-                  </span>
-                  <span className="truncate">{c.email}</span>
-                </a>
-              </li>
-              <li>
-                <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className={`${itemRow} hover:text-emerald-700`} data-testid="footer-whatsapp">
-                  <span className={`${iconBadge} group-hover:ring-emerald-300`}>
-                    <MessageCircle className="h-4 w-4 text-emerald-600" />
-                  </span>
-                  <span className="font-medium">WhatsApp</span>
-                </a>
-              </li>
-              <li>
-                <button
-                  onClick={() => setLocation("/live-contact")}
-                  className={`${itemRow} hover:text-emerald-700 w-full`}
-                  data-testid="footer-live-contact2"
-                >
-                  <span className={`${iconBadge} group-hover:ring-red-300 relative`}>
-                    <MessageCircle className="h-4 w-4 text-red-500" />
-                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white animate-pulse" />
-                  </span>
-                  <span className="font-semibold">
-                    <span className="text-red-500">LIVE</span> კონტაქტი
-                  </span>
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className={sectionTitle}>{titleDot} მისამართი</h3>
-            <div className="group flex items-start gap-3 text-sm text-gray-700">
-              <span className={iconBadge}>
-                <MapPin className="h-4 w-4 text-purple-600" />
-              </span>
-              <RichTextDisplay
-                html={c.address}
-                className="prose prose-sm max-w-none text-sm text-gray-700 leading-relaxed [&_p]:my-0 [&_*]:!leading-relaxed pt-1"
-              />
+        <div className="relative mx-auto max-w-6xl px-6 py-10 lg:px-8 text-white">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Column 1 — Contact rows */}
+            <div>
+              <h3 className="text-base font-bold tracking-tight text-white mb-4">საკონტაქტო ინფორმაცია</h3>
+              <ul className="space-y-3">
+                <li>
+                  <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="flex items-center gap-3" data-testid="footer-phone">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                      <Phone className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="text-sm font-medium text-white">{c.phone}</span>
+                  </a>
+                </li>
+                <li>
+                  <a href={`mailto:${c.email}`} className="flex items-center gap-3" data-testid="footer-email">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                      <Mail className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="text-sm font-medium text-white truncate">{c.email}</span>
+                  </a>
+                </li>
+                <li>
+                  <a href={`https://wa.me/${waNumber}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3" data-testid="footer-whatsapp">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                      <MessageCircle className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="text-sm font-medium text-white">WhatsApp</span>
+                  </a>
+                </li>
+                <li>
+                  <button onClick={() => setLocation("/live-contact")} className="flex items-center gap-3 w-full text-left" data-testid="footer-live-contact2">
+                    <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                      <MessageCircle className="h-4 w-4 text-white" />
+                      <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500 ring-2 ring-emerald-600 animate-pulse" />
+                    </span>
+                    <span className="text-sm font-semibold">
+                      <span className="text-red-400">LIVE</span>
+                      <span className="text-white"> კონტაქტი</span>
+                    </span>
+                  </button>
+                </li>
+              </ul>
             </div>
-          </div>
 
-          <div>
-            <h3 className={sectionTitle}>{titleDot} ბმულები</h3>
-            <ul className="space-y-3">
-              <li>
-                <button
-                  onClick={() => setLocation("/terms")}
-                  className={`${itemRow} w-full`}
-                  data-testid="footer-terms-link2"
-                >
-                  <span className={iconBadge}>
-                    <ScrollText className="h-4 w-4 text-purple-600" />
-                  </span>
-                  წესები და პირობები
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => setLocation("/about")}
-                  className={`${itemRow} w-full`}
-                  data-testid="footer-about-link2"
-                >
-                  <span className={iconBadge}>
-                    <Info className="h-4 w-4 text-pink-600" />
-                  </span>
-                  ჩვენს შესახებ
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h3 className={sectionTitle}>{titleDot} სამუშაო საათები</h3>
-            <div className="rounded-xl bg-white/60 backdrop-blur-sm p-4 ring-1 ring-purple-100 shadow-sm">
-              <RichTextDisplay
-                html={c.workHours}
-                className="prose prose-sm max-w-none text-sm text-gray-800 font-medium [&_p]:my-0 [&_*]:!leading-relaxed"
-              />
-              <div className="mt-2 pt-2 border-t border-purple-100">
+            {/* Column 2 — Address */}
+            <div>
+              <h3 className="text-base font-bold tracking-tight text-white mb-4">მისამართი</h3>
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow mt-0.5">
+                  <MapPin className="h-4 w-4 text-white" />
+                </span>
                 <RichTextDisplay
-                  html={c.dayOff}
-                  className="prose prose-sm max-w-none text-xs text-gray-500 italic [&_p]:my-0 [&_*]:!leading-relaxed"
+                  html={c.address}
+                  className="prose prose-sm max-w-none text-sm text-white [&_p]:my-0 [&_*]:!leading-snug [&_*]:!text-white"
                 />
               </div>
             </div>
-          </div>
-        </div>
 
-        <div className="mt-10 pt-6 border-t border-purple-200/40 flex flex-col items-center gap-3">
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/70 backdrop-blur-sm ring-1 ring-purple-100 shadow-sm">
-            <RegisteredUsersCount />
+            {/* Column 3 — Links */}
+            <div>
+              <h3 className="text-base font-bold tracking-tight text-white mb-4">ბმულები</h3>
+              <ul className="space-y-3">
+                <li>
+                  <button onClick={() => setLocation("/terms")} className="flex items-center gap-3 w-full text-left" data-testid="footer-terms-link2">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                      <ScrollText className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="text-sm font-medium text-white">წესები და პირობები</span>
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setLocation("/about")} className="flex items-center gap-3 w-full text-left" data-testid="footer-about-link2">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                      <Info className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="text-sm font-medium text-white">ჩვენს შესახებ</span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Column 4 — Work hours */}
+            <div>
+              <h3 className="text-base font-bold tracking-tight text-white mb-4">სამუშაო საათები</h3>
+              <div className="rounded-xl bg-slate-900/70 backdrop-blur-sm border border-slate-700/40 p-4 shadow relative overflow-hidden">
+                <div className="relative z-10 pr-10">
+                  <RichTextDisplay
+                    html={c.workHours}
+                    className="prose prose-sm max-w-none text-sm text-white font-medium [&_p]:my-0 [&_*]:!leading-snug [&_*]:!text-white"
+                  />
+                  <div className="mt-2 h-0.5 w-24 rounded-full bg-gradient-to-r from-sky-400 to-cyan-300" />
+                  <RichTextDisplay
+                    html={c.dayOff}
+                    className="prose prose-sm max-w-none text-xs text-slate-200 italic mt-1.5 [&_p]:my-0 [&_*]:!leading-snug"
+                  />
+                </div>
+                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-cyan-300/70 text-3xl">🎣</div>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span className="inline-block h-1 w-1 rounded-full bg-purple-400" />
-            <span>© {new Date().getFullYear()} <span className="font-semibold text-purple-700">spiningebi.ge</span> — ყველა უფლება დაცულია</span>
-            <span className="inline-block h-1 w-1 rounded-full bg-purple-400" />
+
+          <div className="mt-8 pt-5 border-t border-white/15 flex flex-col items-center gap-2">
+            <RegisteredUsersCount />
+            <div className="text-xs text-white/70">
+              © {new Date().getFullYear()} <span className="font-semibold text-emerald-300">spiningebi.ge</span> — ყველა უფლება დაცულია
+            </div>
           </div>
         </div>
-      </div>
       </div>
     </footer>
   );
