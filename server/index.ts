@@ -272,6 +272,18 @@ async function ensureBroadcastTables() {
   }
 }
 
+async function ensureProductColumns() {
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS weight text`);
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS length text`);
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS dimensions text`);
+    console.log("[migrate] products weight/length/dimensions columns ensured");
+  } catch (err) {
+    console.error("[migrate] Error ensuring products columns:", err);
+  }
+}
+
 async function migrateFilesToDb() {
   try {
     const { pool } = await import("./db");
@@ -441,6 +453,7 @@ async function initializeApp() {
     await ensureMediaDataColumns();
     await ensurePushSubscriptionsTable();
     await ensureBroadcastTables();
+    await ensureProductColumns();
     await migrateFilesToDb();
     log("All migrations completed successfully");
   } catch (err: any) {
