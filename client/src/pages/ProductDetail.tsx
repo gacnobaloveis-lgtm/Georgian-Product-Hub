@@ -363,7 +363,7 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen" style={PAGE_BG_STYLE}>
-      <div aria-hidden className="pointer-events-none fixed top-0 left-0 z-0" style={{ ...PAGE_BG_FIXED_STYLE, width: "100vw", height: "100vh", transform: "translateZ(0) scale(1.05)", willChange: "transform", filter: "blur(8px)" }} />
+      <div aria-hidden className="pointer-events-none fixed top-0 left-0 z-0" style={{ ...PAGE_BG_FIXED_STYLE, width: "100vw", height: "100vh", transform: "translateZ(0)", willChange: "transform" }} />
       <div className="relative z-10 mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="rounded-2xl bg-emerald-500/5 backdrop-blur-sm border border-emerald-400/25 text-white px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="mb-4 sm:mb-6">
@@ -378,7 +378,7 @@ export default function ProductDetail() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:gap-8">
           <div className="space-y-2 sm:space-y-4">
             <div
-              className="overflow-hidden rounded-lg border border-gray-100 bg-white touch-pan-y select-none"
+              className="overflow-hidden rounded-lg border border-white/20 bg-white/10 backdrop-blur-md touch-pan-y select-none"
               onTouchStart={(e) => {
                 if (showVideo) return;
                 touchStartX.current = e.touches[0].clientX;
