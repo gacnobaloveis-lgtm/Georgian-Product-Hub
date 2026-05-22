@@ -962,7 +962,7 @@ export default function HomePage() {
 
       <div
         aria-hidden
-        className="pointer-events-none fixed top-0 left-0 -z-10"
+        className="pointer-events-none fixed top-0 left-0 z-0"
         style={{
           width: "100vw",
           height: "100vh",
@@ -974,8 +974,8 @@ export default function HomePage() {
           willChange: "transform",
         }}
       />
-      <div aria-hidden className="pointer-events-none fixed top-0 left-0 -z-10 bg-gradient-to-b from-slate-950/45 via-slate-900/30 to-slate-950/50" style={{ width: "100vw", height: "100vh" }} />
-      <div className="relative">
+      <div aria-hidden className="pointer-events-none fixed top-0 left-0 z-0 bg-gradient-to-b from-slate-950/45 via-slate-900/30 to-slate-950/50" style={{ width: "100vw", height: "100vh" }} />
+      <div className="relative z-10">
 
       {/* Mobile-only online counter */}
       {displayOnline !== null && (
