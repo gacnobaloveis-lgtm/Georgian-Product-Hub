@@ -667,7 +667,7 @@ export default function ProductDetail() {
               setQuantity(1);
               toast({ title: "კალათაში დაემატა", description: `"${product.name}" (${qtyToAdd} ც.)` });
             }}
-            className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-primary bg-white text-sm font-semibold text-primary transition-colors hover:bg-primary/5 sm:text-base"
+            className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/15 backdrop-blur-md text-sm font-semibold text-white transition-colors hover:bg-white/25 sm:text-base"
             data-testid="button-add-cart"
           >
             <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -686,7 +686,7 @@ export default function ProductDetail() {
               }
               setPurchaseOpen(true);
             }}
-            className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:text-base"
+            className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-600/40 backdrop-blur-md text-sm font-semibold text-white transition-colors hover:bg-emerald-600/55 sm:text-base"
             data-testid="button-buy-now"
           >
             ყიდვა
@@ -698,7 +698,7 @@ export default function ProductDetail() {
             href={`https://wa.me/${contactInfo.whatsapp.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`გამარჯობა! მაინტერესებს "${product.name}" — ${formatPrice(hasDiscount ? product.discountPrice : product.originalPrice)}\n\n${typeof window !== "undefined" ? window.location.href : ""}`)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2.5 rounded-xl bg-[#25D366] px-4 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#1ebe5a] hover:shadow-md active:scale-[0.99] sm:text-base"
+            className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2.5 rounded-xl border border-[#25D366]/50 bg-[#25D366]/40 backdrop-blur-md px-4 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#25D366]/55 hover:shadow-md active:scale-[0.99] sm:text-base"
             data-testid="button-whatsapp-product"
           >
             <svg viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 sm:h-6 sm:w-6" aria-hidden="true">
