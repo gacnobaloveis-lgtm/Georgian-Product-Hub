@@ -339,7 +339,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                     value={forgotEmail}
                     onChange={e => setForgotEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="min-h-[44px]"
+                    className="min-h-[44px] text-slate-900 placeholder:text-slate-500"
                     data-testid="input-forgot-email"
                   />
                 </div>
@@ -367,7 +367,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                     onChange={e => setResetCode(e.target.value)}
                     placeholder=""
                     maxLength={6}
-                    className="min-h-[44px] text-center text-lg tracking-[0.3em]"
+                    className="min-h-[44px] text-center text-lg tracking-[0.3em] text-slate-900 placeholder:text-slate-500"
                     data-testid="input-reset-code"
                   />
                 </div>
@@ -378,7 +378,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
                     placeholder="ახალი პაროლი"
-                    className="min-h-[44px]"
+                    className="min-h-[44px] text-slate-900 placeholder:text-slate-500"
                     data-testid="input-new-password"
                   />
                 </div>
@@ -434,7 +434,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                 value={loginForm.phone}
                 onChange={e => setLoginForm(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="+995 5XX XXX XXX"
-                className="min-h-[44px]"
+                className="min-h-[44px] text-slate-900 placeholder:text-slate-500"
                 data-testid="input-login-phone"
               />
             </div>
@@ -447,7 +447,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                   value={loginForm.password}
                   onChange={e => setLoginForm(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="პაროლი"
-                  className="min-h-[44px] pr-10"
+                  className="min-h-[44px] pr-10 text-slate-900 placeholder:text-slate-500"
                   data-testid="input-login-password"
                 />
                 <button
@@ -509,7 +509,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                 value={regForm.fullName}
                 onChange={e => setRegForm(prev => ({ ...prev, fullName: e.target.value }))}
                 placeholder="სახელი გვარი"
-                className="min-h-[44px] border-foreground/30"
+                className="min-h-[44px] border-foreground/30 text-slate-900 placeholder:text-slate-500"
                 autoComplete="off"
                 data-testid="input-register-fullname"
               />
@@ -522,7 +522,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                 value={regForm.email}
                 onChange={e => setRegForm(prev => ({ ...prev, email: e.target.value }))}
                 placeholder=""
-                className="min-h-[44px] border-foreground/30"
+                className="min-h-[44px] border-foreground/30 text-slate-900 placeholder:text-slate-500"
                 autoComplete="off"
                 data-testid="input-register-email"
               />
@@ -531,7 +531,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
             <div className="space-y-1.5">
               <label className="text-xs font-medium">ქალაქი</label>
               <Select value={regForm.city} onValueChange={v => setRegForm(prev => ({ ...prev, city: v }))}>
-                <SelectTrigger className="min-h-[44px] border-foreground/30" data-testid="select-register-city">
+                <SelectTrigger className="min-h-[44px] border-foreground/30 text-slate-900 placeholder:text-slate-500" data-testid="select-register-city">
                   <SelectValue placeholder="აირჩიეთ ქალაქი" />
                 </SelectTrigger>
                 <SelectContent>
@@ -548,7 +548,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                 value={regForm.address}
                 onChange={e => setRegForm(prev => ({ ...prev, address: e.target.value }))}
                 placeholder="ქუჩა, ბინა, რაიონი"
-                className="min-h-[44px] border-foreground/30"
+                className="min-h-[44px] border-foreground/30 text-slate-900 placeholder:text-slate-500"
                 autoComplete="off"
                 data-testid="input-register-address"
               />
@@ -560,7 +560,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                 value={regForm.phone}
                 onChange={e => setRegForm(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="+995 5XX XXX XXX"
-                className="min-h-[44px] border-foreground/30"
+                className="min-h-[44px] border-foreground/30 text-slate-900 placeholder:text-slate-500"
                 autoComplete="off"
                 data-testid="input-register-phone"
               />
@@ -574,7 +574,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
                   value={regForm.password}
                   onChange={e => setRegForm(prev => ({ ...prev, password: e.target.value }))}
                   placeholder="მინ. 4 სიმბოლო"
-                  className="min-h-[44px] pr-10 border-foreground/30"
+                  className="min-h-[44px] pr-10 border-foreground/30 text-slate-900 placeholder:text-slate-500"
                   autoComplete="new-password"
                   data-testid="input-register-password"
                 />
