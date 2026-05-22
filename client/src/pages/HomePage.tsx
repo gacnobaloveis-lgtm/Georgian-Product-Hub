@@ -967,7 +967,7 @@ export default function HomePage() {
           backgroundSize: "cover",
           backgroundPosition: "right center",
           backgroundRepeat: "no-repeat",
-          backgroundAttachment: typeof window !== "undefined" && window.innerWidth >= 768 ? "fixed" : "scroll",
+          backgroundAttachment: "fixed",
         }}
       >
         <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/45 via-slate-900/30 to-slate-950/50" />
