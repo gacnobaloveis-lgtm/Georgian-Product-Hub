@@ -904,7 +904,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-950 pb-20 md:pb-0">
       <div
-        className="relative aspect-[2/1] w-full overflow-hidden rounded-none sm:aspect-[5/1] lg:aspect-[7.5/1]"
+        className="relative z-10 aspect-[2/1] w-full overflow-hidden rounded-none sm:aspect-[5/1] lg:aspect-[7.5/1]"
       >
         {HERO_SLIDES.map((slide, idx) => (
           <picture key={idx}>
