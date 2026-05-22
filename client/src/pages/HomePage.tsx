@@ -970,7 +970,7 @@ export default function HomePage() {
           backgroundAttachment: typeof window !== "undefined" && window.innerWidth >= 768 ? "fixed" : "scroll",
         }}
       >
-        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-900/55 to-slate-950/75" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/45 via-slate-900/30 to-slate-950/50" />
 
       {/* Mobile-only online counter */}
       {displayOnline !== null && (
