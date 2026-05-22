@@ -970,9 +970,8 @@ export default function HomePage() {
           backgroundSize: "cover",
           backgroundPosition: "right center",
           backgroundRepeat: "no-repeat",
-          transform: "translateZ(0) scale(1.05)",
+          transform: "translateZ(0)",
           willChange: "transform",
-          filter: "blur(8px)",
         }}
       />
       <div aria-hidden className="pointer-events-none fixed top-0 left-0 z-0 bg-gradient-to-b from-slate-950/45 via-slate-900/30 to-slate-950/50" style={{ width: "100vw", height: "100vh" }} />
