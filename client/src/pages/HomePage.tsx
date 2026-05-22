@@ -423,9 +423,9 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
 
   return (
     <Link href={`/product/${product.id}`}>
-      <Card className="cursor-pointer border border-emerald-400/25 bg-transparent text-emerald-50 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)] backdrop-blur-md transition-all hover:bg-slate-950/20 hover:border-emerald-300/40 hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.7)]" onClick={handleClick} data-testid={`card-product-${product.id}`}>
+      <Card className="cursor-pointer border border-emerald-400/30 bg-slate-950/55 text-emerald-50 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.7)] backdrop-blur-lg transition-all hover:bg-slate-950/65 hover:border-emerald-300/50 hover:shadow-[0_12px_30px_-12px_rgba(0,0,0,0.8)]" onClick={handleClick} data-testid={`card-product-${product.id}`}>
         <CardContent className="p-2 sm:p-3">
-          <div className="relative mb-2 aspect-square overflow-hidden rounded-md bg-transparent" data-testid={`img-product-main-${product.id}`}>
+          <div className="relative mb-2 aspect-square overflow-hidden rounded-md bg-slate-950/40" data-testid={`img-product-main-${product.id}`}>
             <ImgWithFallback
               src={mainImage || undefined}
               alt={product.name}
