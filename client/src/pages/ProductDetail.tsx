@@ -363,7 +363,7 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen" style={PAGE_BG_STYLE}>
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10" style={PAGE_BG_FIXED_STYLE} />
+      <div aria-hidden className="pointer-events-none fixed top-0 left-0 -z-10" style={{ ...PAGE_BG_FIXED_STYLE, width: "100vw", height: "100vh", transform: "translateZ(0)", willChange: "transform" }} />
       <div className="mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="rounded-2xl bg-emerald-500/5 backdrop-blur-sm border border-emerald-400/25 text-white px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <div className="mb-4 sm:mb-6">
