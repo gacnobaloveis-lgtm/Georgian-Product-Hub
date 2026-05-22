@@ -191,6 +191,10 @@ export default function ProductDetail() {
   const [, params] = useRoute("/product/:id");
   const productId = params?.id;
 
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [productId]);
+
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", productId],
     queryFn: async () => {
