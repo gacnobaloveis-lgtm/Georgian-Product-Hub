@@ -284,6 +284,34 @@ async function ensureProductColumns() {
   }
 }
 
+async function ensureProductReviewTables() {
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS product_reactions (
+        product_id INTEGER NOT NULL,
+        user_id VARCHAR NOT NULL,
+        type VARCHAR NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        PRIMARY KEY (product_id, user_id)
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS product_comments (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER NOT NULL,
+        user_id VARCHAR NOT NULL,
+        text TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_product_comments_pid ON product_comments(product_id, created_at DESC)`);
+    console.log("[migrate] product_reactions/comments tables ensured");
+  } catch (err) {
+    console.error("[migrate] Error ensuring product review tables:", err);
+  }
+}
+
 async function migrateFilesToDb() {
   try {
     const { pool } = await import("./db");
@@ -454,6 +482,7 @@ async function initializeApp() {
     await ensurePushSubscriptionsTable();
     await ensureBroadcastTables();
     await ensureProductColumns();
+    await ensureProductReviewTables();
     await migrateFilesToDb();
     log("All migrations completed successfully");
   } catch (err: any) {
