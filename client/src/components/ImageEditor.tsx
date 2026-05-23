@@ -90,8 +90,9 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
         setLoading(false);
       } catch (err) {
         console.error(err);
-        toast({ variant: "destructive", title: "შეცდომა", description: "ფონის მოცილება ვერ მოხერხდა" });
-        onCancel();
+        if (cancelled) return;
+        toast({ title: "ფონის მოცილება ვერ მოხერხდა", description: "გრძელდება ორიგინალი სურათით" });
+        onSave(file);
       }
     })();
     return () => { cancelled = true; };
