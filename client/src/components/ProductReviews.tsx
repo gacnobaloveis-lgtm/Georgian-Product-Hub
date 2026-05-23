@@ -16,6 +16,16 @@ function formatDate(iso: string) {
   } catch { return ""; }
 }
 
+function formatCount(n: number): string {
+  if (n < 1000) return String(n);
+  if (n < 1_000_000) {
+    const k = n / 1000;
+    return (k >= 10 ? Math.floor(k) : Math.floor(k * 10) / 10) + "k";
+  }
+  const m = n / 1_000_000;
+  return (m >= 10 ? Math.floor(m) : Math.floor(m * 10) / 10) + "M";
+}
+
 function displayName(c: { firstName: string | null; lastName: string | null }) {
   const n = `${c.firstName ?? ""} ${c.lastName ?? ""}`.trim();
   return n || "მომხმარებელი";
@@ -143,8 +153,7 @@ export function ProductReviews({ productId }: { productId: number }) {
           title="კომენტარები"
         >
           <MessageCircle className="h-4 w-4" />
-          <span className="tabular-nums">{commentCount > 0 ? commentCount : ""}</span>
-          <span className="hidden sm:inline">კომენტარი</span>
+          <span className="tabular-nums">კომ {formatCount(commentCount)}</span>
         </button>
       </div>
 
