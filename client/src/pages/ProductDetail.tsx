@@ -367,7 +367,7 @@ export default function ProductDetail() {
     <div className="min-h-screen" style={PAGE_BG_STYLE}>
       <div aria-hidden className="pointer-events-none fixed top-0 left-0 z-0" style={{ ...PAGE_BG_FIXED_STYLE, width: "100vw", height: "100vh", transform: "translateZ(0)", willChange: "transform" }} />
       <div className="relative z-10 mx-auto max-w-6xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
-        <div className={`rounded-2xl bg-emerald-500/5 backdrop-blur-sm border border-emerald-400/25 text-white px-3 py-4 sm:px-6 sm:py-6 lg:px-8 ${reviewsOpen ? "invisible" : ""}`}>
+        <div className={`rounded-2xl bg-emerald-500/5 backdrop-blur-sm border border-emerald-400/25 text-white px-3 py-4 sm:px-6 sm:py-6 lg:px-8 ${reviewsOpen ? "hidden" : ""}`}>
         <div className="mb-4 sm:mb-6">
           <nav className="flex items-center gap-2 text-xs sm:text-sm" data-testid="breadcrumb">
             <Link href="/" className="flex items-center gap-1.5 font-bold text-emerald-400 hover:text-emerald-300" data-testid="link-breadcrumb-home">
