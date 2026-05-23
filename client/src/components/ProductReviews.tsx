@@ -63,7 +63,6 @@ export function ProductReviews({ productId }: { productId: number }) {
       if (!r.ok) throw new Error("err");
       return r.json();
     },
-    enabled: open,
   });
 
   const reactMutation = useMutation({
