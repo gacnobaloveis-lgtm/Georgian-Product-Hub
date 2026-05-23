@@ -233,8 +233,8 @@ export function ProductReviews({ productId, onOpenChange }: { productId: number;
           data-testid="modal-reviews"
         >
           <div
-            className="w-full sm:max-w-md flex flex-col bg-slate-900/55 border border-white/20 rounded-2xl shadow-2xl text-white"
-            style={{ height: "min(520px, calc(100dvh - 32px))" }}
+            className="w-full sm:max-w-3xl flex flex-col bg-slate-900/55 border border-white/20 rounded-2xl shadow-2xl text-white"
+            style={{ height: "calc(100dvh - 48px)", maxHeight: "900px" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
