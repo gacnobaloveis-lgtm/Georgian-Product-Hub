@@ -225,9 +225,18 @@ export function ProductReviews({ productId }: { productId: number }) {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} data-testid="modal-reviews">
+        <div
+          className="fixed inset-0 z-50"
+          onClick={() => setOpen(false)}
+          data-testid="modal-reviews"
+          style={{
+            backgroundImage: "linear-gradient(rgba(8,20,40,0.55), rgba(8,20,40,0.65)), url(/images/hero-fishing.png)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
           <div
-            className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-16px)] sm:w-full sm:max-w-lg flex flex-col bg-slate-900/55 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl text-white"
+            className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-16px)] sm:w-full sm:max-w-lg flex flex-col bg-slate-900/45 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl text-white"
             style={{ top: "16px", bottom: "16px", maxHeight: "calc(100% - 32px)" }}
             onClick={(e) => e.stopPropagation()}
           >
