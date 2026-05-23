@@ -160,9 +160,9 @@ export function ProductReviews({ productId }: { productId: number }) {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4" onClick={() => setOpen(false)} data-testid="modal-reviews">
-          <div className="w-full sm:max-w-lg max-h-[90vh] flex flex-col bg-white rounded-t-2xl sm:rounded-2xl shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b px-4 py-3">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4" onClick={() => setOpen(false)} data-testid="modal-reviews">
+          <div className="w-full sm:max-w-lg max-h-[90vh] flex flex-col bg-white/70 backdrop-blur-xl border border-white/60 rounded-t-2xl sm:rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-white/40 px-4 py-3">
               <h3 className="text-base font-semibold">შეფასებები და კომენტარები</h3>
               <button onClick={() => setOpen(false)} className="text-gray-500 hover:text-gray-800" data-testid="button-close-reviews">
                 <X className="h-5 w-5" />
@@ -189,7 +189,7 @@ export function ProductReviews({ productId }: { productId: number }) {
               )}
             </div>
 
-            <div className="border-t px-4 py-3 space-y-2">
+            <div className="border-t border-white/40 px-4 py-3 space-y-2">
               {isAuthenticated ? (
                 <>
                   <Textarea
