@@ -237,7 +237,7 @@ export function ProductReviews({ productId }: { productId: number }) {
         >
           <div
             className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-16px)] sm:w-full sm:max-w-lg flex flex-col bg-slate-900/45 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl text-white"
-            style={{ top: "16px", bottom: "16px", maxHeight: "calc(100% - 32px)" }}
+            style={{ top: "16px", bottom: "16px", height: "calc(100% - 32px)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
