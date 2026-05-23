@@ -876,7 +876,7 @@ function ProductSpecs({ product, stockOverride, className = "" }: { product: Pro
       {specs.map((s) => (
         <div
           key={s.label}
-          className="rounded-xl border border-gray-200 bg-gray-50/70 px-2.5 py-2 text-center"
+          className="rounded-xl border border-white/60 bg-white/60 backdrop-blur-md shadow-sm px-2.5 py-2 text-center"
           data-testid={`spec-${s.label}`}
         >
           <div className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-gray-500">{s.label}</div>
