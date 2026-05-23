@@ -6,7 +6,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
-import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 interface ReactionData { likes: number; dislikes: number; mine: "like" | "dislike" | null; }
 interface CommentRow { id: number; text: string; createdAt: string; userId: string; firstName: string | null; lastName: string | null; }
@@ -227,18 +226,13 @@ export function ProductReviews({ productId }: { productId: number }) {
 
       {open && (
         <div
-          className="fixed inset-0 z-50"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/30 backdrop-blur-2xl"
           onClick={() => setOpen(false)}
           data-testid="modal-reviews"
-          style={{
-            backgroundImage: `linear-gradient(rgba(2, 6, 23, 0.25), rgba(2, 6, 23, 0.35)), url(${mountainSceneBg})`,
-            backgroundSize: "cover",
-            backgroundPosition: "right center",
-          }}
         >
           <div
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-24px)] sm:w-full sm:max-w-md flex flex-col bg-slate-900/55 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl text-white"
-            style={{ height: "min(560px, calc(100dvh - 48px))" }}
+            className="w-full sm:max-w-md flex flex-col bg-slate-900/55 border border-white/20 rounded-2xl shadow-2xl text-white"
+            style={{ height: "min(520px, calc(100dvh - 32px))" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
