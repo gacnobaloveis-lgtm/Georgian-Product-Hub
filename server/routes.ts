@@ -2460,6 +2460,52 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     }
   });
 
+  app.patch("/api/products/:id/comments/:commentId", async (req: any, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "გთხოვთ გაიაროთ ავტორიზაცია" });
+    }
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const cid = parseInt(req.params.commentId);
+      if (isNaN(cid)) return res.status(400).json({ message: "Invalid id" });
+      const text = String(req.body?.text || "").trim().slice(0, 1000);
+      if (!text) return res.status(400).json({ message: "ცარიელი კომენტარი" });
+      const { pool } = await import("./db");
+      const r = await pool.query(
+        `UPDATE product_comments SET text=$1 WHERE id=$2 AND user_id=$3 RETURNING id`,
+        [text, cid, userId]
+      );
+      if (r.rowCount === 0) return res.status(403).json({ message: "უფლება არ გაქვთ" });
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("comments patch error", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.delete("/api/products/:id/comments/:commentId", async (req: any, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "გთხოვთ გაიაროთ ავტორიზაცია" });
+    }
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const cid = parseInt(req.params.commentId);
+      if (isNaN(cid)) return res.status(400).json({ message: "Invalid id" });
+      const { pool } = await import("./db");
+      const r = await pool.query(
+        `DELETE FROM product_comments WHERE id=$1 AND user_id=$2`,
+        [cid, userId]
+      );
+      if (r.rowCount === 0) return res.status(403).json({ message: "უფლება არ გაქვთ" });
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("comments delete error", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.post("/api/flitt/callback", express.json(), (req, res) => {
     // Log only non-sensitive fields for audit
     const { order_id, payment_id, order_status, response_status } = req.body || {};
