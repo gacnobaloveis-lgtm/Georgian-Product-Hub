@@ -2343,6 +2343,123 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     }
   });
 
+  app.get("/api/products/:id/reactions", async (req: any, res) => {
+    try {
+      const { pool } = await import("./db");
+      const pid = parseInt(req.params.id);
+      if (isNaN(pid)) return res.status(400).json({ message: "Invalid id" });
+      const counts = await pool.query(
+        `SELECT type, COUNT(*)::int AS c FROM product_reactions WHERE product_id=$1 GROUP BY type`,
+        [pid]
+      );
+      let likes = 0, dislikes = 0;
+      for (const row of counts.rows) {
+        if (row.type === "like") likes = row.c;
+        else if (row.type === "dislike") dislikes = row.c;
+      }
+      let mine: string | null = null;
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        const userId = req.user?.claims?.sub;
+        if (userId) {
+          const r = await pool.query(`SELECT type FROM product_reactions WHERE product_id=$1 AND user_id=$2`, [pid, userId]);
+          mine = r.rows[0]?.type ?? null;
+        }
+      }
+      res.json({ likes, dislikes, mine });
+    } catch (err) {
+      console.error("reactions get error", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.post("/api/products/:id/reactions", async (req: any, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "გთხოვთ გაიაროთ ავტორიზაცია" });
+    }
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const pid = parseInt(req.params.id);
+      if (isNaN(pid)) return res.status(400).json({ message: "Invalid id" });
+      const type = req.body?.type;
+      const { pool } = await import("./db");
+      if (type === null) {
+        await pool.query(`DELETE FROM product_reactions WHERE product_id=$1 AND user_id=$2`, [pid, userId]);
+      } else if (type === "like" || type === "dislike") {
+        await pool.query(
+          `INSERT INTO product_reactions(product_id,user_id,type) VALUES($1,$2,$3)
+           ON CONFLICT (product_id,user_id) DO UPDATE SET type=EXCLUDED.type, created_at=NOW()`,
+          [pid, userId, type]
+        );
+      } else {
+        return res.status(400).json({ message: "Invalid type" });
+      }
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("reactions post error", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.get("/api/products/:id/comments", async (req, res) => {
+    try {
+      const { pool } = await import("./db");
+      const pid = parseInt(req.params.id);
+      if (isNaN(pid)) return res.status(400).json({ message: "Invalid id" });
+      const r = await pool.query(
+        `SELECT c.id, c.text, c.created_at, c.user_id, u.first_name, u.last_name
+         FROM product_comments c
+         LEFT JOIN users u ON u.id = c.user_id
+         WHERE c.product_id=$1
+         ORDER BY c.created_at DESC
+         LIMIT 200`,
+        [pid]
+      );
+      res.json(r.rows.map((row) => ({
+        id: row.id,
+        text: row.text,
+        createdAt: row.created_at,
+        userId: row.user_id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+      })));
+    } catch (err) {
+      console.error("comments get error", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.post("/api/products/:id/comments", async (req: any, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "გთხოვთ გაიაროთ ავტორიზაცია" });
+    }
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const pid = parseInt(req.params.id);
+      if (isNaN(pid)) return res.status(400).json({ message: "Invalid id" });
+      const text = String(req.body?.text || "").trim().slice(0, 1000);
+      if (!text) return res.status(400).json({ message: "ცარიელი კომენტარი" });
+      const { pool } = await import("./db");
+      const r = await pool.query(
+        `INSERT INTO product_comments(product_id,user_id,text) VALUES($1,$2,$3) RETURNING id, created_at`,
+        [pid, userId, text]
+      );
+      const user = await storage.getUser(userId);
+      res.status(201).json({
+        id: r.rows[0].id,
+        text,
+        createdAt: r.rows[0].created_at,
+        userId,
+        firstName: user?.firstName ?? null,
+        lastName: user?.lastName ?? null,
+      });
+    } catch (err) {
+      console.error("comments post error", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.post("/api/flitt/callback", express.json(), (req, res) => {
     // Log only non-sensitive fields for audit
     const { order_id, payment_id, order_status, response_status } = req.body || {};
