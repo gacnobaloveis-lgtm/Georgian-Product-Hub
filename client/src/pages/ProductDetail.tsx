@@ -603,7 +603,7 @@ export default function ProductDetail() {
           </div>
         )}
 
-        <div className="mt-3 sm:mt-4 flex items-center gap-4 lg:hidden">
+        <div className="mt-2 sm:mt-4 flex items-center gap-3 sm:gap-4 lg:hidden">
           <label className="text-sm font-medium text-white">რაოდენობა:</label>
           <div className="flex items-center rounded-xl border border-gray-200">
             <button
@@ -615,12 +615,12 @@ export default function ProductDetail() {
                 }
                 setQuantity(q => Math.max(1, q - 1));
               }}
-              className="flex h-10 w-10 items-center justify-center text-gray-500 hover:text-gray-800 transition-colors"
+              className="flex h-8 w-9 sm:h-10 sm:w-10 items-center justify-center text-gray-500 hover:text-gray-800 transition-colors"
               data-testid="button-qty-minus"
             >
               <Minus className="h-4 w-4" />
             </button>
-            <span className="min-w-[40px] text-center text-base font-semibold" data-testid="text-quantity">{quantity}</span>
+            <span className="min-w-[36px] sm:min-w-[40px] text-center text-sm sm:text-base font-semibold" data-testid="text-quantity">{quantity}</span>
             <button
               type="button"
               onClick={() => {
@@ -631,7 +631,7 @@ export default function ProductDetail() {
                 setQuantity(q => Math.min(maxQuantity, q + 1));
               }}
               disabled={!!(selectedColor || !hasColors) && quantity >= maxQuantity}
-              className={`flex h-10 w-10 items-center justify-center transition-colors ${(!hasColors || selectedColor) && quantity >= maxQuantity ? "text-gray-300 cursor-not-allowed" : "text-gray-500 hover:text-gray-800"}`}
+              className={`flex h-8 w-9 sm:h-10 sm:w-10 items-center justify-center transition-colors ${(!hasColors || selectedColor) && quantity >= maxQuantity ? "text-gray-300 cursor-not-allowed" : "text-gray-500 hover:text-gray-800"}`}
               data-testid="button-qty-plus"
             >
               <Plus className="h-4 w-4" />
@@ -639,7 +639,7 @@ export default function ProductDetail() {
           </div>
         </div>
 
-        <ProductSpecs product={product} stockOverride={totalStock} className="lg:hidden mt-3" />
+        <ProductSpecs product={product} stockOverride={totalStock} className="lg:hidden mt-2 sm:mt-3" />
         <div className="lg:hidden"><ProductReviews productId={product.id} onOpenChange={setReviewsOpen} /></div>
 
         <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4">
@@ -877,11 +877,11 @@ function ProductSpecs({ product, stockOverride, className = "" }: { product: Pro
       {specs.map((s) => (
         <div
           key={s.label}
-          className="rounded-xl border border-white/60 bg-white/60 backdrop-blur-md shadow-sm px-2.5 py-2 text-center"
+          className="rounded-xl border border-white/60 bg-white/60 backdrop-blur-md shadow-sm px-2 py-1 sm:px-2.5 sm:py-2 text-center"
           data-testid={`spec-${s.label}`}
         >
-          <div className="text-[10px] sm:text-xs font-medium uppercase tracking-wide text-gray-500">{s.label}</div>
-          <div className="mt-0.5 text-xs sm:text-sm font-semibold text-gray-800 break-words">{s.value}</div>
+          <div className="text-[9px] sm:text-xs font-medium uppercase tracking-wide text-gray-500 leading-tight">{s.label}</div>
+          <div className="text-[11px] sm:text-sm font-semibold text-gray-800 break-words leading-tight">{s.value}</div>
         </div>
       ))}
     </div>
