@@ -3,6 +3,7 @@ import { Loader2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@shared/routes";
 import { useToast } from "@/hooks/use-toast";
+import { removeBackground } from "@imgly/background-removal";
 
 type BgType = "transparent" | "white" | "green" | "red" | "blue" | "yellow" | "blur";
 
@@ -33,6 +34,7 @@ interface Props {
 export function ImageEditor({ file, onSave, onCancel }: Props) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [loadingMsg, setLoadingMsg] = useState("ფონის მოცილება მიმდინარეობს...");
   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
   const [cutoutImg, setCutoutImg] = useState<HTMLImageElement | null>(null);
   const [bgType, setBgType] = useState<BgType>("transparent");
@@ -45,6 +47,7 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
     (async () => {
       try {
         setLoading(true);
+        setLoadingMsg("სურათი იტვირთება...");
         const origUrl = URL.createObjectURL(file);
         const orig = new Image();
         orig.src = origUrl;
@@ -52,12 +55,33 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
         if (cancelled) return;
         setOriginalImg(orig);
 
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch(api.media.cutout.path, { method: "POST", body: fd, credentials: "include" });
-        if (!res.ok) throw new Error("cutout failed");
-        const blob = await res.blob();
-        const cutUrl = URL.createObjectURL(blob);
+        let cutBlob: Blob;
+        try {
+          setLoadingMsg("ფონის მოცილება ბრაუზერში...");
+          cutBlob = await removeBackground(file, {
+            progress: (key, current, total) => {
+              if (cancelled) return;
+              if (key.startsWith("fetch")) {
+                const pct = total ? Math.round((current / total) * 100) : 0;
+                setLoadingMsg(`მოდელის ჩამოტვირთვა... ${pct}%`);
+              } else if (key.startsWith("compute")) {
+                setLoadingMsg("ფონის ამოჭრა...");
+              }
+            },
+          });
+        } catch (clientErr) {
+          console.warn("Client bg removal failed, trying server", clientErr);
+          if (cancelled) return;
+          setLoadingMsg("სერვერზე ვცდი...");
+          const fd = new FormData();
+          fd.append("file", file);
+          const res = await fetch(api.media.cutout.path, { method: "POST", body: fd, credentials: "include" });
+          if (!res.ok) throw new Error("server cutout failed");
+          cutBlob = await res.blob();
+        }
+
+        if (cancelled) return;
+        const cutUrl = URL.createObjectURL(cutBlob);
         const cut = new Image();
         cut.src = cutUrl;
         await new Promise((r, e) => { cut.onload = r; cut.onerror = e; });
@@ -112,8 +136,8 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
     return (
       <div className="rounded-lg border border-emerald-300 bg-white p-8 text-center">
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-emerald-600" />
-        <p className="mt-3 text-sm text-emerald-900">ფონის მოცილება მიმდინარეობს...</p>
-        <p className="text-xs text-emerald-700/70">~10-20 წამი</p>
+        <p className="mt-3 text-sm text-emerald-900" data-testid="text-loading">{loadingMsg}</p>
+        <p className="text-xs text-emerald-700/70">პირველად ~30-60 წამი (მოდელის ჩამოტვირთვა), შემდეგ ~5-10 წამი</p>
       </div>
     );
   }
