@@ -5,6 +5,7 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import multer from "multer";
 import sharp from "sharp";
+import { removeBackground } from "@imgly/background-removal-node";
 import path from "path";
 import fs from "fs";
 import { randomUUID, createHash, timingSafeEqual } from "crypto";
@@ -527,27 +528,57 @@ export async function registerRoutes(
         return res.status(400).json({ message: "ფაილები არ არის ატვირთული" });
       }
 
+      const shouldRemoveBg = String(req.body?.removeBg || "").toLowerCase() === "true" || req.body?.removeBg === "1";
+
       const results = [];
       for (const file of files) {
-        const filename = `${randomUUID()}.webp`;
-        const outputPath = path.join(uploadsDir, filename);
+        let outBuffer: Buffer;
+        let outExt: string;
+        let outMime: string;
 
-        const webpBuffer = await sharp(file.buffer)
-          .resize(800, null, { withoutEnlargement: true })
-          .webp({ quality: 82 })
-          .toBuffer();
+        if (shouldRemoveBg) {
+          try {
+            const blob = await removeBackground(file.buffer);
+            const ab = await blob.arrayBuffer();
+            const pngNoBg = Buffer.from(ab);
+            outBuffer = await sharp(pngNoBg)
+              .resize(800, null, { withoutEnlargement: true })
+              .png({ compressionLevel: 9 })
+              .toBuffer();
+            outExt = "png";
+            outMime = "image/png";
+          } catch (bgErr) {
+            console.error("Background removal failed, falling back to webp:", bgErr);
+            outBuffer = await sharp(file.buffer)
+              .resize(800, null, { withoutEnlargement: true })
+              .webp({ quality: 82 })
+              .toBuffer();
+            outExt = "webp";
+            outMime = "image/webp";
+          }
+        } else {
+          outBuffer = await sharp(file.buffer)
+            .resize(800, null, { withoutEnlargement: true })
+            .webp({ quality: 82 })
+            .toBuffer();
+          outExt = "webp";
+          outMime = "image/webp";
+        }
+
+        const filename = `${randomUUID()}.${outExt}`;
+        const outputPath = path.join(uploadsDir, filename);
 
         const mediaItem = await storage.createMedia({
           filename,
           originalName: sanitizeFilename(file.originalname),
           path: `/uploads/${filename}`,
-          size: String(webpBuffer.length),
+          size: String(outBuffer.length),
         });
 
         try {
           await pool.query(
             "UPDATE media SET data = $1::bytea, mime_type = $2 WHERE id = $3",
-            [webpBuffer, "image/webp", mediaItem.id]
+            [outBuffer, outMime, mediaItem.id]
           );
         } catch (dbErr) {
           console.error("CRITICAL: Failed to store image in DB, rolling back:", dbErr);
@@ -555,7 +586,7 @@ export async function registerRoutes(
           throw new Error("ბაზაში სურათის შენახვა ვერ მოხერხდა — სცადეთ თავიდან");
         }
 
-        try { fs.writeFileSync(outputPath, webpBuffer); } catch (diskErr) {
+        try { fs.writeFileSync(outputPath, outBuffer); } catch (diskErr) {
           console.warn("Disk cache write failed (image still saved in DB):", diskErr);
         }
 
