@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { AuthLoginDialog } from "@/components/AuthLoginDialog";
 
 interface ReactionData { likes: number; dislikes: number; mine: "like" | "dislike" | null; }
 interface CommentRow { id: number; text: string; createdAt: string; userId: string; firstName: string | null; lastName: string | null; }
@@ -37,6 +38,7 @@ export function ProductReviews({ productId }: { productId: number }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const reactionsKey = ["/api/products", productId, "reactions"] as const;
   const commentsKey = ["/api/products", productId, "comments"] as const;
@@ -100,7 +102,7 @@ export function ProductReviews({ productId }: { productId: number }) {
 
   const handleReact = (t: "like" | "dislike") => {
     if (!isAuthenticated) {
-      toast({ variant: "destructive", title: "გთხოვთ გაიაროთ ავტორიზაცია" });
+      setLoginOpen(true);
       return;
     }
     const next = reactions.data?.mine === t ? null : t;
@@ -119,11 +121,11 @@ export function ProductReviews({ productId }: { productId: number }) {
           type="button"
           onClick={() => handleReact("like")}
           disabled={reactMutation.isPending || !isAuthenticated}
-          className={`flex items-center justify-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs sm:text-sm font-semibold backdrop-blur-md shadow-sm transition-colors ${
+          className={`flex items-center justify-center gap-1.5 rounded-xl border-2 px-2.5 py-2 text-xs sm:text-sm font-semibold backdrop-blur-md shadow-sm transition-colors ${
             mine === "like"
-              ? "border-emerald-500/80 bg-emerald-500/40 text-white"
-              : "border-emerald-400/60 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20"
-          } ${!isAuthenticated ? "opacity-60 cursor-not-allowed" : ""}`}
+              ? "border-emerald-600 bg-emerald-600/90 text-white"
+              : "border-emerald-500 bg-white/80 text-emerald-700 hover:bg-emerald-50"
+          }`}
           data-testid="button-like"
           title={isAuthenticated ? "მომწონს" : "გაიარეთ ავტორიზაცია"}
         >
@@ -134,11 +136,11 @@ export function ProductReviews({ productId }: { productId: number }) {
           type="button"
           onClick={() => handleReact("dislike")}
           disabled={reactMutation.isPending || !isAuthenticated}
-          className={`flex items-center justify-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs sm:text-sm font-semibold backdrop-blur-md shadow-sm transition-colors ${
+          className={`flex items-center justify-center gap-1.5 rounded-xl border-2 px-2.5 py-2 text-xs sm:text-sm font-semibold backdrop-blur-md shadow-sm transition-colors ${
             mine === "dislike"
-              ? "border-red-500/80 bg-red-500/40 text-white"
-              : "border-red-400/60 bg-red-500/10 text-red-700 hover:bg-red-500/20"
-          } ${!isAuthenticated ? "opacity-60 cursor-not-allowed" : ""}`}
+              ? "border-red-600 bg-red-600/90 text-white"
+              : "border-red-500 bg-white/80 text-red-700 hover:bg-red-50"
+          }`}
           data-testid="button-dislike"
           title={isAuthenticated ? "არ მომწონს" : "გაიარეთ ავტორიზაცია"}
         >
@@ -148,7 +150,7 @@ export function ProductReviews({ productId }: { productId: number }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center justify-center gap-1.5 rounded-xl border border-white/60 bg-white/20 px-2.5 py-2 text-xs sm:text-sm font-semibold text-blue-700 backdrop-blur-md shadow-sm transition-colors hover:bg-white/30"
+          className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-blue-500 bg-white/80 px-2.5 py-2 text-xs sm:text-sm font-semibold text-blue-700 backdrop-blur-md shadow-sm transition-colors hover:bg-blue-50"
           data-testid="button-open-comments"
           title="კომენტარები"
         >
@@ -212,14 +214,25 @@ export function ProductReviews({ productId }: { productId: number }) {
                   </div>
                 </>
               ) : (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center text-sm text-amber-800" data-testid="text-login-required">
-                  კომენტარის დასაწერად და შესაფასებლად გთხოვთ <a href="/api/login" className="font-semibold underline">გაიაროთ ავტორიზაცია</a>
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-center text-sm text-amber-800 space-y-2" data-testid="text-login-required">
+                  <p>კომენტარის დასაწერად და შესაფასებლად საჭიროა ავტორიზაცია</p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => { setOpen(false); setLoginOpen(true); }}
+                    className="bg-amber-600 hover:bg-amber-700"
+                    data-testid="button-open-login"
+                  >
+                    გაიარეთ ავტორიზაცია
+                  </Button>
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
+
+      <AuthLoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
     </>
   );
 }
