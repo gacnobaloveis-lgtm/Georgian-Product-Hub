@@ -161,35 +161,35 @@ export function ProductReviews({ productId }: { productId: number }) {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4" onClick={() => setOpen(false)} data-testid="modal-reviews">
-          <div className="w-full sm:max-w-lg max-h-[90vh] flex flex-col bg-white/70 backdrop-blur-xl border border-white/60 rounded-t-2xl sm:rounded-2xl shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-white/40 px-4 py-3">
-              <h3 className="text-base font-semibold">შეფასებები და კომენტარები</h3>
-              <button onClick={() => setOpen(false)} className="text-gray-500 hover:text-gray-800" data-testid="button-close-reviews">
+          <div className="w-full sm:max-w-lg max-h-[90vh] flex flex-col bg-slate-900/55 backdrop-blur-xl border border-white/20 rounded-t-2xl sm:rounded-2xl shadow-2xl text-white" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-white/15 px-4 py-3">
+              <h3 className="text-base font-semibold text-white">შეფასებები და კომენტარები</h3>
+              <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white" data-testid="button-close-reviews">
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
               {comments.isLoading ? (
-                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-gray-400" /></div>
+                <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-white/60" /></div>
               ) : (comments.data ?? []).length === 0 ? (
-                <p className="text-center text-sm text-gray-500 py-8">ჯერ კომენტარები არ არის. დაწერეთ პირველი!</p>
+                <p className="text-center text-sm text-white/70 py-8">ჯერ კომენტარები არ არის. დაწერეთ პირველი!</p>
               ) : (
                 comments.data!.map((c) => (
-                  <div key={c.id} className="rounded-lg border border-gray-200 bg-gray-50 p-3" data-testid={`comment-${c.id}`}>
-                    <div className="flex items-center gap-2 text-xs text-gray-600">
+                  <div key={c.id} className="rounded-lg border border-white/15 bg-white/10 backdrop-blur-sm p-3" data-testid={`comment-${c.id}`}>
+                    <div className="flex items-center gap-2 text-xs text-white/80">
                       <UserCircle2 className="h-4 w-4" />
-                      <span className="font-semibold text-gray-800" data-testid={`comment-author-${c.id}`}>{displayName(c)}</span>
-                      <span className="text-gray-400">•</span>
+                      <span className="font-semibold text-white" data-testid={`comment-author-${c.id}`}>{displayName(c)}</span>
+                      <span className="text-white/50">•</span>
                       <span>{formatDate(c.createdAt)}</span>
                     </div>
-                    <p className="mt-1.5 text-sm text-gray-800 whitespace-pre-wrap break-words" data-testid={`comment-text-${c.id}`}>{c.text}</p>
+                    <p className="mt-1.5 text-sm text-white whitespace-pre-wrap break-words" data-testid={`comment-text-${c.id}`}>{c.text}</p>
                   </div>
                 ))
               )}
             </div>
 
-            <div className="border-t border-white/40 px-4 py-3 space-y-2">
+            <div className="border-t border-white/15 px-4 py-3 space-y-2">
               {isAuthenticated ? (
                 <>
                   <Textarea
@@ -198,6 +198,7 @@ export function ProductReviews({ productId }: { productId: number }) {
                     placeholder="დაწერეთ თქვენი კომენტარი..."
                     rows={2}
                     maxLength={1000}
+                    className="bg-white/15 border-white/20 text-white placeholder:text-white/50 focus-visible:ring-white/40"
                     data-testid="input-comment"
                   />
                   <div className="flex justify-end">
