@@ -151,6 +151,26 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-emerald-600" />
         <p className="mt-3 text-sm text-emerald-900" data-testid="text-loading">{loadingMsg}</p>
         <p className="text-xs text-emerald-700/70">პირველად ~30-60 წამი (მოდელის ჩამოტვირთვა), შემდეგ ~5-10 წამი</p>
+        <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-center">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onSave(file)}
+            data-testid="button-skip-bg"
+          >
+            ფონის გარეშე გაგრძელება
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onCancel}
+            data-testid="button-cancel-loading"
+          >
+            გაუქმება
+          </Button>
+        </div>
       </div>
     );
   }
