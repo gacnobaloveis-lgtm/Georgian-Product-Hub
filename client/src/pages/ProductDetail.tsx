@@ -6,6 +6,7 @@ import { ArrowLeft, Play, X, ShoppingCart, Minus, Plus, Coins, AlertCircle, Load
 import { Link } from "wouter";
 import type { Product } from "@shared/schema";
 import { PurchaseDialog } from "@/components/PurchaseDialog";
+import { ProductReviews } from "@/components/ProductReviews";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
@@ -521,6 +522,7 @@ export default function ProductDetail() {
             </div>
 
             <ProductSpecs product={product} stockOverride={totalStock} className="hidden lg:grid mt-3" />
+            <ProductReviews productId={product.id} />
           </div>
         </div>
 
@@ -637,6 +639,7 @@ export default function ProductDetail() {
         </div>
 
         <ProductSpecs product={product} stockOverride={totalStock} className="lg:hidden mt-3" />
+        <ProductReviews productId={product.id} />
 
         <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4">
           <button
