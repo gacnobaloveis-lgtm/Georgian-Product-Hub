@@ -109,10 +109,10 @@ export function ProductReviews({ productId }: { productId: number }) {
           type="button"
           onClick={() => handleReact("like")}
           disabled={reactMutation.isPending || !isAuthenticated}
-          className={`flex items-center justify-center gap-1.5 rounded-xl border-2 px-2.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
+          className={`flex items-center justify-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs sm:text-sm font-semibold backdrop-blur-md shadow-sm transition-colors ${
             mine === "like"
-              ? "border-emerald-600 bg-emerald-600 text-white"
-              : "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+              ? "border-emerald-500/80 bg-emerald-500/40 text-white"
+              : "border-emerald-400/60 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20"
           } ${!isAuthenticated ? "opacity-60 cursor-not-allowed" : ""}`}
           data-testid="button-like"
           title={isAuthenticated ? "მომწონს" : "გაიარეთ ავტორიზაცია"}
@@ -124,10 +124,10 @@ export function ProductReviews({ productId }: { productId: number }) {
           type="button"
           onClick={() => handleReact("dislike")}
           disabled={reactMutation.isPending || !isAuthenticated}
-          className={`flex items-center justify-center gap-1.5 rounded-xl border-2 px-2.5 py-2 text-xs sm:text-sm font-semibold transition-colors ${
+          className={`flex items-center justify-center gap-1.5 rounded-xl border px-2.5 py-2 text-xs sm:text-sm font-semibold backdrop-blur-md shadow-sm transition-colors ${
             mine === "dislike"
-              ? "border-red-600 bg-red-600 text-white"
-              : "border-red-300 bg-red-50 text-red-700 hover:bg-red-100"
+              ? "border-red-500/80 bg-red-500/40 text-white"
+              : "border-red-400/60 bg-red-500/10 text-red-700 hover:bg-red-500/20"
           } ${!isAuthenticated ? "opacity-60 cursor-not-allowed" : ""}`}
           data-testid="button-dislike"
           title={isAuthenticated ? "არ მომწონს" : "გაიარეთ ავტორიზაცია"}
@@ -138,7 +138,7 @@ export function ProductReviews({ productId }: { productId: number }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center justify-center gap-1.5 rounded-xl border-2 border-blue-300 bg-blue-50 px-2.5 py-2 text-xs sm:text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-100"
+          className="flex items-center justify-center gap-1.5 rounded-xl border border-white/60 bg-white/20 px-2.5 py-2 text-xs sm:text-sm font-semibold text-blue-700 backdrop-blur-md shadow-sm transition-colors hover:bg-white/30"
           data-testid="button-open-comments"
           title="კომენტარები"
         >
