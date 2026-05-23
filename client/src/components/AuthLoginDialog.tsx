@@ -694,7 +694,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
       </Dialog>
 
       <Dialog open={termsViewOpen} onOpenChange={setTermsViewOpen}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto bg-white/10 backdrop-blur-xl border border-white/30 text-white shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-center text-lg" data-testid="text-terms-title-register">
               <ScrollText className="inline h-5 w-5 mr-2" />
