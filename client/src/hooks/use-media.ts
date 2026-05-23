@@ -17,12 +17,16 @@ export function useUploadMedia() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (input: File[] | { files: File[]; removeBg?: boolean }) => {
+    mutationFn: async (input: File[] | { files: File[]; removeBg?: boolean; blur?: number; opacity?: number }) => {
       const files = Array.isArray(input) ? input : input.files;
       const removeBg = Array.isArray(input) ? false : !!input.removeBg;
+      const blur = Array.isArray(input) ? 0 : (input.blur ?? 0);
+      const opacity = Array.isArray(input) ? 100 : (input.opacity ?? 100);
       const formData = new FormData();
       files.forEach((file) => formData.append("files", file));
       if (removeBg) formData.append("removeBg", "true");
+      if (blur > 0) formData.append("blur", String(blur));
+      if (opacity < 100) formData.append("opacity", String(opacity));
 
       const res = await fetch(api.media.upload.path, {
         method: "POST",
