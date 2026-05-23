@@ -592,7 +592,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
               </p>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 rounded-xl border border-white/30 bg-white/10 backdrop-blur-md p-3 shadow-sm">
               <label className="flex items-start gap-2 cursor-pointer select-none">
                 <input
                   type="checkbox"
