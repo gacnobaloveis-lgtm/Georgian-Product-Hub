@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ThumbsUp, ThumbsDown, MessageCircle, X, Send, Loader2, UserCircle2, Pencil, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,11 +33,12 @@ function displayName(c: { firstName: string | null; lastName: string | null }) {
   return n || "მომხმარებელი";
 }
 
-export function ProductReviews({ productId }: { productId: number }) {
+export function ProductReviews({ productId, onOpenChange }: { productId: number; onOpenChange?: (open: boolean) => void }) {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const qc = useQueryClient();
-  const [open, setOpen] = useState(false);
+  const [open, _setOpen] = useState(false);
+  const setOpen = (v: boolean) => { _setOpen(v); onOpenChange?.(v); };
   const [text, setText] = useState("");
   const [loginOpen, setLoginOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -224,9 +226,9 @@ export function ProductReviews({ productId }: { productId: number }) {
         </button>
       </div>
 
-      {open && (
+      {open && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/30 backdrop-blur-2xl"
+          className="fixed inset-0 z-50 flex items-center justify-center p-3"
           onClick={() => setOpen(false)}
           data-testid="modal-reviews"
         >
@@ -376,7 +378,8 @@ export function ProductReviews({ productId }: { productId: number }) {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <AuthLoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
