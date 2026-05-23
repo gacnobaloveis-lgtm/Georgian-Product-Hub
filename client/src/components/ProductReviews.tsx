@@ -225,10 +225,10 @@ export function ProductReviews({ productId }: { productId: number }) {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto" onClick={() => setOpen(false)} data-testid="modal-reviews" style={{ paddingTop: "4vh", paddingBottom: "4vh" }}>
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} data-testid="modal-reviews">
           <div
-            className="w-full sm:max-w-lg flex flex-col bg-slate-900/55 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl text-white my-auto"
-            style={{ height: `${modalHeight}px`, maxHeight: "calc(100dvh - 48px)" }}
+            className="fixed left-1/2 -translate-x-1/2 w-[calc(100%-16px)] sm:w-full sm:max-w-lg flex flex-col bg-slate-900/55 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl text-white"
+            style={{ top: "16px", bottom: "16px", maxHeight: "calc(100% - 32px)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
