@@ -522,7 +522,7 @@ export default function ProductDetail() {
             </div>
 
             <ProductSpecs product={product} stockOverride={totalStock} className="hidden lg:grid mt-3" />
-            <ProductReviews productId={product.id} />
+            <div className="hidden lg:block"><ProductReviews productId={product.id} /></div>
           </div>
         </div>
 
@@ -639,7 +639,7 @@ export default function ProductDetail() {
         </div>
 
         <ProductSpecs product={product} stockOverride={totalStock} className="lg:hidden mt-3" />
-        <ProductReviews productId={product.id} />
+        <div className="lg:hidden"><ProductReviews productId={product.id} /></div>
 
         <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4">
           <button
