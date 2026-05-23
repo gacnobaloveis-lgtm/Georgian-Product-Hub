@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
+import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 interface ReactionData { likes: number; dislikes: number; mine: "like" | "dislike" | null; }
 interface CommentRow { id: number; text: string; createdAt: string; userId: string; firstName: string | null; lastName: string | null; }
@@ -230,9 +231,9 @@ export function ProductReviews({ productId }: { productId: number }) {
           onClick={() => setOpen(false)}
           data-testid="modal-reviews"
           style={{
-            backgroundImage: "linear-gradient(rgba(8,20,40,0.55), rgba(8,20,40,0.65)), url(/images/hero-fishing.png)",
+            backgroundImage: `linear-gradient(rgba(2,6,23,0.45), rgba(2,6,23,0.55)), url(${mountainSceneBg})`,
             backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundPosition: "right center",
           }}
         >
           <div
