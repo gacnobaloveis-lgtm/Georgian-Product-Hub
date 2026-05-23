@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, X, Star, Plus, Trash2 } from "lucide-react";
 import { Link } from "wouter";
+import { ImageEditor } from "@/components/ImageEditor";
 
 const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23e2e8f0'%3E%3Crect width='100' height='100'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%2394a3b8'%3E%E1%83%90%E1%83%A0%E1%83%90%3C/text%3E%3C/svg%3E";
 
@@ -56,9 +57,7 @@ export default function AdminAddProduct() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [selectedAlbum, setSelectedAlbum] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [removeBg, setRemoveBg] = useState(true);
-  const [bgBlur, setBgBlur] = useState(0);
-  const [opacity, setOpacity] = useState(100);
+  const [editorQueue, setEditorQueue] = useState<File[]>([]);
   const albumInputRef = useRef<HTMLInputElement>(null);
 
   const setField = <K extends keyof FormState>(key: K, value: string) => {
@@ -66,20 +65,34 @@ export default function AdminAddProduct() {
   };
 
   const handleAlbumUpload = useCallback(
-    async (files: FileList | File[]) => {
+    (files: FileList | File[]) => {
       const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
       if (imageFiles.length === 0) return;
+      setEditorQueue((q) => [...q, ...imageFiles]);
+    },
+    []
+  );
+
+  const handleEditorSave = useCallback(
+    async (blob: Blob) => {
+      const current = editorQueue[0];
+      if (!current) return;
+      const editedFile = new File([blob], current.name.replace(/\.[^.]+$/, "") + ".png", { type: "image/png" });
       try {
-        const uploaded = await uploadMutation.mutateAsync({ files: imageFiles, removeBg, blur: bgBlur, opacity });
+        const uploaded = await uploadMutation.mutateAsync({ files: [editedFile], removeBg: false });
         const newPaths = uploaded.map((m) => m.path);
         setSelectedAlbum((prev) => [...prev, ...newPaths]);
-        toast({ title: "ატვირთულია", description: `${imageFiles.length} სურათი აიტვირთა.` });
+        setEditorQueue((q) => q.slice(1));
       } catch (err) {
         toast({ variant: "destructive", title: "შეცდომა", description: err instanceof Error ? err.message : "ატვირთვის შეცდომა" });
       }
     },
-    [uploadMutation, toast, removeBg, bgBlur, opacity]
+    [editorQueue, uploadMutation, toast]
   );
+
+  const handleEditorCancel = useCallback(() => {
+    setEditorQueue((q) => q.slice(1));
+  }, []);
 
   const removeFromAlbum = (path: string) => {
     setSelectedAlbum((prev) => prev.filter((p) => p !== path));
@@ -276,55 +289,19 @@ export default function AdminAddProduct() {
               <div className="space-y-3">
                 <label className="text-sm font-medium">სურათები</label>
 
-                <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 space-y-3">
-                  <label className="flex items-start gap-2 cursor-pointer select-none" data-testid="label-remove-bg">
-                    <input
-                      type="checkbox"
-                      checked={removeBg}
-                      onChange={(e) => setRemoveBg(e.target.checked)}
-                      className="mt-0.5 h-4 w-4 accent-emerald-600"
-                      data-testid="checkbox-remove-bg"
-                    />
-                    <span className="text-sm">
-                      <span className="font-medium text-emerald-900">ფონის ავტომატური მოცილება</span>
-                      <span className="block text-xs text-emerald-800/70">სურათი ატვირთვისთანავე გამჭვირვალე გახდება (PNG). შეიძლება დაგვიანდეს რამდენიმე წამით.</span>
-                    </span>
-                  </label>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-emerald-900">ბლური (დაბურვა)</span>
-                      <span className="text-emerald-800 tabular-nums" data-testid="text-blur-value">{bgBlur}</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={20}
-                      step={1}
-                      value={bgBlur}
-                      onChange={(e) => setBgBlur(Number(e.target.value))}
-                      className="w-full accent-emerald-600"
-                      data-testid="slider-blur"
+                {editorQueue.length > 0 && (
+                  <div className="space-y-2">
+                    {editorQueue.length > 1 && (
+                      <div className="text-xs text-emerald-700">რიგში: {editorQueue.length} სურათი — მუშავდება #1</div>
+                    )}
+                    <ImageEditor
+                      key={editorQueue[0].name + editorQueue[0].size}
+                      file={editorQueue[0]}
+                      onSave={handleEditorSave}
+                      onCancel={handleEditorCancel}
                     />
                   </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-emerald-900">გამჭვირვალობა</span>
-                      <span className="text-emerald-800 tabular-nums" data-testid="text-opacity-value">{opacity}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={20}
-                      max={100}
-                      step={5}
-                      value={opacity}
-                      onChange={(e) => setOpacity(Number(e.target.value))}
-                      className="w-full accent-emerald-600"
-                      data-testid="slider-opacity"
-                    />
-                  </div>
-                </div>
+                )}
 
                 <div
                   onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}

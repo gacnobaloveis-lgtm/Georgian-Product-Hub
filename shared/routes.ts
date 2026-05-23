@@ -61,6 +61,14 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    cutout: {
+      method: "POST" as const,
+      path: "/api/media/cutout" as const,
+      responses: {
+        200: z.any(),
+        400: errorSchemas.validation,
+      },
+    },
     list: {
       method: "GET" as const,
       path: "/api/media" as const,

@@ -521,6 +521,25 @@ export async function registerRoutes(
     }
   });
 
+  app.post(api.media.cutout.path, requireAdmin, upload.single("file"), async (req, res) => {
+    try {
+      const file = req.file as Express.Multer.File | undefined;
+      if (!file) return res.status(400).json({ message: "ფაილი არ არის" });
+      const blob = await removeBackground(file.buffer);
+      const ab = await blob.arrayBuffer();
+      const png = await sharp(Buffer.from(ab))
+        .resize(1200, null, { withoutEnlargement: true })
+        .png({ compressionLevel: 9 })
+        .toBuffer();
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Cache-Control", "no-store");
+      return res.send(png);
+    } catch (err) {
+      console.error("Cutout error:", err);
+      return res.status(500).json({ message: "ფონის მოცილება ვერ მოხერხდა" });
+    }
+  });
+
   app.post(api.media.upload.path, requireAdmin, upload.array("files", 20), async (req, res) => {
     try {
       const files = req.files as Express.Multer.File[];
