@@ -529,6 +529,8 @@ export async function registerRoutes(
       }
 
       const shouldRemoveBg = String(req.body?.removeBg || "").toLowerCase() === "true" || req.body?.removeBg === "1";
+      const blurRadius = Math.max(0, Math.min(20, Number(req.body?.blur) || 0));
+      const opacityPct = Math.max(20, Math.min(100, Number(req.body?.opacity) || 100));
 
       const results = [];
       for (const file of files) {
@@ -536,33 +538,43 @@ export async function registerRoutes(
         let outExt: string;
         let outMime: string;
 
+        const needsAlpha = shouldRemoveBg || opacityPct < 100;
+
+        async function applyEffects(input: Buffer, hasAlpha: boolean): Promise<Buffer> {
+          let pipe = sharp(input).resize(800, null, { withoutEnlargement: true });
+          if (blurRadius > 0) pipe = pipe.blur(blurRadius);
+          if (hasAlpha && opacityPct < 100) {
+            const meta = await pipe.toBuffer({ resolveWithObject: true });
+            const alphaMul = opacityPct / 100;
+            pipe = sharp(meta.data).ensureAlpha().composite([{
+              input: Buffer.from([255, 255, 255, Math.round(255 * alphaMul)]),
+              raw: { width: 1, height: 1, channels: 4 },
+              tile: true,
+              blend: "dest-in",
+            }]);
+          }
+          return hasAlpha
+            ? pipe.png({ compressionLevel: 9 }).toBuffer()
+            : pipe.webp({ quality: 82 }).toBuffer();
+        }
+
         if (shouldRemoveBg) {
           try {
             const blob = await removeBackground(file.buffer);
             const ab = await blob.arrayBuffer();
-            const pngNoBg = Buffer.from(ab);
-            outBuffer = await sharp(pngNoBg)
-              .resize(800, null, { withoutEnlargement: true })
-              .png({ compressionLevel: 9 })
-              .toBuffer();
+            outBuffer = await applyEffects(Buffer.from(ab), true);
             outExt = "png";
             outMime = "image/png";
           } catch (bgErr) {
-            console.error("Background removal failed, falling back to webp:", bgErr);
-            outBuffer = await sharp(file.buffer)
-              .resize(800, null, { withoutEnlargement: true })
-              .webp({ quality: 82 })
-              .toBuffer();
-            outExt = "webp";
-            outMime = "image/webp";
+            console.error("Background removal failed, falling back:", bgErr);
+            outBuffer = await applyEffects(file.buffer, needsAlpha);
+            outExt = needsAlpha ? "png" : "webp";
+            outMime = needsAlpha ? "image/png" : "image/webp";
           }
         } else {
-          outBuffer = await sharp(file.buffer)
-            .resize(800, null, { withoutEnlargement: true })
-            .webp({ quality: 82 })
-            .toBuffer();
-          outExt = "webp";
-          outMime = "image/webp";
+          outBuffer = await applyEffects(file.buffer, needsAlpha);
+          outExt = needsAlpha ? "png" : "webp";
+          outMime = needsAlpha ? "image/png" : "image/webp";
         }
 
         const filename = `${randomUUID()}.${outExt}`;
