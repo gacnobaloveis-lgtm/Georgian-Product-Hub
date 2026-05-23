@@ -694,28 +694,30 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
       </Dialog>
 
       <Dialog open={termsViewOpen} onOpenChange={setTermsViewOpen}>
-        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto bg-white/10 backdrop-blur-xl border border-white/30 text-white shadow-2xl">
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto bg-slate-900/55 backdrop-blur-xl border border-white/20 text-white shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-center text-lg" data-testid="text-terms-title-register">
-              <ScrollText className="inline h-5 w-5 mr-2" />
-              წესები & პირობები
+            <DialogTitle className="text-center text-lg text-white flex items-center justify-center gap-2 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]" data-testid="text-terms-title-register">
+              <div className="rounded-full bg-emerald-500/20 p-2 ring-1 ring-emerald-400/40 backdrop-blur-md">
+                <ScrollText className="h-4 w-4 text-emerald-300" />
+              </div>
+              წესები და პირობები
             </DialogTitle>
-            <DialogDescription className="text-center text-sm text-muted-foreground">
+            <DialogDescription className="text-center text-xs text-emerald-100/80">
               გაეცანით წესებს რეგისტრაციის წინ
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2" data-testid="terms-content-register">
             {termsSections.length === 0 ? (
-              <p className="text-center text-sm text-muted-foreground py-4">
-                წესები და პირობები ჯერ არ არის დამატებული
-              </p>
+              <div className="rounded-2xl border border-white/20 bg-white/25 p-6 text-center text-emerald-50 backdrop-blur-md [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
+                წესები და პირობები მალე განახლდება
+              </div>
             ) : (
               termsSections.map((section) => (
-                <div key={section.id} className="space-y-1">
-                  <h3 className="text-base font-bold" data-testid={`terms-title-${section.id}`}>{section.title}</h3>
+                <div key={section.id} className="rounded-2xl border border-white/20 bg-white/25 p-4 shadow-xl backdrop-blur-md">
+                  <h3 className="mb-2 text-sm font-bold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]" data-testid={`terms-title-${section.id}`}>{section.title}</h3>
                   <RichTextDisplay
                     html={section.content}
-                    className="prose prose-sm max-w-none text-sm text-muted-foreground"
+                    className="prose prose-sm max-w-none text-[13px] leading-6 text-emerald-50 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)] prose-headings:text-white prose-strong:text-white prose-a:text-emerald-300"
                     testId={`terms-content-${section.id}`}
                   />
                 </div>
@@ -727,7 +729,7 @@ export function AuthLoginDialog({ open, onOpenChange, onRegistered, defaultTab =
               setAgreedToTerms(true);
               setTermsViewOpen(false);
             }}
-            className="w-full mt-2"
+            className="w-full mt-2 bg-emerald-600/80 hover:bg-emerald-600 text-white backdrop-blur-md border border-emerald-400/40"
             data-testid="button-accept-terms"
           >
             ვეთანხმები
