@@ -56,9 +56,17 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
         setOriginalImg(orig);
 
         let cutBlob: Blob;
+        const useServer = async (): Promise<Blob> => {
+          setLoadingMsg("ფონის მოცილება სერვერზე...");
+          const fd = new FormData();
+          fd.append("file", file);
+          const res = await fetch(api.media.cutout.path, { method: "POST", body: fd, credentials: "include" });
+          if (!res.ok) throw new Error("server cutout failed");
+          return await res.blob();
+        };
         try {
           setLoadingMsg("ფონის მოცილება ბრაუზერში...");
-          cutBlob = await removeBackground(file, {
+          const clientPromise = removeBackground(file, {
             progress: (key, current, total) => {
               if (cancelled) return;
               if (key.startsWith("fetch")) {
@@ -69,15 +77,20 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
               }
             },
           });
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("client timeout")), 45000)
+          );
+          try {
+            cutBlob = await Promise.race([clientPromise, timeoutPromise]);
+          } catch (raceErr) {
+            if (cancelled) return;
+            console.warn("Client bg removal timeout/failed, falling back to server", raceErr);
+            cutBlob = await useServer();
+          }
         } catch (clientErr) {
           console.warn("Client bg removal failed, trying server", clientErr);
           if (cancelled) return;
-          setLoadingMsg("სერვერზე ვცდი...");
-          const fd = new FormData();
-          fd.append("file", file);
-          const res = await fetch(api.media.cutout.path, { method: "POST", body: fd, credentials: "include" });
-          if (!res.ok) throw new Error("server cutout failed");
-          cutBlob = await res.blob();
+          cutBlob = await useServer();
         }
 
         if (cancelled) return;
