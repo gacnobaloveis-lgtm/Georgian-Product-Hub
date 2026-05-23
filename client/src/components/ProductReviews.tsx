@@ -41,7 +41,7 @@ export function ProductReviews({ productId }: { productId: number }) {
   const [loginOpen, setLoginOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
-  const [modalHeight, setModalHeight] = useState<number>(() => Math.round(window.innerHeight * 0.65));
+  const [modalHeight, setModalHeight] = useState<number>(() => Math.round(window.innerHeight * 0.55));
   const dragStateRef = useRef<{ startY: number; startH: number } | null>(null);
 
   const reactionsKey = ["/api/products", productId, "reactions"] as const;
@@ -225,10 +225,10 @@ export function ProductReviews({ productId }: { productId: number }) {
       </div>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4" onClick={() => setOpen(false)} data-testid="modal-reviews">
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto" onClick={() => setOpen(false)} data-testid="modal-reviews" style={{ paddingTop: "4vh", paddingBottom: "4vh" }}>
           <div
-            className="w-full sm:max-w-lg flex flex-col bg-slate-900/55 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl text-white"
-            style={{ height: `${modalHeight}px`, maxHeight: "calc(100vh - 24px)" }}
+            className="w-full sm:max-w-lg flex flex-col bg-slate-900/55 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl text-white my-auto"
+            style={{ height: `${modalHeight}px`, maxHeight: "calc(100dvh - 48px)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
