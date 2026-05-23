@@ -231,8 +231,8 @@ export function ProductReviews({ productId }: { productId: number }) {
           data-testid="modal-reviews"
         >
           <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-24px)] sm:w-full sm:max-w-md flex flex-col bg-slate-900/55 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl text-white"
-            style={{ height: "min(560px, calc(100% - 48px))" }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%-24px)] sm:w-full sm:max-w-md flex flex-col bg-slate-900/55 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl text-white"
+            style={{ height: "min(560px, calc(100dvh - 48px))" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div
