@@ -56,6 +56,7 @@ export default function AdminAddProduct() {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [selectedAlbum, setSelectedAlbum] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [removeBg, setRemoveBg] = useState(true);
   const albumInputRef = useRef<HTMLInputElement>(null);
 
   const setField = <K extends keyof FormState>(key: K, value: string) => {
@@ -67,7 +68,7 @@ export default function AdminAddProduct() {
       const imageFiles = Array.from(files).filter((f) => f.type.startsWith("image/"));
       if (imageFiles.length === 0) return;
       try {
-        const uploaded = await uploadMutation.mutateAsync(imageFiles);
+        const uploaded = await uploadMutation.mutateAsync({ files: imageFiles, removeBg });
         const newPaths = uploaded.map((m) => m.path);
         setSelectedAlbum((prev) => [...prev, ...newPaths]);
         toast({ title: "ატვირთულია", description: `${imageFiles.length} სურათი აიტვირთა.` });
@@ -75,7 +76,7 @@ export default function AdminAddProduct() {
         toast({ variant: "destructive", title: "შეცდომა", description: err instanceof Error ? err.message : "ატვირთვის შეცდომა" });
       }
     },
-    [uploadMutation, toast]
+    [uploadMutation, toast, removeBg]
   );
 
   const removeFromAlbum = (path: string) => {
@@ -272,6 +273,20 @@ export default function AdminAddProduct() {
 
               <div className="space-y-3">
                 <label className="text-sm font-medium">სურათები</label>
+
+                <label className="flex items-start gap-2 cursor-pointer select-none rounded-lg border border-emerald-300 bg-emerald-50 p-3" data-testid="label-remove-bg">
+                  <input
+                    type="checkbox"
+                    checked={removeBg}
+                    onChange={(e) => setRemoveBg(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 accent-emerald-600"
+                    data-testid="checkbox-remove-bg"
+                  />
+                  <span className="text-sm">
+                    <span className="font-medium text-emerald-900">ფონის ავტომატური მოცილება</span>
+                    <span className="block text-xs text-emerald-800/70">სურათი ატვირთვისთანავე გამჭვირვალე გახდება (PNG). შეიძლება დაგვიანდეს რამდენიმე წამით.</span>
+                  </span>
+                </label>
 
                 <div
                   onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
