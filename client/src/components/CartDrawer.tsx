@@ -28,8 +28,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ArrowLeft, Trash2, Minus, Plus, ShoppingBag, Check, Loader2, Pencil, AlertCircle, CheckSquare, Square } from "lucide-react";
+import { ArrowLeft, Trash2, Minus, Plus, ShoppingBag, Check, Loader2, Pencil, AlertCircle, CheckSquare, Square, Coins } from "lucide-react";
 import { SiVisa, SiMastercard } from "react-icons/si";
+import { InsufficientCreditDialog } from "@/components/InsufficientCreditDialog";
 
 const GEORGIAN_CITIES = [
   "თბილისი", "ქუთაისი", "ბათუმი", "რუსთავი", "ფოთი", "ზუგდიდი",
@@ -46,6 +47,7 @@ interface ProfileData {
   city: string | null;
   address: string | null;
   phone: string | null;
+  myCredit?: string | null;
 }
 
 interface EditForm {
@@ -74,7 +76,13 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState<EditForm>({ fullName: "", city: "", address: "", phone: "" });
   const [paySubmitting, setPaySubmitting] = useState(false);
+  const [creditSubmitting, setCreditSubmitting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [creditConfirmOpen, setCreditConfirmOpen] = useState(false);
+  const [insufficientCreditOpen, setInsufficientCreditOpen] = useState(false);
+  const [userCredit, setUserCredit] = useState(0);
+  const [creditToGel, setCreditToGel] = useState(1);
+  const [creditVideoUrl, setCreditVideoUrl] = useState("");
   const [flittPay, setFlittPay] = useState<{ orderId: number; amount: number; description: string } | null>(null);
   const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
   const [, navigate] = useLocation();
@@ -162,13 +170,18 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
     setCheckoutMode(true);
     setProfileLoading(true);
     setEditing(false);
-    fetch("/api/profile", { credentials: "include" })
-      .then(res => res.ok ? res.json() : null)
-      .then(profileData => {
+    Promise.all([
+      fetch("/api/profile", { credentials: "include" }).then(res => res.ok ? res.json() : null),
+      fetch("/api/credit-info", { credentials: "include" }).then(res => res.ok ? res.json() : { credit_to_gel: "1" }),
+    ])
+      .then(([profileData, creditInfo]) => {
         setProfile(profileData);
         if (!isProfileComplete(profileData)) {
           startEditing(profileData);
         }
+        setUserCredit(Number(profileData?.myCredit || 0));
+        setCreditToGel(Number(creditInfo?.credit_to_gel || 1));
+        setCreditVideoUrl(String(creditInfo?.credit_video_url || ""));
       })
       .catch(() => {
         setProfile(null);
@@ -283,8 +296,54 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
     }
   }
 
+  async function handleCreditPay() {
+    if (!profile || !isProfileComplete(profile)) return;
+    setCreditSubmitting(true);
+    const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
+    const itemsToOrder = confirmedItemsRef.current;
+    let successCount = 0;
+    try {
+      for (const item of itemsToOrder) {
+        const total = item.price * item.quantity;
+        const res = await fetch("/api/orders/credit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            productId: item.productId,
+            productName: item.name,
+            productPrice: String(total),
+            quantity: item.quantity,
+            selectedColor: item.selectedColor,
+            fullName: fullName.trim(),
+            city: profile.city,
+            address: profile.address!.trim(),
+            phone: profile.phone!.trim(),
+          }),
+        });
+        if (res.ok) successCount++;
+      }
+      if (successCount === 0) {
+        toast({ variant: "destructive", title: "შეცდომა", description: "შეკვეთა ვერ შეიქმნა" });
+      } else {
+        toast({ title: "შეკვეთა მიღებულია!", description: `${successCount} ნივთი კრედიტით შეძენილია.` });
+        clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
+        setSelected(new Set());
+        queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        onOpenChange(false);
+      }
+    } catch {
+      toast({ variant: "destructive", title: "შეცდომა", description: "კავშირის შეცდომა" });
+    } finally {
+      setCreditSubmitting(false);
+    }
+  }
+
   const profileComplete = isProfileComplete(profile);
   const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ");
+  const creditNeeded = selectedTotal / creditToGel;
+  const hasEnoughCredit = userCredit >= creditNeeded;
 
   return (
     <>
@@ -552,7 +611,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
 
                   <button
                     onClick={() => { confirmedItemsRef.current = [...checkoutItems]; setConfirmOpen(true); }}
-                    disabled={paySubmitting}
+                    disabled={paySubmitting || creditSubmitting}
                     className="min-h-[44px] w-full rounded-md border-2 border-slate-200 bg-white hover:bg-slate-50 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2"
                     data-testid="button-cart-submit"
                   >
@@ -572,12 +631,63 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                       </div>
                     )}
                   </button>
+
+                  <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50/50 p-3">
+                    <Button
+                      onClick={() => {
+                        if (hasEnoughCredit) {
+                          confirmedItemsRef.current = [...checkoutItems];
+                          setCreditConfirmOpen(true);
+                        } else {
+                          setInsufficientCreditOpen(true);
+                        }
+                      }}
+                      disabled={creditSubmitting || paySubmitting}
+                      variant="outline"
+                      className="min-h-[44px] w-full border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-900"
+                      data-testid="button-cart-credit"
+                    >
+                      {creditSubmitting ? (
+                        <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> იგზავნება...</>
+                      ) : (
+                        <><Coins className="mr-2 h-4 w-4" /> კრედიტით შეძენა — ₾{selectedTotal.toFixed(2)}</>
+                      )}
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
           )}
         </SheetContent>
       </Sheet>
+
+      <AlertDialog open={creditConfirmOpen} onOpenChange={setCreditConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-base">კრედიტით შეძენის დადასტურება</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-relaxed">
+              თქვენი კრედიტიდან ჩამოიჭრება <strong>{creditNeeded.toFixed(2)}</strong> ერთეული ({checkoutItems.length} ნივთის შეკვეთა — ₾{selectedTotal.toFixed(2)}). გსურთ გაგრძელება?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-credit-confirm-no">არა</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => { setCreditConfirmOpen(false); handleCreditPay(); }}
+              data-testid="button-credit-confirm-yes"
+            >
+              კი
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <InsufficientCreditDialog
+        open={insufficientCreditOpen}
+        onOpenChange={setInsufficientCreditOpen}
+        userCredit={userCredit}
+        creditNeeded={creditNeeded}
+        videoUrl={creditVideoUrl}
+      />
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
