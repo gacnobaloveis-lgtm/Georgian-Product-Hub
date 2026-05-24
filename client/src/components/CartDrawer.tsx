@@ -639,7 +639,8 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                           confirmedItemsRef.current = [...checkoutItems];
                           setCreditConfirmOpen(true);
                         } else {
-                          setInsufficientCreditOpen(true);
+                          onOpenChange(false);
+                          setTimeout(() => setInsufficientCreditOpen(true), 150);
                         }
                       }}
                       disabled={creditSubmitting || paySubmitting}
