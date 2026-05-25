@@ -38,7 +38,7 @@ import eyeIconPath from "@assets/image_1777053072588.png";
 import mobileFooterBg from "@assets/690814979_2185444182251201_1788998078963550236_n_1779374232358.jpg";
 import desktopFooterBg from "@assets/ChatGPT_Image_May_21,_2026,_07_04_25_PM_1779375895205.png";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
-import heroCover2026 from "@assets/hero-cover-spiningebi-2026.png";
+import heroCover2026 from "@assets/hero-cover-spiningebi-2026.webp";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 import RichTextDisplay from "@/components/RichTextDisplay";
 
@@ -912,7 +912,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-950 pb-20 md:pb-0">
       <div
-        className="relative z-10 aspect-[2/1] w-full overflow-hidden rounded-none sm:aspect-[5/1] lg:aspect-[7.5/1]"
+        className="relative z-10 aspect-[1600/783] w-full overflow-hidden rounded-none bg-slate-950"
       >
         {HERO_SLIDES.map((slide, idx) => (
           <picture key={idx}>
@@ -920,7 +920,7 @@ export default function HomePage() {
             <img
               src={slide.desktop}
               alt="spiningebi.ge"
-              className={`absolute inset-0 block h-full w-full object-cover transition-opacity duration-1000 ease-in-out ${idx === heroSlide ? "opacity-100" : "opacity-0"}`}
+              className={`absolute inset-0 block h-full w-full object-contain transition-opacity duration-1000 ease-in-out ${idx === heroSlide ? "opacity-100" : "opacity-0"}`}
               data-testid={idx === 0 ? "img-hero" : `img-hero-${idx}`}
             />
           </picture>
