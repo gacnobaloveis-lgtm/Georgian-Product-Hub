@@ -796,12 +796,21 @@ export default function HomePage() {
   const heroIsItalic = visualSettings?.isItalic ?? false;
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("guide") === "credit") {
+    const openCreditGuide = () => {
       setGuideOpen(true);
       setGuideCreditOpen(true);
+      setTimeout(() => {
+        const el = document.querySelector('[data-testid="button-guide-credit"]');
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 250);
+    };
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("guide") === "credit") {
+      openCreditGuide();
       window.history.replaceState({}, "", window.location.pathname);
     }
+    window.addEventListener("open-credit-guide", openCreditGuide);
+    return () => window.removeEventListener("open-credit-guide", openCreditGuide);
   }, []);
 
   const { data: profileData } = useQuery<any>({
