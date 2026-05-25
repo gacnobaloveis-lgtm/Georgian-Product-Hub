@@ -284,6 +284,27 @@ async function ensureProductColumns() {
   }
 }
 
+async function ensureStockNotificationsTable() {
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS stock_notifications (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER NOT NULL,
+        email TEXT NOT NULL,
+        user_id VARCHAR,
+        selected_color TEXT,
+        notified_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_stock_notifications_product ON stock_notifications(product_id) WHERE notified_at IS NULL`);
+    console.log("[migrate] stock_notifications table ensured");
+  } catch (err) {
+    console.error("[migrate] Error ensuring stock_notifications table:", err);
+  }
+}
+
 async function ensureProductReviewTables() {
   try {
     const { pool } = await import("./db");
@@ -483,6 +504,7 @@ async function initializeApp() {
     await ensureBroadcastTables();
     await ensureProductColumns();
     await ensureProductReviewTables();
+    await ensureStockNotificationsTable();
     await migrateFilesToDb();
     log("All migrations completed successfully");
   } catch (err: any) {

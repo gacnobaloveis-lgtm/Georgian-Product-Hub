@@ -128,6 +128,55 @@ function escHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+async function notifyStockRestock(productId: number, productName: string, imageUrl: string | null) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.log("[stock-notify] RESEND_API_KEY not set, skipping");
+    return;
+  }
+  const pending = await storage.getPendingStockNotifications(productId);
+  if (pending.length === 0) return;
+
+  const { Resend } = await import("resend");
+  const resend = new Resend(apiKey);
+
+  const productUrl = `https://spiningebi.ge/products/${productId}`;
+  const imgTag = imageUrl ? `<img src="https://spiningebi.ge${imageUrl}" alt="" style="max-width:100%;border-radius:8px;margin:12px 0" />` : "";
+
+  const sentIds: number[] = [];
+  for (const n of pending) {
+    try {
+      await resend.emails.send({
+        from: "no-reply@spiningebi.ge",
+        to: n.email,
+        subject: `დაემატა ნივთი რომელსაც ელოდებოდით — ${productName}`,
+        html: `
+          <div style="font-family:'FiraGO',Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#f9fafb;border-radius:12px">
+            <div style="text-align:center;margin-bottom:20px">
+              <h1 style="color:#059669;font-size:22px;margin:0">spiningebi.ge</h1>
+            </div>
+            <div style="background:white;padding:24px;border-radius:8px;border:1px solid #e5e7eb">
+              <h2 style="color:#1f2937;font-size:18px;margin:0 0 12px">დაემატა ნივთი რომელსაც ელოდებოდით</h2>
+              <p style="color:#4b5563;font-size:15px;line-height:1.7">
+                <strong>${productName}</strong> ისევ მარაგშია.
+              </p>
+              ${imgTag}
+              <div style="text-align:center;margin:20px 0">
+                <a href="${productUrl}" style="display:inline-block;background:#059669;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">ნახეთ ნივთი</a>
+              </div>
+            </div>
+            <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:16px">spiningebi.ge</p>
+          </div>
+        `,
+      });
+      sentIds.push(n.id);
+    } catch (err) {
+      console.error("[stock-notify] send failed for", n.email, err);
+    }
+  }
+  if (sentIds.length > 0) await storage.markStockNotificationsSent(sentIds);
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
@@ -480,10 +529,51 @@ export async function registerRoutes(
         updates.imageUrl = albumArr.length > 0 ? albumArr[0] : product.imageUrl;
       }
 
+      const prevTotalStock = (() => {
+        try {
+          const cs = JSON.parse(product.colorStock || "{}");
+          const colorTotal = Object.values(cs).reduce((a: number, b: any) => a + Number(b || 0), 0);
+          return colorTotal > 0 ? colorTotal : (product.stock || 0);
+        } catch { return product.stock || 0; }
+      })();
+
       const updated = await storage.updateProduct(id, updates);
+
+      if (updated) {
+        const newTotalStock = (() => {
+          try {
+            const cs = JSON.parse(updated.colorStock || "{}");
+            const colorTotal = Object.values(cs).reduce((a: number, b: any) => a + Number(b || 0), 0);
+            return colorTotal > 0 ? colorTotal : (updated.stock || 0);
+          } catch { return updated.stock || 0; }
+        })();
+
+        if (prevTotalStock <= 0 && newTotalStock > 0) {
+          notifyStockRestock(updated.id, updated.name, updated.imageUrl).catch(err => console.error("[stock-notify] failed:", err));
+        }
+      }
+
       res.json(updated);
     } catch (err) {
       console.error("Product update error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
+  app.post("/api/stock-notifications", async (req: any, res) => {
+    try {
+      const productId = Number(req.body.productId);
+      const email = String(req.body.email || "").trim().toLowerCase();
+      const selectedColor = req.body.selectedColor ? String(req.body.selectedColor) : null;
+      if (!productId || isNaN(productId)) return res.status(400).json({ message: "არასწორი პროდუქტი" });
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ message: "არასწორი ელ-ფოსტა" });
+      const product = await storage.getProduct(productId);
+      if (!product) return res.status(404).json({ message: "პროდუქტი ვერ მოიძებნა" });
+      const userId = req.isAuthenticated?.() ? req.user?.claims?.sub : null;
+      await storage.createStockNotification({ productId, email, userId, selectedColor });
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("Stock notification subscribe error:", err);
       res.status(500).json({ message: "სერვერის შეცდომა" });
     }
   });
