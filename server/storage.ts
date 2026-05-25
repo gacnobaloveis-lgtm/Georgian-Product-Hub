@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast } from "@shared/schema";
+import { products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
 import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
 import { eq, desc, sql, lt, asc } from "drizzle-orm";
 
@@ -66,6 +66,9 @@ export interface IStorage {
   deleteBroadcast(id: number): Promise<void>;
   getUnreadBroadcastsForUser(userId: string): Promise<Broadcast[]>;
   markBroadcastRead(broadcastId: number, userId: string): Promise<void>;
+  createStockNotification(data: { productId: number; email: string; userId?: string | null; selectedColor?: string | null }): Promise<StockNotification>;
+  getPendingStockNotifications(productId: number): Promise<StockNotification[]>;
+  markStockNotificationsSent(ids: number[]): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -489,6 +492,27 @@ export class DatabaseStorage implements IStorage {
       VALUES (${broadcastId}, ${userId})
       ON CONFLICT DO NOTHING
     `);
+  }
+
+  async createStockNotification(data: { productId: number; email: string; userId?: string | null; selectedColor?: string | null }): Promise<StockNotification> {
+    const [row] = await db.insert(stockNotifications).values({
+      productId: data.productId,
+      email: data.email.toLowerCase().trim(),
+      userId: data.userId || null,
+      selectedColor: data.selectedColor || null,
+    }).returning();
+    return row;
+  }
+
+  async getPendingStockNotifications(productId: number): Promise<StockNotification[]> {
+    return await db.select().from(stockNotifications).where(
+      sql`${stockNotifications.productId} = ${productId} AND ${stockNotifications.notifiedAt} IS NULL`
+    );
+  }
+
+  async markStockNotificationsSent(ids: number[]): Promise<void> {
+    if (ids.length === 0) return;
+    await db.execute(sql`UPDATE stock_notifications SET notified_at = NOW() WHERE id = ANY(${ids})`);
   }
 }
 
