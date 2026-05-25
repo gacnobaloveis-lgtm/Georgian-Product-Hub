@@ -23,11 +23,15 @@ export function InsufficientCreditDialog({ open, onOpenChange, userCredit, credi
 
   const goToGuide = () => {
     onOpenChange(false);
-    if (location === "/") {
-      window.dispatchEvent(new Event("open-credit-guide"));
-    } else {
-      setLocation("/?guide=credit");
-    }
+    setTimeout(() => {
+      if (window.location.pathname === "/") {
+        window.dispatchEvent(new Event("open-credit-guide"));
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => window.dispatchEvent(new Event("open-credit-guide")), 400);
+      } else {
+        setLocation("/?guide=credit");
+      }
+    }, 200);
   };
 
   return (
@@ -50,33 +54,33 @@ export function InsufficientCreditDialog({ open, onOpenChange, userCredit, credi
         </DialogHeader>
 
         <div className="space-y-3">
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-1.5 text-sm">
+          <div className="rounded-lg border border-white/20 bg-white/10 backdrop-blur-md p-3 space-y-1.5 text-sm">
             <div className="flex items-center justify-between">
-              <span className="text-amber-900">თქვენი კრედიტი:</span>
-              <span className="font-bold text-amber-900 inline-flex items-center gap-1">
+              <span className="text-white/85">თქვენი კრედიტი:</span>
+              <span className="font-bold text-amber-300 inline-flex items-center gap-1">
                 <Coins className="h-4 w-4" />
                 {userCredit.toFixed(2)}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-amber-900">საჭიროა:</span>
-              <span className="font-bold text-amber-900 inline-flex items-center gap-1">
+              <span className="text-white/85">საჭიროა:</span>
+              <span className="font-bold text-amber-300 inline-flex items-center gap-1">
                 <Coins className="h-4 w-4" />
                 {creditNeeded.toFixed(2)}
               </span>
             </div>
-            <div className="border-t border-amber-300 pt-1.5 flex items-center justify-between">
-              <span className="font-semibold text-red-700">გაკლიათ:</span>
-              <span className="font-bold text-red-700 inline-flex items-center gap-1">
+            <div className="border-t border-white/15 pt-1.5 flex items-center justify-between">
+              <span className="font-semibold text-red-300">გაკლიათ:</span>
+              <span className="font-bold text-red-300 inline-flex items-center gap-1">
                 <Coins className="h-4 w-4" />
                 {shortfall.toFixed(2)}
               </span>
             </div>
           </div>
 
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 space-y-2">
-            <p className="text-sm font-semibold text-blue-900 flex items-center gap-1.5">
-              <PlayCircle className="h-5 w-5" />
+          <div className="rounded-lg border border-white/20 bg-white/10 backdrop-blur-md p-3 space-y-2">
+            <p className="text-sm font-semibold text-white flex items-center gap-1.5">
+              <PlayCircle className="h-5 w-5 text-sky-300" />
               როგორ დავაგროვო კრედიტი?
             </p>
             {ytId ? (
@@ -92,7 +96,7 @@ export function InsufficientCreditDialog({ open, onOpenChange, userCredit, credi
                 />
               </div>
             ) : (
-              <p className="text-sm text-blue-800">
+              <p className="text-sm text-white/85">
                 ნახეთ ვიდეო გაკვეთილი ჩვენი მთავარ გვერდზე — როგორ მოიწვიოთ მეგობრები და მიიღოთ კრედიტი ყოველ ახალ შენაძენზე.
               </p>
             )}
