@@ -6,6 +6,7 @@ import { ArrowLeft, Play, X, ShoppingCart, Minus, Plus, Coins, AlertCircle, Load
 import { Link } from "wouter";
 import type { Product } from "@shared/schema";
 import { PurchaseDialog } from "@/components/PurchaseDialog";
+import { OutOfStockDialog } from "@/components/OutOfStockDialog";
 import { ProductReviews } from "@/components/ProductReviews";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -211,6 +212,7 @@ export default function ProductDetail() {
   const touchStartY = useRef<number | null>(null);
   const [showVideo, setShowVideo] = useState(false);
   const [purchaseOpen, setPurchaseOpen] = useState(false);
+  const [outOfStockOpen, setOutOfStockOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
@@ -650,13 +652,13 @@ export default function ProductDetail() {
                 return;
               }
               if (maxQuantity <= 0) {
-                toast({ variant: "destructive", title: "მარაგი ამოწურულია" });
+                setOutOfStockOpen(true);
                 return;
               }
               const effectivePrice = Number(hasDiscount ? product.discountPrice : product.originalPrice);
               const qtyToAdd = Math.min(quantity, maxQuantity);
               if (qtyToAdd <= 0) {
-                toast({ variant: "destructive", title: "მარაგი ამოწურულია" });
+                setOutOfStockOpen(true);
                 return;
               }
               addItem({
@@ -681,6 +683,10 @@ export default function ProductDetail() {
             onClick={() => {
               if (hasColors && !selectedColor) {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
+                return;
+              }
+              if (rawMaxQuantity <= 0) {
+                setOutOfStockOpen(true);
                 return;
               }
               if (!isRealUser) {
@@ -731,6 +737,14 @@ export default function ProductDetail() {
           productName={product.name}
           productPrice={hasDiscount ? product.discountPrice! : product.originalPrice}
           quantity={quantity}
+          selectedColor={selectedColor}
+        />
+
+        <OutOfStockDialog
+          open={outOfStockOpen}
+          onOpenChange={setOutOfStockOpen}
+          productId={product.id}
+          productName={product.name}
           selectedColor={selectedColor}
         />
 
