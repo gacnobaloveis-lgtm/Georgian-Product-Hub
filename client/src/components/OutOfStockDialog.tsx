@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,28 +16,25 @@ interface Props {
 
 export function OutOfStockDialog({ open, onOpenChange, productId, productName, selectedColor }: Props) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { isRealUser } = useAuth();
   const [subscribe, setSubscribe] = useState(true);
-  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setEmail((user as any)?.email || "");
       setSubscribe(true);
       setDone(false);
     }
-  }, [open, user]);
+  }, [open]);
 
   async function handleSubmit() {
     if (!subscribe) {
       onOpenChange(false);
       return;
     }
-    const cleanEmail = email.trim().toLowerCase();
-    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
-      toast({ variant: "destructive", title: "შეიყვანეთ სწორი ელ-ფოსტა" });
+    if (!isRealUser) {
+      toast({ variant: "destructive", title: "შეტყობინებისთვის გაიარეთ ავტორიზაცია" });
       return;
     }
     setSubmitting(true);
@@ -47,7 +43,7 @@ export function OutOfStockDialog({ open, onOpenChange, productId, productName, s
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ productId, email: cleanEmail, selectedColor: selectedColor || null }),
+        body: JSON.stringify({ productId, selectedColor: selectedColor || null }),
       });
       if (res.ok) {
         setDone(true);
@@ -88,7 +84,7 @@ export function OutOfStockDialog({ open, onOpenChange, productId, productName, s
             ნივთის <strong>"{productName}"</strong> მარაგი ამოწურულია, მალე შეივსება.
           </p>
 
-          <div className="rounded-lg border border-white/20 bg-white/10 p-3 space-y-3">
+          <div className="rounded-lg border border-white/20 bg-white/10 p-3">
             <label className="flex items-start gap-2.5 cursor-pointer select-none">
               <Checkbox
                 checked={subscribe}
@@ -101,18 +97,6 @@ export function OutOfStockDialog({ open, onOpenChange, productId, productName, s
                 მინდა შეტყობინება ნივთის შემოსვლისას
               </span>
             </label>
-
-            {subscribe && (
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="ელ-ფოსტა"
-                className="bg-white/15 border-white/30 text-white placeholder:text-white/50"
-                data-testid="input-stock-email"
-                disabled={submitting || done}
-              />
-            )}
           </div>
 
           <div className="flex gap-2">
