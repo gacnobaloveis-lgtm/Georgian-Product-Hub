@@ -42,3 +42,9 @@ id = "CAQ5k19v-8zwZklCyzNtb"
 uri = "file://attached_assets/generated_images/cover3_mobile.png"
 type = "image"
 title = "mobile cover variant 3"
+
+[[generated]]
+id = "Ocx1n9HJhhiycdqpS-MQ_"
+uri = "file://attached_assets/hero-generated.png"
+type = "image"
+title = "spiningebi hero banner"
