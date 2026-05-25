@@ -129,49 +129,33 @@ function escHtml(s: string): string {
 }
 
 async function notifyStockRestock(productId: number, productName: string, imageUrl: string | null) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.log("[stock-notify] RESEND_API_KEY not set, skipping");
-    return;
-  }
   const pending = await storage.getPendingStockNotifications(productId);
   if (pending.length === 0) return;
 
-  const { Resend } = await import("resend");
-  const resend = new Resend(apiKey);
-
-  const productUrl = `https://spiningebi.ge/products/${productId}`;
-  const imgTag = imageUrl ? `<img src="https://spiningebi.ge${imageUrl}" alt="" style="max-width:100%;border-radius:8px;margin:12px 0" />` : "";
+  const payload = JSON.stringify({
+    title: "📦 დაემატა ნივთი რომელსაც ელოდებოდით",
+    body: `${productName} ისევ მარაგშია`,
+    url: `/products/${productId}`,
+    imageUrl: imageUrl || undefined,
+    tag: `stock-restock-${productId}`,
+  });
 
   const sentIds: number[] = [];
   for (const n of pending) {
     try {
-      await resend.emails.send({
-        from: "no-reply@spiningebi.ge",
-        to: n.email,
-        subject: `დაემატა ნივთი რომელსაც ელოდებოდით — ${productName}`,
-        html: `
-          <div style="font-family:'FiraGO',Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#f9fafb;border-radius:12px">
-            <div style="text-align:center;margin-bottom:20px">
-              <h1 style="color:#059669;font-size:22px;margin:0">spiningebi.ge</h1>
-            </div>
-            <div style="background:white;padding:24px;border-radius:8px;border:1px solid #e5e7eb">
-              <h2 style="color:#1f2937;font-size:18px;margin:0 0 12px">დაემატა ნივთი რომელსაც ელოდებოდით</h2>
-              <p style="color:#4b5563;font-size:15px;line-height:1.7">
-                <strong>${productName}</strong> ისევ მარაგშია.
-              </p>
-              ${imgTag}
-              <div style="text-align:center;margin:20px 0">
-                <a href="${productUrl}" style="display:inline-block;background:#059669;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600">ნახეთ ნივთი</a>
-              </div>
-            </div>
-            <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:16px">spiningebi.ge</p>
-          </div>
-        `,
-      });
+      if (n.userId) {
+        const subs = await storage.getUserPushSubscriptions(n.userId);
+        for (const sub of subs) {
+          webpush.sendNotification(
+            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+            payload,
+            { urgency: "high", TTL: 60 * 60 * 24 }
+          ).catch(() => storage.removePushSubscription(sub.endpoint));
+        }
+      }
       sentIds.push(n.id);
     } catch (err) {
-      console.error("[stock-notify] send failed for", n.email, err);
+      console.error("[stock-notify] send failed:", err);
     }
   }
   if (sentIds.length > 0) await storage.markStockNotificationsSent(sentIds);
@@ -562,15 +546,16 @@ export async function registerRoutes(
 
   app.post("/api/stock-notifications", async (req: any, res) => {
     try {
+      if (!req.isAuthenticated?.()) return res.status(401).json({ message: "გაიარეთ ავტორიზაცია" });
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "გაიარეთ ავტორიზაცია" });
       const productId = Number(req.body.productId);
-      const email = String(req.body.email || "").trim().toLowerCase();
       const selectedColor = req.body.selectedColor ? String(req.body.selectedColor) : null;
       if (!productId || isNaN(productId)) return res.status(400).json({ message: "არასწორი პროდუქტი" });
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ message: "არასწორი ელ-ფოსტა" });
       const product = await storage.getProduct(productId);
       if (!product) return res.status(404).json({ message: "პროდუქტი ვერ მოიძებნა" });
-      const userId = req.isAuthenticated?.() ? req.user?.claims?.sub : null;
-      await storage.createStockNotification({ productId, email, userId, selectedColor });
+      const user = await storage.getUser(userId);
+      await storage.createStockNotification({ productId, email: user?.email || "", userId, selectedColor });
       res.json({ ok: true });
     } catch (err) {
       console.error("Stock notification subscribe error:", err);
