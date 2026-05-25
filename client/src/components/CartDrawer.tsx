@@ -507,13 +507,6 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                 </div>
               ) : editing ? (
                 <div className="space-y-3">
-                  {!profileComplete && (
-                    <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                      <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
-                      <p className="text-sm text-amber-800">შეავსეთ ყველა ველი შეკვეთის გასაფორმებლად</p>
-                    </div>
-                  )}
-
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium">სახელი და გვარი</label>
                     <Input
