@@ -38,6 +38,7 @@ import eyeIconPath from "@assets/image_1777053072588.png";
 import mobileFooterBg from "@assets/690814979_2185444182251201_1788998078963550236_n_1779374232358.jpg";
 import desktopFooterBg from "@assets/ChatGPT_Image_May_21,_2026,_07_04_25_PM_1779375895205.png";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
+import heroCover2026 from "@assets/hero-cover-spiningebi-2026.png";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 import RichTextDisplay from "@/components/RichTextDisplay";
 
@@ -331,9 +332,7 @@ function cacheBust(url: string | undefined): string | undefined {
 }
 
 const HERO_SLIDES = [
-  { mobile: "/images/spiningebi-cover-mobile.jpg?v=5", desktop: "/images/spiningebi-cover.jpg?v=5" },
-  { mobile: "/images/spiningebi-cover-mobile-2.jpg?v=1", desktop: "/images/spiningebi-cover-2.jpg?v=1" },
-  { mobile: "/images/spiningebi-cover-mobile-3.jpg?v=1", desktop: "/images/spiningebi-cover-3.jpg?v=1" },
+  { mobile: heroCover2026, desktop: heroCover2026 },
 ];
 const HERO_SLIDE_INTERVAL_MS = 20000;
 
@@ -789,7 +788,7 @@ export default function HomePage() {
     ? allLogos[visualSettings.selectedLogo].src
     : fishermanLogo;
   const heroText = visualSettings?.text || "spiningebi.ge";
-  const heroSubtitle = visualSettings?.customText || "საუკეთესო თევზაობის აქსესუარები და აღჭურვილობა";
+  const heroSubtitle = visualSettings?.customText || "საუკეთესო სასპინინგე ინვენტარი ჩვენთან!";
   const heroFont = visualSettings?.font || "FiraGO";
   const heroTextColor = visualSettings?.textColor && visualSettings.textColor !== "transparent" ? visualSettings.textColor : undefined;
   const heroIsBold = visualSettings?.isBold ?? true;
