@@ -75,6 +75,18 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
 
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 
+export const stockNotifications = pgTable("stock_notifications", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  email: text("email").notNull(),
+  userId: varchar("user_id"),
+  selectedColor: text("selected_color"),
+  notifiedAt: timestamp("notified_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type StockNotification = typeof stockNotifications.$inferSelect;
+
 export const broadcasts = pgTable("broadcasts", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
