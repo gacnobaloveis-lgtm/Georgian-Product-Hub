@@ -925,47 +925,12 @@ export default function HomePage() {
             />
           </picture>
         ))}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-black/55 to-transparent" />
-        <div className="absolute inset-x-0 top-0 flex items-start pl-10 pr-3 pt-2 sm:pl-20 sm:pr-8 sm:pt-4 lg:pl-32 lg:pr-16">
-          <div className="flex items-center gap-2 sm:gap-5">
-            <button onClick={handleGoHome} className="shrink-0 hover:opacity-80 transition-opacity" data-testid="img-logo-btn">
-              <img
-                src={cacheBust(heroLogoSrc)}
-                alt="მთავარი"
-                className="h-14 w-14 rounded-full border-2 border-emerald-500 bg-emerald-500 object-contain shadow-lg sm:h-16 sm:w-16 lg:h-20 lg:w-20"
-                data-testid="img-logo"
-                onError={(e) => { e.currentTarget.src = fishermanLogo; }}
-              />
-            </button>
-            <div className="flex min-w-0 flex-col">
-              <h1
-                onClick={handleGoHome}
-                className="cursor-pointer tracking-wide drop-shadow-lg text-xl leading-tight sm:text-3xl lg:text-4xl hover:opacity-80 transition-opacity"
-                style={{
-                  fontFamily: heroFont,
-                  color: heroTextColor || "#ffffff",
-                  fontWeight: heroIsBold ? "bold" : "normal",
-                  fontStyle: heroIsItalic ? "italic" : "normal",
-                }}
-                data-testid="text-hero-title"
-              >
-                {heroText}
-              </h1>
-              <p
-                className="mt-0.5 text-xs leading-tight drop-shadow sm:mt-1 sm:text-base lg:text-lg"
-                style={{
-                  fontFamily: heroFont,
-                  color: visualSettings?.customTextColor
-                    ? visualSettings.customTextColor
-                    : heroTextColor ? `${heroTextColor}cc` : "rgba(255,255,255,0.8)",
-                  fontStyle: (visualSettings?.customTextItalic ?? heroIsItalic) ? "italic" : "normal",
-                }}
-              >
-                {heroSubtitle}
-              </p>
-            </div>
-          </div>
-        </div>
+        <button
+          onClick={handleGoHome}
+          aria-label="მთავარი"
+          className="absolute inset-0 z-10 cursor-pointer"
+          data-testid="img-hero-clickable"
+        />
       </div>
 
       <div
