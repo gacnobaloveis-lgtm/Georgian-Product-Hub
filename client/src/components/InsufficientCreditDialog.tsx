@@ -1,7 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Coins, AlertCircle, PlayCircle } from "lucide-react";
-import { Link } from "wouter";
-import mountainSceneBg from "@assets/mountain-scene-bg.webp";
+import { useLocation } from "wouter";
 
 interface Props {
   open: boolean;
@@ -20,10 +19,28 @@ function getYouTubeId(url: string): string | null {
 export function InsufficientCreditDialog({ open, onOpenChange, userCredit, creditNeeded, videoUrl }: Props) {
   const ytId = videoUrl ? getYouTubeId(videoUrl) : null;
   const shortfall = Math.max(0, creditNeeded - userCredit);
+  const [location, setLocation] = useLocation();
+
+  const goToGuide = () => {
+    onOpenChange(false);
+    if (location === "/") {
+      window.dispatchEvent(new Event("open-credit-guide"));
+    } else {
+      setLocation("/?guide=credit");
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg border-emerald-400/20 text-white" data-testid="dialog-insufficient-credit" style={{ backgroundImage: `linear-gradient(rgba(2,6,23,0.82), rgba(2,6,23,0.88)), url(${mountainSceneBg})`, backgroundSize: "cover", backgroundPosition: "right center" }}>
+      <DialogContent
+        className="max-w-lg border-white/20 text-white"
+        data-testid="dialog-insufficient-credit"
+        style={{
+          background: "rgba(15, 23, 42, 0.55)",
+          backdropFilter: "blur(24px) saturate(160%)",
+          WebkitBackdropFilter: "blur(24px) saturate(160%)",
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <AlertCircle className="h-6 w-6 text-amber-600" />
@@ -81,15 +98,14 @@ export function InsufficientCreditDialog({ open, onOpenChange, userCredit, credi
             )}
           </div>
 
-          <Link href="/?guide=credit">
-            <button
-              onClick={() => onOpenChange(false)}
-              className="w-full rounded-xl bg-green-600 px-4 py-3 text-base font-bold text-white shadow-md hover:bg-green-700 transition-colors"
-              data-testid="button-view-credit-guide"
-            >
-              დეტალური გზამკვლევი →
-            </button>
-          </Link>
+          <button
+            type="button"
+            onClick={goToGuide}
+            className="w-full rounded-xl bg-green-600 px-4 py-3 text-base font-bold text-white shadow-md hover:bg-green-700 transition-colors"
+            data-testid="button-view-credit-guide"
+          >
+            დეტალური გზამკვლევი →
+          </button>
         </div>
       </DialogContent>
     </Dialog>
