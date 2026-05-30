@@ -798,7 +798,7 @@ function AdBanner() {
         <button
           type="button"
           onClick={() => setInfoOpen(true)}
-          className="ad-shine ad-gradient relative mt-3 sm:mt-4 block w-full overflow-hidden rounded-2xl border border-white/20 shadow-lg ring-1 ring-black/5 transition-transform hover:scale-[1.01] active:scale-[0.99] text-left"
+          className="ad-shine ad-gradient relative mt-3 sm:mt-4 block w-full overflow-hidden rounded-2xl border border-white/20 shadow-lg ring-1 ring-black/5 opacity-80 transition-[transform,opacity] hover:opacity-100 hover:scale-[1.01] active:scale-[0.99] text-left"
           data-testid="ad-banner-empty"
         >
           <div className="relative z-[1] flex flex-col items-center gap-1.5 px-4 py-5 sm:py-6 text-white">
