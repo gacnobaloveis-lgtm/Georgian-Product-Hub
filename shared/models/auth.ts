@@ -46,6 +46,8 @@ export const orders = pgTable("orders", {
   address: text("address").notNull(),
   phone: varchar("phone").notNull(),
   status: varchar("status").notNull().default("pending"),
+  refCode: varchar("ref_code"),
+  flittOrderId: varchar("flitt_order_id"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

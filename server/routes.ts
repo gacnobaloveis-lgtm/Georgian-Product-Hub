@@ -885,6 +885,13 @@ export async function registerRoutes(
         phone: sanitizeString(String(phone)),
       });
 
+      // Card orders start unpaid. The order only becomes a real sale — and any
+      // referral credit is awarded — after Flitt confirms payment in the
+      // /api/flitt/callback handler. We persist the referral code captured from
+      // the cookie onto the order so the (cookie-less) server callback can use it.
+      const refCookie = req.cookies?.ref;
+      const refCode = refCookie && typeof refCookie === "string" ? refCookie : null;
+
       const order = await storage.createOrder({
         userId,
         productId: Number(productId),
@@ -897,38 +904,12 @@ export async function registerRoutes(
         city: sanitizeString(String(city)),
         address: sanitizeString(String(address)),
         phone: sanitizeString(String(phone)),
+        status: "awaiting_payment",
+        refCode,
       });
 
-      await storage.incrementSoldCount(Number(productId), orderQty);
-
-      const refCode = req.cookies?.ref;
-      if (refCode && typeof refCode === "string") {
-        try {
-          const referrer = await storage.getUserByReferralCode(refCode);
-          if (referrer && referrer.id !== userId) {
-            const alreadyRewarded = await storage.hasReferralLogForBuyer(referrer.id, userId);
-            if (!alreadyRewarded) {
-              const creditSetting = await storage.getSetting("referral_credit_amount");
-              const creditAmount = creditSetting ? Number(creditSetting) : DEFAULT_REFERRAL_CREDIT;
-              await storage.addCredit(referrer.id, creditAmount);
-              await storage.createReferralLog({
-                referrerUserId: referrer.id,
-                buyerUserId: userId,
-                orderId: order.id,
-                productName: String(productName),
-                productPrice: String(productPrice),
-                creditAwarded: creditAmount,
-              });
-              console.log(`Referral credit: +${creditAmount} to user ${referrer.id} (code: ${refCode})`);
-            } else {
-              console.log(`Referral credit skipped: buyer ${userId} already rewarded referrer ${referrer.id}`);
-            }
-          }
-        } catch (refErr) {
-          console.error("Referral credit error:", refErr);
-        }
-        res.clearCookie("ref");
-      }
+      // Single-use: consume the referral cookie now that it's stored on the order.
+      if (refCode) res.clearCookie("ref");
 
       res.status(201).json(order);
     } catch (err) {
@@ -2407,13 +2388,23 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         order_desc: (description || "spiningebi.ge შეკვეთა").substring(0, 255),
         currency: "GEL",
         amount: amountTetri,
-        response_url: `${appUrl}/payment/success`,
+        response_url: `${appUrl}/payment/success${orderId ? `?oid=${encodeURIComponent(String(orderId))}` : ""}`,
         server_callback_url: `${appUrl}/api/flitt/callback`,
       };
 
       if (cardOnly) {
         requestData.default_payment_system = "card";
         requestData.required_rectoken = "n";
+      }
+
+      // Persist the exact Flitt order_id so we can authoritatively query its
+      // payment status later (server callback + success-page confirmation).
+      if (orderId && !isNaN(Number(orderId))) {
+        try {
+          await storage.setFlittOrderId(Number(orderId), uniqueOid);
+        } catch (e: any) {
+          console.error("[Flitt pay] setFlittOrderId failed:", e?.message || e);
+        }
       }
 
       const result = await flittClient.Checkout(requestData);
@@ -2593,11 +2584,119 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     }
   });
 
-  app.post("/api/flitt/callback", express.json(), (req, res) => {
+  // Settle an order whose payment is confirmed real. Idempotent: only acts on
+  // orders still in "awaiting_payment", so the callback and the success-page
+  // confirmation can both call it without double-crediting.
+  async function settlePaidOrder(ourOrderId: number, source: string): Promise<boolean> {
+    const order = await storage.getOrder(ourOrderId);
+    if (!order || order.status !== "awaiting_payment") return false;
+
+    // Atomically claim this order. Only the single caller that actually performs
+    // the awaiting_payment → pending transition proceeds; concurrent callback +
+    // confirm calls cannot both count the sale or award referral credit twice.
+    const claimed = await storage.markOrderPaidIfAwaiting(ourOrderId);
+    if (!claimed) return false;
+
+    // The payment is real → count the sale.
+    await storage.incrementSoldCount(order.productId, order.quantity);
+
+    // Award the referral credit now (and only now), with anti-fraud checks:
+    // valid referrer, not self-referral, once per buyer.
+    if (order.refCode) {
+      try {
+        const referrer = await storage.getUserByReferralCode(order.refCode);
+        if (referrer && referrer.id !== order.userId) {
+          const alreadyRewarded = await storage.hasReferralLogForBuyer(referrer.id, order.userId);
+          if (!alreadyRewarded) {
+            const creditSetting = await storage.getSetting("referral_credit_amount");
+            const creditAmount = creditSetting ? Number(creditSetting) : DEFAULT_REFERRAL_CREDIT;
+            await storage.addCredit(referrer.id, creditAmount);
+            await storage.createReferralLog({
+              referrerUserId: referrer.id,
+              buyerUserId: order.userId,
+              orderId: order.id,
+              productName: order.productName,
+              productPrice: order.productPrice,
+              creditAwarded: creditAmount,
+            });
+            console.log(`Referral credit: +${creditAmount} to user ${referrer.id} for paid order ${order.id} (${source})`);
+          }
+        }
+      } catch (refErr) {
+        console.error("Referral credit error:", refErr);
+      }
+      await storage.clearOrderRef(ourOrderId);
+    }
+    console.log(`[Flitt] order ${ourOrderId} settled via ${source}`);
+    return true;
+  }
+
+  app.post("/api/flitt/callback", express.json(), async (req: any, res) => {
     // Log only non-sensitive fields for audit
     const { order_id, payment_id, order_status, response_status } = req.body || {};
     console.log("[Flitt callback]", { order_id, payment_id, order_status, response_status });
+
+    // Always ack Flitt so it stops retrying; do processing best-effort below.
     res.sendStatus(200);
+
+    try {
+      // Verify the callback signature so forged "approved" callbacks can't grant
+      // free referral credits or mark orders paid.
+      if (!flittClient.isValidResponse(req.body)) {
+        console.warn("[Flitt callback] invalid signature — ignored");
+        return;
+      }
+
+      if (order_status !== "approved") return;
+
+      // We sent Flitt order_id as `${ourOrderId}-${timestamp}` — recover our id.
+      const ourOrderId = parseInt(String(order_id).split("-")[0], 10);
+      if (!Number.isFinite(ourOrderId)) return;
+
+      await settlePaidOrder(ourOrderId, "callback");
+    } catch (err) {
+      console.error("[Flitt callback] processing error:", err);
+    }
+  });
+
+  // Safety net: the buyer always returns to /payment/success after paying, but
+  // Flitt's server callback may be delayed or undelivered. This endpoint lets the
+  // success page confirm the payment by asking Flitt's API directly (authoritative,
+  // unspoofable), then settles the order the same way the callback would.
+  app.post("/api/flitt/confirm", async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const userId = req.user?.claims?.sub;
+      const ourOrderId = parseInt(String(req.body?.orderId), 10);
+      if (!userId || !Number.isFinite(ourOrderId)) {
+        return res.status(400).json({ message: "Invalid order" });
+      }
+
+      const order = await storage.getOrder(ourOrderId);
+      if (!order || order.userId !== userId) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+      if (order.status !== "awaiting_payment") {
+        return res.json({ settled: false, status: order.status });
+      }
+      if (!order.flittOrderId) {
+        return res.json({ settled: false, status: order.status });
+      }
+
+      // Ask Flitt for the authoritative payment status of this order.
+      const statusResp = await flittClient.Status({ order_id: order.flittOrderId });
+      const r = statusResp?.response || statusResp;
+      if (r?.order_status === "approved") {
+        const settled = await settlePaidOrder(ourOrderId, "confirm");
+        return res.json({ settled, status: "pending" });
+      }
+      return res.json({ settled: false, status: order.status, flittStatus: r?.order_status });
+    } catch (err: any) {
+      console.error("[Flitt confirm] error:", err?.message || err);
+      return res.status(500).json({ message: "შეცდომა" });
+    }
   });
 
   return httpServer;

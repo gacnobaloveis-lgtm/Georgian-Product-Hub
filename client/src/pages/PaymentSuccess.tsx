@@ -17,6 +17,19 @@ export default function PaymentSuccess() {
 
   const params = new URLSearchParams(window.location.search);
   const payId = params.get("payId") || params.get("transactionId") || "";
+  const oid = params.get("oid") || "";
+
+  useEffect(() => {
+    // Authoritatively confirm the payment with the server (which asks Flitt's API)
+    // so the order is marked paid even if Flitt's server callback is delayed.
+    if (!oid) return;
+    fetch("/api/flitt/confirm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ orderId: oid }),
+    }).catch(() => {});
+  }, [oid]);
 
   useEffect(() => {
     if (window.parent && window.parent !== window) {

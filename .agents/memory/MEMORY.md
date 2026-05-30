@@ -1,2 +1,3 @@
 - [Deploy workflow](deploy-workflow.md) — live site deploys from GitHub repo via Contents API → Railway; /tmp deploy script gets wiped (recreate it); SW cache-first is the usual "updates not live" culprit.
 - [Ad banners](ad-banners.md) — banner text is baked into the webp image (not HTML); banner list lives in Railway DB site_settings key `ad_banners`; editing text = pixel-editing image.
+- [Referral/payment settlement](referral-payment-settlement.md) — referral credit + sold-count must gate on CONFIRMED Flitt payment (awaiting_payment → atomic claim); dual path callback + /payment/success confirm; /api/flitt/pay amount not yet bound.
