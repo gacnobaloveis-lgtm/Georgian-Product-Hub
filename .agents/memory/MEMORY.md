@@ -1,0 +1,1 @@
+- [Deploy workflow](deploy-workflow.md) — live site deploys from GitHub repo via Contents API → Railway; /tmp deploy script gets wiped (recreate it); SW cache-first is the usual "updates not live" culprit.
