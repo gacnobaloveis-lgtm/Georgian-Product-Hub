@@ -191,7 +191,7 @@ function SiteFooter() {
           <img
             src={desktopFooterBg}
             alt=""
-            className="h-full w-full object-cover object-top"
+            className="h-full w-full object-cover object-bottom"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/70 via-slate-900/55 to-slate-900/80" />
