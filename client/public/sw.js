@@ -1,4 +1,4 @@
-const CACHE_NAME = "spiningebi-v15";
+const CACHE_NAME = "spiningebi-v16";
 const STATIC_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".svg", ".ico", ".woff", ".woff2", ".ttf"];
 
 self.addEventListener("install", () => {
@@ -32,16 +32,18 @@ self.addEventListener("fetch", (event) => {
     || url.pathname.startsWith("/assets/");
 
   if (isStaticAsset) {
+    // Stale-while-revalidate: serve cache instantly, but always refetch in the
+    // background and update the cache so new deploys propagate without a hard reset.
     event.respondWith(
       caches.match(event.request).then((cached) => {
-        if (cached) return cached;
-        return fetch(event.request).then((response) => {
+        const network = fetch(event.request).then((response) => {
           if (response.ok) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
           }
           return response;
-        });
+        }).catch(() => cached);
+        return cached || network;
       })
     );
   }
