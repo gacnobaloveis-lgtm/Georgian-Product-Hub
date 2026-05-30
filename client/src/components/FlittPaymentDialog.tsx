@@ -7,12 +7,13 @@ interface FlittPaymentDialogProps {
   open: boolean;
   amount: number;
   orderId: number | string;
+  orderIds?: number[];
   description: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export function FlittPaymentDialog({ open, amount, orderId, description, onClose, onSuccess }: FlittPaymentDialogProps) {
+export function FlittPaymentDialog({ open, amount, orderId, orderIds, description, onClose, onSuccess }: FlittPaymentDialogProps) {
   const initializedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -33,7 +34,7 @@ export function FlittPaymentDialog({ open, amount, orderId, description, onClose
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ amount, orderId, description }),
+          body: JSON.stringify({ amount, orderId, orderIds, description }),
         });
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -50,7 +51,7 @@ export function FlittPaymentDialog({ open, amount, orderId, description, onClose
       }
     })();
     return () => { cancelled = true; };
-  }, [open, amount, orderId, description, toast]);
+  }, [open, amount, orderId, orderIds, description, toast]);
 
   useEffect(() => {
     function handleMessage(e: MessageEvent) {
