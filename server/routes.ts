@@ -1457,8 +1457,20 @@ export async function registerRoutes(
         }
       }
 
-      const jpegBuffer = await sharp(sourceBuffer)
+      // Blurred, darkened background fills the 1200x630 card, while the full
+      // product image is contained (never cropped) and centered on top.
+      const background = await sharp(sourceBuffer)
         .resize(1200, 630, { fit: "cover", position: "center" })
+        .blur(28)
+        .modulate({ brightness: 0.6 })
+        .toBuffer();
+
+      const foreground = await sharp(sourceBuffer)
+        .resize(1200, 630, { fit: "inside", withoutEnlargement: false })
+        .toBuffer();
+
+      const jpegBuffer = await sharp(background)
+        .composite([{ input: foreground, gravity: "center" }])
         .jpeg({ quality: 85 })
         .toBuffer();
 
