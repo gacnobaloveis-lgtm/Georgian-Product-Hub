@@ -913,7 +913,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-slate-950 pb-20 md:pb-0">
       <div
-        className="relative z-10 mx-auto h-[335px] w-full max-w-[1908px] overflow-hidden rounded-none bg-slate-950"
+        className="relative z-10 mx-auto h-[332px] w-full max-w-[1908px] overflow-hidden rounded-none bg-slate-950"
       >
         {HERO_SLIDES.map((slide, idx) => (
           <picture key={idx}>
