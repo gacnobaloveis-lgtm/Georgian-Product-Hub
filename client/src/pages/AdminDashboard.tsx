@@ -1242,7 +1242,14 @@ function OrdersSection() {
                     const isShipped = order.status === "shipped";
                     return (
                       <tr key={order.id} className="border-b border-muted/20 transition-colors hover:bg-muted/20" data-testid={`row-order-${prefix}-${gIdx}-${oIdx}`}>
-                        <td className="px-3 py-2.5 font-medium">{order.productName}</td>
+                        <td className="px-3 py-2.5 font-medium">
+                          {order.productName}
+                          {order.status === "awaiting_payment" && (
+                            <span className="ml-2 inline-block rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-700 align-middle" data-testid={`badge-awaiting-${prefix}-${gIdx}-${oIdx}`}>
+                              გადაუხდელი
+                            </span>
+                          )}
+                        </td>
                         <td className="px-3 py-2.5 text-center">{order.quantity || 1}</td>
                         <td className="px-3 py-2.5 text-xs">{(order as any).selectedColor || "—"}</td>
                         <td className="px-3 py-2.5 font-medium text-primary">₾{Number(order.productPrice).toFixed(2)}</td>
