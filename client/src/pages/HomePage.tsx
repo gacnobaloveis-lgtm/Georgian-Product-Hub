@@ -35,13 +35,14 @@ import spinnerIcon from "@assets/image_1776965581799.png";
 import vestIcon from "@assets/image_1776966819348.png";
 import fishermanLogo from "@assets/spiningebi_logo.png";
 import eyeIconPath from "@assets/image_1777053072588.png";
-import mobileFooterBg from "@assets/690814979_2185444182251201_1788998078963550236_n_1779374232358.jpg";
 import desktopFooterBg from "@assets/footer-bg-2026.webp";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 import heroCover2026 from "@assets/hero-cover-spiningebi-2026.webp";
 import heroCoverDesktop from "@assets/hero-cover-desktop-2026.webp";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 import RichTextDisplay from "@/components/RichTextDisplay";
+
+const mobileFooterBg = desktopFooterBg;
 
 function SiteFooter() {
   const [, setLocation] = useLocation();
