@@ -527,11 +527,13 @@ export default function MyProfile() {
                             order.status === "shipped" ? "bg-emerald-500/15 text-green-700" :
                             order.status === "completed" ? "bg-emerald-500/15 text-green-700" :
                             order.status === "cancelled" ? "bg-red-50 text-red-700" :
+                            order.status === "awaiting_payment" ? "bg-orange-50 text-orange-700" :
                             "bg-yellow-50 text-yellow-700"
                           }`} data-testid={`text-order-status-${i}`}>
                             {order.status === "shipped" ? (<><Truck className="h-3 w-3" /> გაგზავნილი</>) :
                              order.status === "completed" ? "შესრულებული" :
                              order.status === "cancelled" ? "გაუქმებული" :
+                             order.status === "awaiting_payment" ? "გადახდის მოლოდინში" :
                              "მუშავდება"}
                           </span>
                         </div>
