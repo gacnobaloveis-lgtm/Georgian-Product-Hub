@@ -10,6 +10,14 @@ export function registerAuthRoutes(app: Express): void {
     });
   });
 
+  // The Facebook App ID is public (it appears in share/login URLs). Exposing it
+  // lets the frontend open the full Facebook Share Dialog, which offers an
+  // audience picker (own timeline, a group, a page you manage, Messenger, …)
+  // instead of the plain sharer that only posts to your own timeline.
+  app.get("/api/facebook/app-id", (_req, res) => {
+    res.json({ appId: process.env.AUTH_FACEBOOK_ID || "" });
+  });
+
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;

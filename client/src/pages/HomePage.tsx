@@ -357,6 +357,10 @@ function ImgWithFallback({
 }
 
 function ProductCard({ product, referralCode }: { product: Product; referralCode?: string | null }) {
+  const { data: fbConfig } = useQuery<{ appId: string }>({
+    queryKey: ["/api/facebook/app-id"],
+    staleTime: Infinity,
+  });
   const mainImage = product.imageUrl || null;
   const hasDiscount = product.discountPrice && Number(product.discountPrice) < Number(product.originalPrice);
   const discountPct =
@@ -390,7 +394,13 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
     if (referralCode) {
       productUrl += `?ref=${referralCode}`;
     }
-    const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
+    const appId = fbConfig?.appId;
+    // Share Dialog (needs app_id) lets the user pick where to post — their own
+    // timeline, a group, a page they manage, or Messenger. The plain sharer only
+    // posts to the user's own timeline, so prefer the dialog when we have an id.
+    const fbUrl = appId
+      ? `https://www.facebook.com/dialog/share?app_id=${appId}&display=popup&href=${encodeURIComponent(productUrl)}&redirect_uri=${encodeURIComponent(productUrl)}`
+      : `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
 
     const popup = window.open(fbUrl, "_blank", "width=600,height=600,noopener=no");
 
