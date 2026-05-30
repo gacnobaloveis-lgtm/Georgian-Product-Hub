@@ -515,6 +515,7 @@ function MobileBottomNav({
   selectedCategory,
   onGoHome,
   onProfileClick,
+  profileLabel,
   hasAdminRole,
   cartCount,
   chatUnreadCount,
@@ -525,6 +526,7 @@ function MobileBottomNav({
   selectedCategory: Category | null;
   onGoHome: () => void;
   onProfileClick: () => void;
+  profileLabel: string;
   hasAdminRole: boolean;
   cartCount: number;
   chatUnreadCount: number;
@@ -578,7 +580,7 @@ function MobileBottomNav({
         <div className="relative">
           <UserCircle className="h-4 w-4" />
         </div>
-        <span>პროფილი</span>
+        <span>{profileLabel}</span>
       </button>
       {hasAdminRole && (
         <Link href="/admin-login">
@@ -744,6 +746,16 @@ export default function HomePage() {
     return () => clearInterval(id);
   }, []);
   const hasAdminRole = !!(user && user.role && ["admin", "moderator", "sales_admin"].includes(user.role));
+  const [hasAccount, setHasAccount] = useState(() => {
+    try { return localStorage.getItem("hasAccount") === "1"; } catch { return false; }
+  });
+  useEffect(() => {
+    if (isAuthenticated) {
+      try { localStorage.setItem("hasAccount", "1"); } catch {}
+      setHasAccount(true);
+    }
+  }, [isAuthenticated]);
+  const profileLabel = isAuthenticated ? "პროფილი" : hasAccount ? "შესვლა" : "რეგისტრაცია";
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
@@ -1030,7 +1042,7 @@ export default function HomePage() {
               data-testid="link-profile-desktop"
             >
               <UserCircle className="h-4 w-4 shrink-0" />
-              პროფილი
+              {profileLabel}
             </button>
             {hasAdminRole && (
               <Link href="/admin-login">
@@ -1141,6 +1153,7 @@ export default function HomePage() {
         selectedCategory={selectedCategory}
         onGoHome={handleGoHome}
         onProfileClick={handleProfileClick}
+        profileLabel={profileLabel}
         hasAdminRole={hasAdminRole}
         cartCount={cartCount}
         chatUnreadCount={chatUnreadCount}
