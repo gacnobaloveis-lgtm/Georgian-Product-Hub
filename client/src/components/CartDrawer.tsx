@@ -83,7 +83,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   const [userCredit, setUserCredit] = useState(0);
   const [creditToGel, setCreditToGel] = useState(1);
   const [creditVideoUrl, setCreditVideoUrl] = useState("");
-  const [flittPay, setFlittPay] = useState<{ orderId: number; amount: number; description: string } | null>(null);
+  const [flittPay, setFlittPay] = useState<{ orderId: number; orderIds: number[]; amount: number; description: string } | null>(null);
   const [paymentSuccessOpen, setPaymentSuccessOpen] = useState(false);
   const [, navigate] = useLocation();
   const confirmedItemsRef = useRef<CartItem[]>([]);
@@ -252,15 +252,12 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
 
     try {
       for (const item of itemsToOrder) {
-        const total = item.price * item.quantity;
         const res = await fetch("/api/orders", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
             productId: item.productId,
-            productName: item.name,
-            productPrice: String(total),
             quantity: item.quantity,
             selectedColor: item.selectedColor,
             fullName: fullName.trim(),
@@ -287,7 +284,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
 
       clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
       setSelected(new Set());
-      setFlittPay({ orderId: createdOrderIds[0], amount: totalAmount, description });
+      setFlittPay({ orderId: createdOrderIds[0], orderIds: createdOrderIds, amount: totalAmount, description });
       setPaySubmitting(false);
       onOpenChange(false);
     } catch {
@@ -304,15 +301,12 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
     let successCount = 0;
     try {
       for (const item of itemsToOrder) {
-        const total = item.price * item.quantity;
         const res = await fetch("/api/orders/credit", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
             productId: item.productId,
-            productName: item.name,
-            productPrice: String(total),
             quantity: item.quantity,
             selectedColor: item.selectedColor,
             fullName: fullName.trim(),
@@ -718,6 +712,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
           open={!!flittPay}
           amount={flittPay.amount}
           orderId={flittPay.orderId}
+          orderIds={flittPay.orderIds}
           description={flittPay.description}
           onClose={() => setFlittPay(null)}
           onSuccess={() => {
