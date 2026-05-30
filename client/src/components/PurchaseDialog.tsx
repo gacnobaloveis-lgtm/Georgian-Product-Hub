@@ -183,8 +183,6 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
         credentials: "include",
         body: JSON.stringify({
           productId,
-          productName,
-          productPrice: String(total),
           quantity,
           selectedColor,
           fullName: fullName.trim(),
@@ -220,8 +218,6 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
         credentials: "include",
         body: JSON.stringify({
           productId,
-          productName,
-          productPrice: String(total),
           quantity,
           selectedColor,
           fullName: fullName.trim(),

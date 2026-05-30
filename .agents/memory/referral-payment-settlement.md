@@ -28,10 +28,25 @@ path is directly exploitable for free balance.
   returning rows). Only the single caller that wins the transition counts the sale /
   awards credit, so concurrent callback+confirm can't double-credit.
 
-**Pre-req:** the exact Flitt `order_id` (`${ourId}-${ts}`) is persisted on the order
-(`flitt_order_id` column) at `/api/flitt/pay` time so the Status query can find it.
+**Pre-req:** the exact Flitt `order_id` (`${firstOrderId}-${ts}`, the `uniqueOid`) is
+persisted as `flitt_order_id` on EVERY order in the payment at `/api/flitt/pay` time
+so the Status query + settlement can find the whole group.
 
-**Known remaining gap (NOT fixed — out of referral scope):** `/api/flitt/pay` trusts
-the client-supplied `amount` and does not verify the requester owns the order, so a
-crafted request could underpay (pay 1 GEL for a 100 GEL order) and still settle.
-Fix would bind amount from the DB order + require auth/ownership on `/api/flitt/pay`.
+**Amount is always server-authoritative.** Order price is computed server-side from
+the DB product (`discountPrice < originalPrice ? discountPrice : originalPrice` × qty)
+in BOTH `/api/orders` and `/api/orders/credit`; client `productPrice`/`productName`
+are ignored. `/api/flitt/pay` requires auth, accepts `orderId` or `orderIds[]`,
+verifies each order belongs to the requester and is `awaiting_payment`, and derives
+the Flitt amount by summing `order.productPrice`. Never trust a client-sent amount.
+
+**Multi-item carts settle as a group.** A cart checkout creates one order per item,
+all sharing one `flitt_order_id`. `settlePaidOrderGroup(flittOrderId)` settles every
+order in the group (each via the atomic per-order claim). The callback's `order_id`
+IS the `flitt_order_id`, so it settles the group directly (no numeric-prefix parsing).
+
+**Rebind race guard.** `/api/flitt/pay` binds via `bindFlittOrderId` =
+`UPDATE ... SET flitt_order_id=? WHERE id=? AND status='awaiting_payment' AND
+flitt_order_id IS NULL RETURNING` (atomic). Binding happens BEFORE checkout and is
+rolled back (`clearFlittOrderId`) if checkout fails/has no URL, so retries work; a
+parallel/second pay on an already-bound order gets 409 instead of rebinding it (which
+would orphan the first payment's settlement).

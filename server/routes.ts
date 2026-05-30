@@ -858,25 +858,34 @@ export async function registerRoutes(
       const userId = req.user?.claims?.sub;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const { productId, productName, productPrice, fullName, city, address, phone, quantity, selectedColor } = req.body;
+      const { productId, fullName, city, address, phone, quantity, selectedColor } = req.body;
       if (!productId || !fullName || !city || !address || !phone) {
         return res.status(400).json({ message: "ყველა ველი აუცილებელია" });
       }
 
-      const orderQty = quantity ? Number(quantity) : 1;
+      const orderQty = Math.max(1, Number(quantity) || 1);
+
+      // Price and name come from the DB product, never from the client, so the
+      // amount charged can't be tampered with by the browser.
+      const prod = await storage.getProduct(Number(productId));
+      if (!prod) {
+        return res.status(404).json({ message: "პროდუქტი ვერ მოიძებნა" });
+      }
+      const unitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
+        ? Number(prod.discountPrice)
+        : Number(prod.originalPrice);
+      const lineTotal = unitPrice * orderQty;
+      const serverProductName = prod.name;
 
       if (selectedColor) {
-        const prod = await storage.getProduct(Number(productId));
-        if (prod) {
-          let colorStock: Record<string, number> = {};
-          try { colorStock = JSON.parse(prod.colorStock || "{}"); } catch {}
-          const available = colorStock[selectedColor] ?? 0;
-          if (available < orderQty) {
-            return res.status(400).json({ message: `"${selectedColor}" ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
-          }
-          colorStock[selectedColor] = available - orderQty;
-          await storage.updateProduct(prod.id, { colorStock: JSON.stringify(colorStock) });
+        let colorStock: Record<string, number> = {};
+        try { colorStock = JSON.parse(prod.colorStock || "{}"); } catch {}
+        const available = colorStock[selectedColor] ?? 0;
+        if (available < orderQty) {
+          return res.status(400).json({ message: `"${selectedColor}" ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
         }
+        colorStock[selectedColor] = available - orderQty;
+        await storage.updateProduct(prod.id, { colorStock: JSON.stringify(colorStock) });
       }
 
       await storage.updateUserDetails(userId, {
@@ -895,8 +904,8 @@ export async function registerRoutes(
       const order = await storage.createOrder({
         userId,
         productId: Number(productId),
-        productName: sanitizeString(String(productName)),
-        productPrice: String(productPrice),
+        productName: sanitizeString(serverProductName),
+        productPrice: String(lineTotal),
         quantity: orderQty,
         selectedColor: selectedColor ? sanitizeString(String(selectedColor)) : null,
         fullName: sanitizeString(String(fullName)),
@@ -926,13 +935,23 @@ export async function registerRoutes(
       const userId = req.user?.claims?.sub;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const { productId, productName, productPrice, quantity, selectedColor, fullName, city, address, phone } = req.body;
-      if (!productId || !productName || !productPrice || !quantity || !fullName || !city || !address || !phone) {
+      const { productId, quantity, selectedColor, fullName, city, address, phone } = req.body;
+      if (!productId || !quantity || !fullName || !city || !address || !phone) {
         return res.status(400).json({ message: "ყველა ველი აუცილებელია" });
       }
 
       const orderQty = Math.max(1, Number(quantity));
-      const totalPrice = Number(productPrice);
+
+      // Price and name come from the DB product, never from the client.
+      const prod = await storage.getProduct(Number(productId));
+      if (!prod) {
+        return res.status(404).json({ message: "პროდუქტი ვერ მოიძებნა" });
+      }
+      const unitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
+        ? Number(prod.discountPrice)
+        : Number(prod.originalPrice);
+      const totalPrice = unitPrice * orderQty;
+      const serverProductName = prod.name;
 
       const creditToGelSetting = await storage.getSetting("credit_to_gel") || "1";
       const creditToGel = Number(creditToGelSetting);
@@ -958,7 +977,7 @@ export async function registerRoutes(
       const order = await storage.createOrder({
         userId,
         productId: Number(productId),
-        productName: sanitizeString(String(productName)),
+        productName: sanitizeString(serverProductName),
         productPrice: String(totalPrice),
         quantity: orderQty,
         selectedColor: selectedColor ? sanitizeString(String(selectedColor)) : null,
@@ -2372,13 +2391,46 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
 
   app.post("/api/flitt/pay", async (req: any, res) => {
     try {
-      const { amount, description, orderId, cardOnly } = req.body;
-      if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
-        return res.status(400).json({ message: "თანხა აუცილებელია" });
+      if (!req.isAuthenticated || !req.isAuthenticated()) {
+        return res.status(401).json({ message: "გაიარეთ ავტორიზაცია" });
       }
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const { description, orderId, orderIds, cardOnly } = req.body;
+
+      // Collect the orders to pay for (single order or a whole cart). The
+      // amount is derived from these orders on the server, so the browser
+      // can never dictate how much is actually charged.
+      const rawIds: any[] = Array.isArray(orderIds) && orderIds.length > 0
+        ? orderIds
+        : (orderId != null ? [orderId] : []);
+      const ids = Array.from(new Set(rawIds.map((x) => Number(x)).filter((n) => Number.isInteger(n) && n > 0)));
+      if (ids.length === 0) {
+        return res.status(400).json({ message: "შეკვეთა აუცილებელია" });
+      }
+
+      let totalGel = 0;
+      for (const id of ids) {
+        const ord = await storage.getOrder(id);
+        if (!ord) {
+          return res.status(404).json({ message: "შეკვეთა ვერ მოიძებნა" });
+        }
+        if (ord.userId !== userId) {
+          return res.status(403).json({ message: "წვდომა აკრძალულია" });
+        }
+        if (ord.status !== "awaiting_payment") {
+          return res.status(400).json({ message: "შეკვეთა გადახდას არ ელოდება" });
+        }
+        totalGel += Number(ord.productPrice);
+      }
+      if (!(totalGel > 0)) {
+        return res.status(400).json({ message: "არასწორი თანხა" });
+      }
+
       const appUrl = (process.env.APP_URL || "https://spiningebi.ge").replace(/\/$/, "");
-      const amountTetri = Math.round(Number(amount) * 100); // GEL → tetri
-      const oid = orderId ? String(orderId) : randomUUID();
+      const amountTetri = Math.round(totalGel * 100); // GEL → tetri
+      const oid = String(ids[0]);
 
       // Flitt rejects duplicate order_ids — always add timestamp suffix to make unique
       const uniqueOid = `${oid}-${Date.now()}`;
@@ -2388,7 +2440,7 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         order_desc: (description || "spiningebi.ge შეკვეთა").substring(0, 255),
         currency: "GEL",
         amount: amountTetri,
-        response_url: `${appUrl}/payment/success${orderId ? `?oid=${encodeURIComponent(String(orderId))}` : ""}`,
+        response_url: `${appUrl}/payment/success?oid=${encodeURIComponent(oid)}`,
         server_callback_url: `${appUrl}/api/flitt/callback`,
       };
 
@@ -2397,21 +2449,47 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         requestData.required_rectoken = "n";
       }
 
-      // Persist the exact Flitt order_id so we can authoritatively query its
-      // payment status later (server callback + success-page confirmation).
-      if (orderId && !isNaN(Number(orderId))) {
-        try {
-          await storage.setFlittOrderId(Number(orderId), uniqueOid);
-        } catch (e: any) {
-          console.error("[Flitt pay] setFlittOrderId failed:", e?.message || e);
+      // Atomically bind the exact Flitt order_id onto every order in this
+      // payment BEFORE creating the checkout. Binding only succeeds while an
+      // order is still awaiting and unbound, so a second/parallel pay request
+      // can't rebind these orders and orphan this payment's settlement.
+      const boundIds: number[] = [];
+      let bindConflict = false;
+      for (const id of ids) {
+        const ok = await storage.bindFlittOrderId(id, uniqueOid);
+        if (ok) {
+          boundIds.push(id);
+        } else {
+          bindConflict = true;
+          break;
         }
       }
+      if (bindConflict) {
+        // Roll back our partial bindings so a later retry can rebind cleanly.
+        for (const id of boundIds) {
+          try { await storage.clearFlittOrderId(id); } catch {}
+        }
+        return res.status(409).json({ message: "გადახდა უკვე მიმდინარეობს ამ შეკვეთაზე" });
+      }
 
-      const result = await flittClient.Checkout(requestData);
+      let result: any;
+      try {
+        result = await flittClient.Checkout(requestData);
+      } catch (checkoutErr) {
+        // Checkout never started → release the bindings so the user can retry.
+        for (const id of boundIds) {
+          try { await storage.clearFlittOrderId(id); } catch {}
+        }
+        throw checkoutErr;
+      }
       const resp = result?.response || result;
 
       if (resp?.checkout_url) {
         return res.json({ payUrl: resp.checkout_url, paymentId: resp.payment_id });
+      }
+      // No checkout URL → release bindings so the user can retry.
+      for (const id of boundIds) {
+        try { await storage.clearFlittOrderId(id); } catch {}
       }
       console.error("[Flitt pay] bad response:", resp?.error_message || "unknown");
       return res.status(502).json({ message: "გადახდის ბმულის მიღება ვერ მოხერხდა" });
@@ -2631,6 +2709,22 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     return true;
   }
 
+  // Settle every order that shares one Flitt order_id (a multi-item cart pays
+  // for several orders under a single payment). Idempotent per order.
+  async function settlePaidOrderGroup(flittOrderId: string, source: string): Promise<number> {
+    let settledCount = 0;
+    try {
+      const group = await storage.getOrdersByFlittOrderId(flittOrderId);
+      for (const o of group) {
+        const ok = await settlePaidOrder(o.id, source);
+        if (ok) settledCount++;
+      }
+    } catch (err) {
+      console.error("[Flitt] settlePaidOrderGroup error:", err);
+    }
+    return settledCount;
+  }
+
   app.post("/api/flitt/callback", express.json(), async (req: any, res) => {
     // Log only non-sensitive fields for audit
     const { order_id, payment_id, order_status, response_status } = req.body || {};
@@ -2649,11 +2743,10 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
 
       if (order_status !== "approved") return;
 
-      // We sent Flitt order_id as `${ourOrderId}-${timestamp}` — recover our id.
-      const ourOrderId = parseInt(String(order_id).split("-")[0], 10);
-      if (!Number.isFinite(ourOrderId)) return;
-
-      await settlePaidOrder(ourOrderId, "callback");
+      // order_id is the exact Flitt order_id we stored on every order in this
+      // payment, so settle the whole group (cart purchases pay for several).
+      if (!order_id) return;
+      await settlePaidOrderGroup(String(order_id), "callback");
     } catch (err) {
       console.error("[Flitt callback] processing error:", err);
     }
@@ -2689,8 +2782,8 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       const statusResp = await flittClient.Status({ order_id: order.flittOrderId });
       const r = statusResp?.response || statusResp;
       if (r?.order_status === "approved") {
-        const settled = await settlePaidOrder(ourOrderId, "confirm");
-        return res.json({ settled, status: "pending" });
+        const settledCount = await settlePaidOrderGroup(order.flittOrderId, "confirm");
+        return res.json({ settled: settledCount > 0, status: "pending" });
       }
       return res.json({ settled: false, status: order.status, flittStatus: r?.order_status });
     } catch (err: any) {

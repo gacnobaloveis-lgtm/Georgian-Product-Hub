@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
 import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
-import { eq, desc, sql, lt, asc, and } from "drizzle-orm";
+import { eq, desc, sql, lt, asc, and, isNull } from "drizzle-orm";
 
 export interface IStorage {
   getProducts(): Promise<Product[]>;
@@ -26,6 +26,9 @@ export interface IStorage {
   getOrder(orderId: number): Promise<Order | undefined>;
   clearOrderRef(orderId: number): Promise<void>;
   setFlittOrderId(orderId: number, flittOrderId: string): Promise<void>;
+  getOrdersByFlittOrderId(flittOrderId: string): Promise<Order[]>;
+  bindFlittOrderId(orderId: number, flittOrderId: string): Promise<boolean>;
+  clearFlittOrderId(orderId: number): Promise<void>;
   markOrderPaidIfAwaiting(orderId: number): Promise<boolean>;
   getOrdersByUser(userId: string): Promise<Order[]>;
   updateOrderStatus(orderId: number, status: string): Promise<Order | undefined>;
@@ -173,6 +176,31 @@ export class DatabaseStorage implements IStorage {
 
   async setFlittOrderId(orderId: number, flittOrderId: string): Promise<void> {
     await db.update(orders).set({ flittOrderId }).where(eq(orders.id, orderId));
+  }
+
+  async getOrdersByFlittOrderId(flittOrderId: string): Promise<Order[]> {
+    return await db.select().from(orders).where(eq(orders.flittOrderId, flittOrderId));
+  }
+
+  // Atomically claim an order for one Flitt payment: only binds if the order is
+  // still awaiting and not already bound to another in-flight payment. Prevents
+  // a second/parallel pay request from rebinding an order and orphaning the
+  // first payment's settlement. Returns true only for the caller that bound it.
+  async bindFlittOrderId(orderId: number, flittOrderId: string): Promise<boolean> {
+    const rows = await db
+      .update(orders)
+      .set({ flittOrderId })
+      .where(and(
+        eq(orders.id, orderId),
+        eq(orders.status, "awaiting_payment"),
+        isNull(orders.flittOrderId),
+      ))
+      .returning({ id: orders.id });
+    return rows.length > 0;
+  }
+
+  async clearFlittOrderId(orderId: number): Promise<void> {
+    await db.update(orders).set({ flittOrderId: null }).where(eq(orders.id, orderId));
   }
 
   // Atomic, race-safe transition: flips an order from "awaiting_payment" to
