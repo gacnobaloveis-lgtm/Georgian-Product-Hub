@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
 import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
-import { eq, desc, sql, lt, asc } from "drizzle-orm";
+import { eq, desc, sql, lt, asc, and } from "drizzle-orm";
 
 export interface IStorage {
   getProducts(): Promise<Product[]>;
@@ -23,6 +23,10 @@ export interface IStorage {
   deleteUser(id: string): Promise<void>;
   createOrder(order: InsertOrder): Promise<Order>;
   getOrders(): Promise<Order[]>;
+  getOrder(orderId: number): Promise<Order | undefined>;
+  clearOrderRef(orderId: number): Promise<void>;
+  setFlittOrderId(orderId: number, flittOrderId: string): Promise<void>;
+  markOrderPaidIfAwaiting(orderId: number): Promise<boolean>;
   getOrdersByUser(userId: string): Promise<Order[]>;
   updateOrderStatus(orderId: number, status: string): Promise<Order | undefined>;
   deleteOrdersOlderThan(date: Date): Promise<number>;
@@ -156,6 +160,32 @@ export class DatabaseStorage implements IStorage {
 
   async getOrders(): Promise<Order[]> {
     return await db.select().from(orders).orderBy(orders.createdAt);
+  }
+
+  async getOrder(orderId: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId));
+    return order;
+  }
+
+  async clearOrderRef(orderId: number): Promise<void> {
+    await db.update(orders).set({ refCode: null }).where(eq(orders.id, orderId));
+  }
+
+  async setFlittOrderId(orderId: number, flittOrderId: string): Promise<void> {
+    await db.update(orders).set({ flittOrderId }).where(eq(orders.id, orderId));
+  }
+
+  // Atomic, race-safe transition: flips an order from "awaiting_payment" to
+  // "pending" only if it is still awaiting. Returns true only for the single
+  // caller that actually performed the transition, so callback + confirm can
+  // both run without double-crediting or double-counting the sale.
+  async markOrderPaidIfAwaiting(orderId: number): Promise<boolean> {
+    const rows = await db
+      .update(orders)
+      .set({ status: "pending" })
+      .where(and(eq(orders.id, orderId), eq(orders.status, "awaiting_payment")))
+      .returning({ id: orders.id });
+    return rows.length > 0;
   }
 
   async incrementSoldCount(productId: number, qty: number): Promise<void> {
