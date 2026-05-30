@@ -39,6 +39,7 @@ import mobileFooterBg from "@assets/690814979_2185444182251201_17889980789635502
 import desktopFooterBg from "@assets/ChatGPT_Image_May_21,_2026,_07_04_25_PM_1779375895205.png";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 import heroCover2026 from "@assets/hero-cover-spiningebi-2026.webp";
+import heroCoverDesktop from "@assets/hero-cover-desktop-2026.webp";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 import RichTextDisplay from "@/components/RichTextDisplay";
 
@@ -332,7 +333,7 @@ function cacheBust(url: string | undefined): string | undefined {
 }
 
 const HERO_SLIDES = [
-  { mobile: heroCover2026, desktop: heroCover2026 },
+  { mobile: heroCover2026, desktop: heroCoverDesktop },
 ];
 const HERO_SLIDE_INTERVAL_MS = 20000;
 
