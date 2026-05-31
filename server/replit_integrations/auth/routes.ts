@@ -14,8 +14,10 @@ export function registerAuthRoutes(app: Express): void {
   // lets the frontend open the full Facebook Share Dialog, which offers an
   // audience picker (own timeline, a group, a page you manage, Messenger, …)
   // instead of the plain sharer that only posts to your own timeline.
+  // Public Facebook App ID. Falls back to the registered app id so the Share
+  // Dialog works even on hosts where AUTH_FACEBOOK_ID is not set as an env var.
   app.get("/api/facebook/app-id", (_req, res) => {
-    res.json({ appId: process.env.AUTH_FACEBOOK_ID || "" });
+    res.json({ appId: process.env.AUTH_FACEBOOK_ID || "2388960611602139" });
   });
 
   app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
