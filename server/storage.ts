@@ -36,6 +36,7 @@ export interface IStorage {
   deleteOrder(orderId: number): Promise<boolean>;
   deleteAllOrders(): Promise<number>;
   incrementSoldCount(productId: number, qty: number): Promise<void>;
+  decrementColorStock(productId: number, color: string, qty: number): Promise<void>;
   incrementViewCount(productId: number): Promise<void>;
   incrementShareCount(productId: number): Promise<void>;
   getUserByReferralCode(code: string): Promise<User | undefined>;
@@ -225,6 +226,21 @@ export class DatabaseStorage implements IStorage {
   async incrementSoldCount(productId: number, qty: number): Promise<void> {
     await db.update(products)
       .set({ soldCount: sql`COALESCE(${products.soldCount}, 0) + ${qty}` })
+      .where(eq(products.id, productId));
+  }
+
+  // Reduce the stock of a single color (clamped at 0). colorStock is a JSON map
+  // {color: count} stored as text, so we read-modify-write the current product.
+  // Called only when a sale becomes real (card payment confirmed / credit paid).
+  async decrementColorStock(productId: number, color: string, qty: number): Promise<void> {
+    const [prod] = await db.select().from(products).where(eq(products.id, productId));
+    if (!prod) return;
+    let colorStock: Record<string, number> = {};
+    try { colorStock = JSON.parse(prod.colorStock || "{}"); } catch {}
+    const available = colorStock[color] ?? 0;
+    colorStock[color] = Math.max(0, available - qty);
+    await db.update(products)
+      .set({ colorStock: JSON.stringify(colorStock) })
       .where(eq(products.id, productId));
   }
 
