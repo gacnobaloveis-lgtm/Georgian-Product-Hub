@@ -877,6 +877,9 @@ export async function registerRoutes(
       const lineTotal = unitPrice * orderQty;
       const serverProductName = prod.name;
 
+      // Only CHECK color availability here — do NOT decrement yet. Card orders
+      // start unpaid; the stock is reduced only once Flitt confirms the payment
+      // (in settlePaidOrder), so an abandoned checkout never eats inventory.
       if (selectedColor) {
         let colorStock: Record<string, number> = {};
         try { colorStock = JSON.parse(prod.colorStock || "{}"); } catch {}
@@ -884,8 +887,6 @@ export async function registerRoutes(
         if (available < orderQty) {
           return res.status(400).json({ message: `"${selectedColor}" ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
         }
-        colorStock[selectedColor] = available - orderQty;
-        await storage.updateProduct(prod.id, { colorStock: JSON.stringify(colorStock) });
       }
 
       await storage.updateUserDetails(userId, {
@@ -953,6 +954,17 @@ export async function registerRoutes(
       const totalPrice = unitPrice * orderQty;
       const serverProductName = prod.name;
 
+      // Credit purchases are paid instantly, so check color availability up front
+      // and reject if there isn't enough before touching the user's credit.
+      if (selectedColor) {
+        let colorStock: Record<string, number> = {};
+        try { colorStock = JSON.parse(prod.colorStock || "{}"); } catch {}
+        const available = colorStock[selectedColor] ?? 0;
+        if (available < orderQty) {
+          return res.status(400).json({ message: `"${selectedColor}" ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
+        }
+      }
+
       const creditToGelSetting = await storage.getSetting("credit_to_gel") || "1";
       const creditToGel = Number(creditToGelSetting);
       const creditNeeded = totalPrice / creditToGel;
@@ -990,6 +1002,9 @@ export async function registerRoutes(
       });
 
       await storage.incrementSoldCount(Number(productId), orderQty);
+      if (selectedColor) {
+        await storage.decrementColorStock(Number(productId), String(selectedColor), orderQty);
+      }
 
       console.log(`Credit order: user ${userId} spent ${creditNeeded} credits for order ${order.id}`);
       res.status(201).json(order);
@@ -2675,8 +2690,12 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     const claimed = await storage.markOrderPaidIfAwaiting(ourOrderId);
     if (!claimed) return false;
 
-    // The payment is real → count the sale.
+    // The payment is real → count the sale and reduce the chosen color's stock
+    // now (not at checkout), so abandoned/unpaid card orders never eat inventory.
     await storage.incrementSoldCount(order.productId, order.quantity);
+    if (order.selectedColor) {
+      await storage.decrementColorStock(order.productId, order.selectedColor, order.quantity);
+    }
 
     // Award the referral credit now (and only now), with anti-fraud checks:
     // valid referrer, not self-referral, once per buyer.
