@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
 import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
-import { eq, desc, sql, lt, asc, and, isNull } from "drizzle-orm";
+import { eq, desc, sql, lt, asc, and, isNull, ne } from "drizzle-orm";
 
 export interface IStorage {
   getProducts(): Promise<Product[]>;
@@ -161,8 +161,14 @@ export class DatabaseStorage implements IStorage {
     return newOrder;
   }
 
+  // Only real orders. Card orders sit in "awaiting_payment" from the moment the
+  // checkout form is submitted until Flitt confirms the payment, so an abandoned
+  // checkout would otherwise show up here as a phantom order. Hide those until
+  // they are actually paid (settlePaidOrder flips them to "pending").
   async getOrders(): Promise<Order[]> {
-    return await db.select().from(orders).orderBy(orders.createdAt);
+    return await db.select().from(orders)
+      .where(ne(orders.status, "awaiting_payment"))
+      .orderBy(orders.createdAt);
   }
 
   async getOrder(orderId: number): Promise<Order | undefined> {
@@ -235,7 +241,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrdersByUser(userId: string): Promise<Order[]> {
-    return await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(orders.createdAt);
+    // Hide abandoned/unpaid card checkouts (see getOrders) from the buyer too.
+    return await db.select().from(orders)
+      .where(and(eq(orders.userId, userId), ne(orders.status, "awaiting_payment")))
+      .orderBy(orders.createdAt);
   }
 
   async updateOrderStatus(orderId: number, status: string): Promise<Order | undefined> {
