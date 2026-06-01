@@ -291,10 +291,6 @@ function SiteFooter() {
                     className="prose prose-sm max-w-none text-sm text-white font-medium [&_p]:my-0 [&_*]:!leading-snug [&_*]:!text-white"
                   />
                   <div className="mt-2 h-0.5 w-24 rounded-full bg-gradient-to-r from-sky-400 to-cyan-300" />
-                  <RichTextDisplay
-                    html={c.dayOff}
-                    className="prose prose-sm max-w-none text-xs text-white/85 italic mt-1.5 [&_p]:my-0 [&_*]:!leading-snug [&_*]:!text-white/85"
-                  />
                 </div>
               </div>
             </div>
