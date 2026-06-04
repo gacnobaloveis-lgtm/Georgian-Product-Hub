@@ -106,9 +106,20 @@ export const broadcastReads = pgTable("broadcast_reads", {
 export type Broadcast = typeof broadcasts.$inferSelect;
 export type BroadcastRead = typeof broadcastReads.$inferSelect;
 
+export const productInterests = pgTable("product_interests", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  productName: text("product_name").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertMediaSchema = createInsertSchema(media).omit({ id: true, createdAt: true });
+export const insertProductInterestSchema = createInsertSchema(productInterests).omit({ id: true, createdAt: true });
+
+export type InsertProductInterest = z.infer<typeof insertProductInterestSchema>;
+export type ProductInterest = typeof productInterests.$inferSelect;
 
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = typeof products.$inferSelect;
