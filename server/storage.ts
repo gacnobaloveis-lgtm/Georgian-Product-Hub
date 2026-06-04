@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
+import { products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, productInterests, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
 import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
 import { eq, desc, sql, lt, asc, and, isNull, ne } from "drizzle-orm";
 
@@ -53,6 +53,8 @@ export interface IStorage {
   recordPageVisit(visit: InsertPageVisit): Promise<void>;
   getAnalytics(days: number): Promise<{ domain: string; count: number }[]>;
   getAnalyticsTotal(days: number): Promise<number>;
+  recordProductInterest(productId: number, productName: string): Promise<void>;
+  getProductInterests(): Promise<{ productId: number; name: string; categoryName: string | null; count: number; lastAt: Date | null }[]>;
   getTermsSections(): Promise<TermsSection[]>;
   createTermsSection(section: InsertTermsSection): Promise<TermsSection>;
   updateTermsSection(id: number, updates: Partial<InsertTermsSection>): Promise<TermsSection | undefined>;
@@ -380,6 +382,54 @@ export class DatabaseStorage implements IStorage {
       .from(pageVisits)
       .where(sql`${pageVisits.createdAt} >= ${since}`);
     return row?.count ?? 0;
+  }
+
+  async recordProductInterest(productId: number, productName: string): Promise<void> {
+    await db.insert(productInterests).values({ productId, productName });
+  }
+
+  async getProductInterests(): Promise<{ productId: number; name: string; categoryName: string | null; count: number; lastAt: Date | null }[]> {
+    const rows = await db
+      .select({
+        productId: productInterests.productId,
+        snapshotName: sql<string>`MAX(${productInterests.productName})`,
+        count: sql<number>`COUNT(*)::int`,
+        lastAt: sql<Date>`MAX(${productInterests.createdAt})`,
+      })
+      .from(productInterests)
+      .groupBy(productInterests.productId);
+
+    if (rows.length === 0) return [];
+
+    const [prods, cats] = await Promise.all([
+      db.select().from(products),
+      db.select().from(categories),
+    ]);
+    const prodMap = new Map(prods.map((p) => [p.id, p]));
+    const catMap = new Map(cats.map((c) => [c.id, c.name]));
+
+    const result: { productId: number; name: string; categoryName: string | null; count: number; lastAt: Date | null }[] = [];
+    for (const r of rows) {
+      const p = prodMap.get(r.productId);
+      if (!p) continue; // product no longer exists on site
+      // compute total available stock
+      let total = p.stock ?? 0;
+      try {
+        const cs = JSON.parse(p.colorStock || "{}");
+        const keys = Object.keys(cs);
+        if (keys.length > 0) total = keys.reduce((a, k) => a + Number(cs[k] || 0), 0);
+      } catch {}
+      if (total > 0) continue; // only items currently out of stock
+      result.push({
+        productId: r.productId,
+        name: p.name || r.snapshotName,
+        categoryName: p.categoryId != null ? (catMap.get(p.categoryId) ?? null) : null,
+        count: r.count,
+        lastAt: r.lastAt ?? null,
+      });
+    }
+    result.sort((a, b) => b.count - a.count);
+    return result;
   }
 
   async getTermsSections(): Promise<TermsSection[]> {
