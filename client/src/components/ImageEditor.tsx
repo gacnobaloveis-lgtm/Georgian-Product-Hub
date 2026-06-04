@@ -40,6 +40,7 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
   const [bgType, setBgType] = useState<BgType>("transparent");
   const [bgBlur, setBgBlur] = useState(15);
   const [opacity, setOpacity] = useState(100);
+  const [balance, setBalance] = useState(35);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -120,10 +121,33 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
       ctx.fillRect(0, 0, W, H);
     }
 
+    const fg = document.createElement("canvas");
+    fg.width = W;
+    fg.height = H;
+    const fgCtx = fg.getContext("2d");
+    if (!fgCtx) return;
+    fgCtx.drawImage(cutoutImg, 0, 0, W, H);
+
+    const center = 20 + (balance / 100) * 180;
+    const low = center - 35;
+    const high = center + 35;
+    if (high > low) {
+      const imgData = fgCtx.getImageData(0, 0, W, H);
+      const d = imgData.data;
+      for (let i = 3; i < d.length; i += 4) {
+        const a = d[i];
+        if (a === 0 || a === 255) continue;
+        if (a <= low) d[i] = 0;
+        else if (a >= high) d[i] = 255;
+        else d[i] = Math.round(((a - low) / (high - low)) * 255);
+      }
+      fgCtx.putImageData(imgData, 0, 0);
+    }
+
     ctx.globalAlpha = opacity / 100;
-    ctx.drawImage(cutoutImg, 0, 0, W, H);
+    ctx.drawImage(fg, 0, 0, W, H);
     ctx.globalAlpha = 1;
-  }, [cutoutImg, originalImg, bgType, bgBlur, opacity]);
+  }, [cutoutImg, originalImg, bgType, bgBlur, opacity, balance]);
 
   const handleSave = () => {
     const canvas = canvasRef.current;
@@ -199,6 +223,24 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
           />
         </div>
       )}
+
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-medium text-emerald-900">ამოჭრის ბალანსი</span>
+          <span className="text-emerald-800 tabular-nums">{balance}%</span>
+        </div>
+        <input
+          type="range" min={0} max={100} step={5}
+          value={balance}
+          onChange={(e) => setBalance(Number(e.target.value))}
+          className="w-full accent-emerald-600"
+          data-testid="slider-balance"
+        />
+        <div className="flex justify-between text-[10px] text-emerald-700/70">
+          <span>ნაკლები ჭამა (მეტი ნაპირი)</span>
+          <span>მეტი ამოჭრა</span>
+        </div>
+      </div>
 
       <div className="space-y-1">
         <div className="flex items-center justify-between text-xs">
