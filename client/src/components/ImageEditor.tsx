@@ -40,7 +40,7 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
   const [bgType, setBgType] = useState<BgType>("transparent");
   const [bgBlur, setBgBlur] = useState(15);
   const [opacity, setOpacity] = useState(100);
-  const [balance, setBalance] = useState(35);
+  const [balance, setBalance] = useState(25);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -128,7 +128,7 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
     if (!fgCtx) return;
     fgCtx.drawImage(cutoutImg, 0, 0, W, H);
 
-    const center = 20 + (balance / 100) * 180;
+    const center = (balance / 100) * 200;
     const low = center - 35;
     const high = center + 35;
     if (high > low) {
