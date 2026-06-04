@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush, ChevronDown, ChevronRight, Archive, FileText, GripVertical, ArrowUp, ArrowDown, MessageCircle, Send, ArrowLeft as ArrowLeftIcon, Megaphone, Loader2 } from "lucide-react";
+import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush, ChevronDown, ChevronRight, Archive, FileText, GripVertical, ArrowUp, ArrowDown, MessageCircle, Send, ArrowLeft as ArrowLeftIcon, Megaphone, Loader2, Flame, Package } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories";
@@ -692,6 +692,87 @@ function SiteManagement() {
         value={iconPickerForId !== null ? (cats?.find((c) => c.id === iconPickerForId)?.icon ?? null) : newIcon}
         onSelect={handleIconSelect}
       />
+    </GlassPanel>
+  );
+}
+
+function InterestsSection() {
+  const { data, isLoading } = useQuery<{ productId: number; name: string; categoryName: string | null; count: number; lastAt: string | null }[]>({
+    queryKey: ["/api/admin/product-interests"],
+  });
+
+  const GEO_MONTHS = ["იანვარი", "თებერვალი", "მარტი", "აპრილი", "მაისი", "ივნისი", "ივლისი", "აგვისტო", "სექტემბერი", "ოქტომბერი", "ნოემბერი", "დეკემბერი"];
+  const formatMonth = (iso: string | null) => {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "—";
+    return `${GEO_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  const totalClicks = (data || []).reduce((s, r) => s + r.count, 0);
+  const maxCount = data?.[0]?.count || 1;
+
+  return (
+    <GlassPanel className="p-5 sm:p-7">
+      <div className="mb-4 flex items-center gap-2">
+        <Flame className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-semibold">ამოწურული პროდუქტების ინტერესი</h2>
+      </div>
+
+      <p className="mb-5 text-sm text-muted-foreground">
+        როდესაც მომხმარებელი ამოწურულ პროდუქტზე აჭერს „ყიდვას", ეს აქ აღირიცხება. ყველაზე მოთხოვნადი პირველ ადგილზეა.
+      </p>
+
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-center">
+          <p className="text-xs text-muted-foreground mb-1">პროდუქტი მოთხოვნაში</p>
+          <p className="text-3xl font-bold text-primary" data-testid="text-interests-products">{data?.length ?? "—"}</p>
+        </div>
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-center">
+          <p className="text-xs text-muted-foreground mb-1">სულ კლიკები</p>
+          <p className="text-3xl font-bold text-primary" data-testid="text-interests-total">{data ? totalClicks : "—"}</p>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      ) : !data || data.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">ჯერ არცერთ ამოწურულ პროდუქტზე არ დაუჭერიათ ყიდვა</p>
+      ) : (
+        <div className="space-y-2.5">
+          {data.map((row, idx) => {
+            const barWidth = Math.max((row.count / maxCount) * 100, 6);
+            return (
+              <div key={row.productId} className="rounded-lg border border-card-border bg-card p-3" data-testid={`interest-row-${idx}`}>
+                <div className="flex items-center justify-between gap-3 mb-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">{idx + 1}</span>
+                    <span className="text-sm font-medium truncate" data-testid={`text-interest-name-${idx}`}>{row.name}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Flame className="h-3.5 w-3.5 text-primary" />
+                    <span className="text-sm font-bold min-w-[28px] text-right" data-testid={`text-interest-count-${idx}`}>{row.count}</span>
+                  </div>
+                </div>
+                <div className="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 pl-8 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1" data-testid={`text-interest-category-${idx}`}>
+                    <Package className="h-3 w-3" />
+                    {row.categoryName || "კატეგორიის გარეშე"}
+                  </span>
+                  <span data-testid={`text-interest-month-${idx}`}>{formatMonth(row.lastAt)}</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${barWidth}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </GlassPanel>
   );
 }
@@ -2583,7 +2664,7 @@ function TermsSectionsManager() {
 }
 
 
-type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms" | "ads" | "tutorials";
+type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms" | "ads" | "tutorials" | "interests";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>(null);
@@ -2709,6 +2790,29 @@ export default function AdminDashboard() {
               </div>
             </div>
             <AnalyticsSection />
+          </AnimatedShell>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeSection === "interests") {
+    return (
+      <div className="min-h-screen bg-mesh">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+          <AnimatedShell className="space-y-6">
+            <div className="flex items-center justify-between">
+              <TopBar title="ადმინ პანელი" subtitle="მომხმარებლის ინტერესები" />
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setActiveSection(null)} data-testid="button-back">
+                  უკან
+                </Button>
+                <Link href="/">
+                  <Button variant="ghost" size="sm" data-testid="link-homepage">მთავარი</Button>
+                </Link>
+              </div>
+            </div>
+            <InterestsSection />
           </AnimatedShell>
         </div>
       </div>
@@ -2993,6 +3097,22 @@ export default function AdminDashboard() {
                   </div>
                   <h3 className="text-lg font-semibold">ანალიტიკა</h3>
                   <p className="text-sm text-muted-foreground">ტრაფიკის წყაროები — რომელი საიტებიდან მოდიან ვიზიტორები</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {isFullAdmin && (
+              <Card
+                className="cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-primary/40"
+                onClick={() => setActiveSection("interests")}
+                data-testid="card-section-interests"
+              >
+                <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <Flame className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold">მომხმარებლის ინტერესები</h3>
+                  <p className="text-sm text-muted-foreground">რომელ ამოწურულ პროდუქტებზე აჭერენ ყიდვას ყველაზე ხშირად</p>
                 </CardContent>
               </Card>
             )}
