@@ -22,6 +22,7 @@ import type { User, Order } from "@shared/models/auth";
 import { VisualSection } from "@/components/VisualSection";
 import RichTextEditor from "@/components/RichTextEditor";
 import RichTextDisplay from "@/components/RichTextDisplay";
+import { ImageEditor } from "@/components/ImageEditor";
 
 const PLACEHOLDER_IMG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' fill='%23e2e8f0'%3E%3Crect width='80' height='80'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='10' fill='%2394a3b8'%3E%E1%83%90%E1%83%A0%E1%83%90%E1%83%A1%E1%83%A3%E1%83%A0%E1%83%90%E1%83%97%E1%83%98%3C/text%3E%3C/svg%3E";
 
@@ -109,15 +110,18 @@ function ProductRow({ product }: { product: Product }) {
   });
 
   const [editForm, setEditForm] = useState<EditFormState>(defaultEditState());
+  const [editorQueue, setEditorQueue] = useState<File[]>([]);
 
   function startEdit() {
     setEditForm(defaultEditState());
+    setEditorQueue([]);
     setIsEditing(true);
     setConfirmDelete(false);
   }
 
   function cancelEdit() {
     editForm.newImagePreviews.forEach(u => URL.revokeObjectURL(u));
+    setEditorQueue([]);
     setIsEditing(false);
     setEditForm(defaultEditState());
   }
@@ -130,16 +134,28 @@ function ProductRow({ product }: { product: Product }) {
   }
 
   function handleAddNewImages(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(e.target.files || []).filter(f => f.type.startsWith("image/"));
     if (files.length === 0) return;
-    const previews = files.map(f => URL.createObjectURL(f));
-    previewUrlsRef.current.push(...previews);
+    setEditorQueue(q => [...q, ...files]);
+    e.target.value = "";
+  }
+
+  function handleEditorSave(blob: Blob) {
+    const current = editorQueue[0];
+    if (!current) return;
+    const editedFile = new File([blob], current.name.replace(/\.[^.]+$/, "") + ".png", { type: "image/png" });
+    const preview = URL.createObjectURL(editedFile);
+    previewUrlsRef.current.push(preview);
     setEditForm(prev => ({
       ...prev,
-      newImageFiles: [...prev.newImageFiles, ...files],
-      newImagePreviews: [...prev.newImagePreviews, ...previews],
+      newImageFiles: [...prev.newImageFiles, editedFile],
+      newImagePreviews: [...prev.newImagePreviews, preview],
     }));
-    e.target.value = "";
+    setEditorQueue(q => q.slice(1));
+  }
+
+  function handleEditorCancel() {
+    setEditorQueue(q => q.slice(1));
   }
 
   function handleRemoveNewImage(index: number) {
@@ -325,6 +341,19 @@ function ProductRow({ product }: { product: Product }) {
             </div>
             <div className="space-y-2 sm:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">სურათები</label>
+              {editorQueue.length > 0 && (
+                <div className="space-y-2">
+                  {editorQueue.length > 1 && (
+                    <div className="text-xs text-emerald-700">რიგში: {editorQueue.length} სურათი — მუშავდება #1</div>
+                  )}
+                  <ImageEditor
+                    key={editorQueue[0].name + editorQueue[0].size}
+                    file={editorQueue[0]}
+                    onSave={handleEditorSave}
+                    onCancel={handleEditorCancel}
+                  />
+                </div>
+              )}
               <div className="flex flex-wrap gap-2">
                 {editForm.albumImages.map((imgUrl, idx) => (
                   <div key={`existing-${idx}`} className="group relative">
