@@ -41,6 +41,7 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
   const [bgBlur, setBgBlur] = useState(15);
   const [opacity, setOpacity] = useState(100);
   const [balance, setBalance] = useState(10);
+  const [useOriginal, setUseOriginal] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -100,17 +101,24 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
   }, [file]);
 
   useEffect(() => {
-    if (!cutoutImg || !canvasRef.current) return;
+    const baseImg = useOriginal ? originalImg : cutoutImg;
+    if (!baseImg || !canvasRef.current) return;
     const canvas = canvasRef.current;
     const maxW = 800;
-    const scale = Math.min(1, maxW / cutoutImg.width);
-    const W = Math.round(cutoutImg.width * scale);
-    const H = Math.round(cutoutImg.height * scale);
+    const scale = Math.min(1, maxW / baseImg.width);
+    const W = Math.round(baseImg.width * scale);
+    const H = Math.round(baseImg.height * scale);
     canvas.width = W;
     canvas.height = H;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.clearRect(0, 0, W, H);
+
+    if (useOriginal && originalImg) {
+      ctx.drawImage(originalImg, 0, 0, W, H);
+      return;
+    }
+    if (!cutoutImg) return;
 
     if (bgType === "blur" && originalImg) {
       ctx.filter = `blur(${bgBlur}px)`;
@@ -146,7 +154,7 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
     ctx.globalAlpha = opacity / 100;
     ctx.drawImage(fg, 0, 0, W, H);
     ctx.globalAlpha = 1;
-  }, [cutoutImg, originalImg, bgType, bgBlur, opacity, balance]);
+  }, [cutoutImg, originalImg, bgType, bgBlur, opacity, balance, useOriginal]);
 
   const handleSave = () => {
     const canvas = canvasRef.current;
@@ -180,6 +188,36 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
         <canvas ref={canvasRef} className="w-full h-auto block" data-testid="canvas-preview" />
       </div>
 
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setUseOriginal(false)}
+          className={`rounded-md border-2 px-2.5 py-2 text-xs font-medium transition-colors ${
+            !useOriginal ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-slate-200 text-slate-600 hover:border-emerald-300"
+          }`}
+          data-testid="button-mode-cutout"
+        >
+          ფონმოცილებული
+        </button>
+        <button
+          type="button"
+          onClick={() => setUseOriginal(true)}
+          className={`rounded-md border-2 px-2.5 py-2 text-xs font-medium transition-colors ${
+            useOriginal ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-slate-200 text-slate-600 hover:border-emerald-300"
+          }`}
+          data-testid="button-mode-original"
+        >
+          ორიგინალი (ფონით)
+        </button>
+      </div>
+      {useOriginal && (
+        <p className="text-[11px] text-emerald-700/80">
+          სურათი ინახება ისე როგორც არის, ფონის მოცილების გარეშე — გამოიყენე როცა ამოჭრა პროდუქტს ჭამს.
+        </p>
+      )}
+
+      {!useOriginal && (
+      <>
       <div className="space-y-2">
         <div className="text-xs font-medium text-emerald-900">ფონი</div>
         <div className="flex flex-wrap gap-2">
@@ -254,6 +292,8 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
           data-testid="slider-fg-opacity"
         />
       </div>
+      </>
+      )}
 
       <div className="flex gap-2 pt-1">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1" data-testid="button-cancel-edit">
