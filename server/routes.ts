@@ -479,6 +479,27 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/products/:id/interest", async (req, res) => {
+    const id = Number(req.params.id);
+    if (isNaN(id) || id <= 0) return res.status(400).json({ message: "არასწორი ID" });
+    try {
+      const product = await storage.getProduct(id);
+      if (!product) return res.status(404).json({ message: "პროდუქტი ვერ მოიძებნა" });
+      // Server-side verification: only record interest for out-of-stock products
+      let total = product.stock ?? 0;
+      try {
+        const cs = JSON.parse(product.colorStock || "{}");
+        const keys = Object.keys(cs);
+        if (keys.length > 0) total = keys.reduce((a, k) => a + Number(cs[k] || 0), 0);
+      } catch {}
+      if (total > 0) return res.json({ ok: false, reason: "in_stock" });
+      await storage.recordProductInterest(id, product.name);
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.put(api.products.update.path, requireAdmin, upload.none(), async (req, res) => {
     try {
       const id = Number(req.params.id);
@@ -1213,6 +1234,16 @@ export async function registerRoutes(
       res.json({ sources, total, days });
     } catch (err) {
       console.error("Analytics error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.get("/api/admin/product-interests", requireAdmin, async (_req, res) => {
+    try {
+      const interests = await storage.getProductInterests();
+      res.json(interests);
+    } catch (err) {
+      console.error("Product interests error:", err);
       res.status(500).json({ message: "შეცდომა" });
     }
   });
