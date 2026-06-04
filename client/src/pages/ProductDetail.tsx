@@ -328,6 +328,15 @@ export default function ProductDetail() {
   const totalStock = hasColors ? Object.values(colorStock).reduce((a, b) => a + b, 0) : generalStock;
   const allOutOfStock = totalStock <= 0;
 
+  const recordInterest = () => {
+    try {
+      const key = `interest_${product.id}`;
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+      fetch(`/api/products/${product.id}/interest`, { method: "POST" }).catch(() => {});
+    } catch {}
+  };
+
   const COLOR_STYLES: Record<string, { bg: string; border: string; shadow?: string }> = {
     "ოქროსფერი": { bg: "linear-gradient(135deg, #FFD700, #FFC107, #FFB300)", border: "#DAA520", shadow: "0 0 6px 1px rgba(255, 215, 0, 0.6)" },
     "ოქროს ფერი": { bg: "linear-gradient(135deg, #FFD700, #FFC107, #FFB300)", border: "#DAA520", shadow: "0 0 6px 1px rgba(255, 215, 0, 0.6)" },
@@ -681,6 +690,11 @@ export default function ProductDetail() {
           </button>
           <button
             onClick={() => {
+              if (allOutOfStock) {
+                recordInterest();
+                setOutOfStockOpen(true);
+                return;
+              }
               if (hasColors && !selectedColor) {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                 return;
