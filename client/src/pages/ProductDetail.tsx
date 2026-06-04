@@ -317,11 +317,13 @@ export default function ProductDetail() {
   try { colorStock = JSON.parse(product.colorStock || "{}"); } catch {}
   const colorNames = Object.keys(colorStock);
   const hasColors = colorNames.length > 0;
-  const selectedColorStock = selectedColor ? (colorStock[selectedColor] ?? 0) : null;
+  const imageColorMode = hasColors && albumImages.length === colorNames.length;
+  const effectiveColor = imageColorMode ? (colorNames[selectedImage] ?? null) : selectedColor;
+  const selectedColorStock = effectiveColor ? (colorStock[effectiveColor] ?? 0) : null;
   const isSelectedColorOutOfStock = selectedColorStock !== null && selectedColorStock <= 0;
   const generalStock = product.stock ?? 0;
   const rawMaxQuantity = selectedColorStock !== null ? selectedColorStock : (hasColors ? 0 : generalStock);
-  const cartKey = `${product.id}_${selectedColor || "default"}`;
+  const cartKey = `${product.id}_${effectiveColor || "default"}`;
   const inCartQty = cartItems.find(ci => `${ci.productId}_${ci.selectedColor || "default"}` === cartKey)?.quantity || 0;
   const maxQuantity = Math.max(0, rawMaxQuantity - inCartQty);
 
@@ -468,7 +470,7 @@ export default function ProductDetail() {
             </div>
 
             {hasColors && (
-              <div className="hidden lg:block mt-2" data-testid="color-selector-desktop">
+              <div className={`${imageColorMode ? "hidden" : "hidden lg:block"} mt-2`} data-testid="color-selector-desktop">
                 <label className="text-sm font-medium text-gray-700 mb-2 block">ფერი:</label>
                 <div className="flex flex-wrap gap-2">
                   {colorNames.map(color => {
@@ -503,7 +505,7 @@ export default function ProductDetail() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (hasColors && !selectedColor) {
+                    if (hasColors && !effectiveColor) {
                       toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                       return;
                     }
@@ -518,14 +520,14 @@ export default function ProductDetail() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (hasColors && !selectedColor) {
+                    if (hasColors && !effectiveColor) {
                       toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                       return;
                     }
                     setQuantity(q => Math.min(maxQuantity, q + 1));
                   }}
-                  disabled={!!(selectedColor || !hasColors) && quantity >= maxQuantity}
-                  className={`flex h-10 w-10 items-center justify-center transition-colors ${(!hasColors || selectedColor) && quantity >= maxQuantity ? "text-gray-300 cursor-not-allowed" : "text-gray-500 hover:text-gray-800"}`}
+                  disabled={!!(effectiveColor || !hasColors) && quantity >= maxQuantity}
+                  className={`flex h-10 w-10 items-center justify-center transition-colors ${(!hasColors || effectiveColor) && quantity >= maxQuantity ? "text-gray-300 cursor-not-allowed" : "text-gray-500 hover:text-gray-800"}`}
                   data-testid="button-qty-plus-desktop"
                 >
                   <Plus className="h-4 w-4" />
@@ -543,7 +545,7 @@ export default function ProductDetail() {
             {albumImages.map((img, idx) => (
               <button
                 key={idx}
-                onClick={() => { setSelectedImage(idx); setShowVideo(false); }}
+                onClick={() => { setSelectedImage(idx); setShowVideo(false); if (imageColorMode) setQuantity(1); }}
                 className={`overflow-hidden rounded-lg border-2 transition-all ${
                   idx === selectedImage && !showVideo ? "border-green-500 shadow-md" : "border-gray-200 hover:border-gray-300"
                 }`}
@@ -578,13 +580,23 @@ export default function ProductDetail() {
           </div>
         )}
 
+        {imageColorMode && effectiveColor && !showVideo && (
+          <div className="mt-2 sm:mt-3 flex items-center gap-2 text-sm" data-testid="text-variant-stock">
+            <span className="inline-block h-4 w-4 rounded-full" style={getColorDotStyle(effectiveColor)} />
+            <span className="font-semibold text-white">{effectiveColor}</span>
+            <span className={isSelectedColorOutOfStock ? "text-red-400 font-semibold" : "text-emerald-300"}>
+              {isSelectedColorOutOfStock ? "ამოწურულია" : `მარაგში: ${selectedColorStock} ც.`}
+            </span>
+          </div>
+        )}
+
         <div className="prose prose-sm max-w-none text-xs text-emerald-400 font-medium sm:text-base [text-shadow:_0_1px_3px_rgb(0_0_0_/_70%)] mt-3 sm:mt-4 lg:hidden" data-testid="text-product-description">
           {product.description.split("\n").map((line, i) => (
             <p key={i} className="mb-1">{line}</p>
           ))}
         </div>
 
-        {hasColors && (
+        {hasColors && !imageColorMode && (
           <div className="mt-3 sm:mt-4 lg:hidden" data-testid="color-selector-mobile">
             <label className="text-sm font-medium text-gray-700 mb-2 block">ფერი:</label>
             <div className="flex flex-wrap gap-2">
@@ -620,7 +632,7 @@ export default function ProductDetail() {
             <button
               type="button"
               onClick={() => {
-                if (hasColors && !selectedColor) {
+                if (hasColors && !effectiveColor) {
                   toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                   return;
                 }
@@ -635,14 +647,14 @@ export default function ProductDetail() {
             <button
               type="button"
               onClick={() => {
-                if (hasColors && !selectedColor) {
+                if (hasColors && !effectiveColor) {
                   toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                   return;
                 }
                 setQuantity(q => Math.min(maxQuantity, q + 1));
               }}
-              disabled={!!(selectedColor || !hasColors) && quantity >= maxQuantity}
-              className={`flex h-8 w-9 sm:h-10 sm:w-10 items-center justify-center transition-colors ${(!hasColors || selectedColor) && quantity >= maxQuantity ? "text-gray-300 cursor-not-allowed" : "text-gray-500 hover:text-gray-800"}`}
+              disabled={!!(effectiveColor || !hasColors) && quantity >= maxQuantity}
+              className={`flex h-8 w-9 sm:h-10 sm:w-10 items-center justify-center transition-colors ${(!hasColors || effectiveColor) && quantity >= maxQuantity ? "text-gray-300 cursor-not-allowed" : "text-gray-500 hover:text-gray-800"}`}
               data-testid="button-qty-plus"
             >
               <Plus className="h-4 w-4" />
@@ -656,7 +668,7 @@ export default function ProductDetail() {
         <div className="flex gap-2 sm:gap-3 mt-3 sm:mt-4">
           <button
             onClick={() => {
-              if (hasColors && !selectedColor) {
+              if (hasColors && !effectiveColor) {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                 return;
               }
@@ -676,7 +688,7 @@ export default function ProductDetail() {
                 price: effectivePrice,
                 imageUrl: product.imageUrl || "",
                 quantity: qtyToAdd,
-                selectedColor,
+                selectedColor: effectiveColor,
                 maxStock: rawMaxQuantity,
               });
               setQuantity(1);
@@ -695,7 +707,7 @@ export default function ProductDetail() {
                 setOutOfStockOpen(true);
                 return;
               }
-              if (hasColors && !selectedColor) {
+              if (hasColors && !effectiveColor) {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                 return;
               }
@@ -751,7 +763,7 @@ export default function ProductDetail() {
           productName={product.name}
           productPrice={hasDiscount ? product.discountPrice! : product.originalPrice}
           quantity={quantity}
-          selectedColor={selectedColor}
+          selectedColor={effectiveColor}
         />
 
         <OutOfStockDialog
@@ -759,7 +771,7 @@ export default function ProductDetail() {
           onOpenChange={setOutOfStockOpen}
           productId={product.id}
           productName={product.name}
-          selectedColor={selectedColor}
+          selectedColor={effectiveColor}
         />
 
         <AuthLoginDialog
