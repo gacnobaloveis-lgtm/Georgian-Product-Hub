@@ -269,6 +269,13 @@ export default function ProductDetail() {
     };
   }, [product]);
 
+  useEffect(() => {
+    setSelectedImage(0);
+    setSelectedColor(null);
+    setQuantity(1);
+    setShowVideo(false);
+  }, [productId]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen" style={PAGE_BG_STYLE}>
@@ -412,6 +419,7 @@ export default function ProductDetail() {
                 } else {
                   setSelectedImage((i) => (i - 1 + albumImages.length) % albumImages.length);
                 }
+                if (imageColorMode) setQuantity(1);
               }}
             >
               {showVideo && youtubeId ? (
