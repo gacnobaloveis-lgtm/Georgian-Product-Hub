@@ -98,6 +98,7 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
   const [fillColor, setFillColor] = useState<FillColor>("white");
   const [bgThreshold, setBgThreshold] = useState(45);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const floodCache = useRef<{ key: string; canvas: HTMLCanvasElement } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -178,9 +179,12 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
       if (!originalImg) return;
       ctx.fillStyle = BG_COLORS[fillColor];
       ctx.fillRect(0, 0, W, H);
-      const fg = removeBgByFlood(originalImg, W, H, bgThreshold);
+      const key = `${W}x${H}:${bgThreshold}`;
+      if (!floodCache.current || floodCache.current.key !== key) {
+        floodCache.current = { key, canvas: removeBgByFlood(originalImg, W, H, bgThreshold) };
+      }
       ctx.globalAlpha = opacity / 100;
-      ctx.drawImage(fg, 0, 0, W, H);
+      ctx.drawImage(floodCache.current.canvas, 0, 0, W, H);
       ctx.globalAlpha = 1;
       return;
     }
