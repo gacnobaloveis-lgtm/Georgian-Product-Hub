@@ -1121,7 +1121,7 @@ export default function HomePage() {
                     <h2 className="mb-3 text-center text-lg font-bold text-white drop-shadow-lg sm:text-xl" data-testid="text-section-title"><span className="text-red-500">TOP</span>-გაყიდვადი პროდუქცია</h2>
                     {renderProductGrid(
                       products
-                        ? [...products].sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0)).slice(0, 16)
+                        ? [...products].sort((a, b) => (b.soldCount ?? 0) - (a.soldCount ?? 0)).slice(0, 24)
                         : undefined,
                       isLoading,
                       "პროდუქტები ჯერ არ არის დამატებული"
