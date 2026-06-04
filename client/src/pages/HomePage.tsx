@@ -33,6 +33,7 @@ import jigIcon from "@assets/image_1776965688800.png";
 import mormishingIcon from "@assets/image_1776965808335.png";
 import spinnerIcon from "@assets/image_1776965581799.png";
 import vestIcon from "@assets/image_1776966819348.png";
+import variousInventoryIcon from "@assets/various_inventory_icon.png";
 import fishermanLogo from "@assets/spiningebi_logo.png";
 import eyeIconPath from "@assets/image_1777053072588.png";
 import desktopFooterBg from "@assets/footer-bg-2026.webp";
@@ -510,6 +511,7 @@ function getCategoryIcon(name: string) {
     "მორმიშკები": mormishingIcon,
     "ტანსაცმელი": vestIcon,
     "სპ.ჟილეტები": vestIcon,
+    "სხვადასხვა ინვენტარი": variousInventoryIcon,
   };
   return icons[name] || null;
 }
