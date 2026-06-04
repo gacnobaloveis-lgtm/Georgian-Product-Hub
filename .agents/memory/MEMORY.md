@@ -1,5 +1,6 @@
 - [Deploy workflow](deploy-workflow.md) — live site deploys from GitHub repo via Contents API → Railway; /tmp deploy script gets wiped (recreate it); SW cache-first is the usual "updates not live" culprit.
 - [Ad banners](ad-banners.md) — banner text is baked into the webp image (not HTML); banner list lives in Railway DB site_settings key `ad_banners`; editing text = pixel-editing image.
 - [DB architecture](db-architecture.md) — dev (helium) and prod (Railway) are SEPARATE DBs; Railway deploy runs no migrations, so add new tables/columns to BOTH via `CREATE TABLE IF NOT EXISTS`, never `drizzle-kit push` to prod.
+- [Image editor](image-editor.md) — 3 bg modes (cutout/colorbg/original); colorbg = border flood-fill on original (AI eats white products, can't be undone by balance slider).
 - [Product color variants](product-color-variants.md) — no stored image↔color map; product page pairs them by index when album image count == color count (imageColorMode).
 - [Referral/payment settlement](referral-payment-settlement.md) — referral credit + sold-count must gate on CONFIRMED Flitt payment (awaiting_payment → atomic claim); dual path callback + /payment/success confirm; /api/flitt/pay amount not yet bound.

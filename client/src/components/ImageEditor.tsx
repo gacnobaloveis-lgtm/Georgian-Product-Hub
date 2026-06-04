@@ -6,8 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 import { removeBackground } from "@imgly/background-removal";
 
 type BgType = "transparent" | "white" | "green" | "red" | "blue" | "yellow" | "blur";
+type FillColor = "white" | "green" | "red" | "blue" | "yellow";
+type Mode = "cutout" | "colorbg" | "original";
 
-const BG_COLORS: Record<Exclude<BgType, "transparent" | "blur">, string> = {
+const BG_COLORS: Record<FillColor, string> = {
   white: "#ffffff",
   green: "#10b981",
   red: "#ef4444",
@@ -25,6 +27,57 @@ const BG_OPTIONS: { value: BgType; label: string; swatch: string }[] = [
   { value: "yellow", label: "ყვითელი", swatch: "#facc15" },
 ];
 
+const FILL_OPTIONS: { value: FillColor; label: string; swatch: string }[] = [
+  { value: "white", label: "თეთრი", swatch: "#ffffff" },
+  { value: "green", label: "მწვანე", swatch: "#10b981" },
+  { value: "red", label: "წითელი", swatch: "#ef4444" },
+  { value: "blue", label: "ლურჯი", swatch: "#3b82f6" },
+  { value: "yellow", label: "ყვითელი", swatch: "#facc15" },
+];
+
+// Replace the background of `img` with transparency using a flood fill from the
+// image borders. Only background-connected pixels close to the border color are
+// removed, so the product (including white parts inside it) stays intact.
+function removeBgByFlood(img: HTMLImageElement, W: number, H: number, threshold: number): HTMLCanvasElement {
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const cx = c.getContext("2d")!;
+  cx.drawImage(img, 0, 0, W, H);
+  const id = cx.getImageData(0, 0, W, H);
+  const d = id.data;
+
+  // average the four corners to estimate the background color
+  const corners = [0, (W - 1) * 4, (H - 1) * W * 4, ((H - 1) * W + (W - 1)) * 4];
+  let br = 0, bg = 0, bb = 0;
+  for (const s of corners) { br += d[s]; bg += d[s + 1]; bb += d[s + 2]; }
+  br /= 4; bg /= 4; bb /= 4;
+
+  const visited = new Uint8Array(W * H);
+  const stack: number[] = [];
+  for (let x = 0; x < W; x++) { stack.push(x); stack.push((H - 1) * W + x); }
+  for (let y = 0; y < H; y++) { stack.push(y * W); stack.push(y * W + (W - 1)); }
+
+  const tol = threshold * threshold * 3;
+  while (stack.length) {
+    const p = stack.pop()!;
+    if (visited[p]) continue;
+    visited[p] = 1;
+    const i = p * 4;
+    const dr = d[i] - br, dg = d[i + 1] - bg, db = d[i + 2] - bb;
+    if (dr * dr + dg * dg + db * db > tol) continue;
+    d[i + 3] = 0;
+    const x = p % W;
+    const y = (p / W) | 0;
+    if (x > 0) stack.push(p - 1);
+    if (x < W - 1) stack.push(p + 1);
+    if (y > 0) stack.push(p - W);
+    if (y < H - 1) stack.push(p + W);
+  }
+  cx.putImageData(id, 0, 0);
+  return c;
+}
+
 interface Props {
   file: File;
   onSave: (blob: Blob) => void;
@@ -37,12 +90,15 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
   const [loadingMsg, setLoadingMsg] = useState("ფონის მოცილება მიმდინარეობს...");
   const [originalImg, setOriginalImg] = useState<HTMLImageElement | null>(null);
   const [cutoutImg, setCutoutImg] = useState<HTMLImageElement | null>(null);
+  const [mode, setMode] = useState<Mode>("cutout");
   const [bgType, setBgType] = useState<BgType>("transparent");
   const [bgBlur, setBgBlur] = useState(15);
   const [opacity, setOpacity] = useState(100);
   const [balance, setBalance] = useState(10);
-  const [useOriginal, setUseOriginal] = useState(false);
+  const [fillColor, setFillColor] = useState<FillColor>("white");
+  const [bgThreshold, setBgThreshold] = useState(45);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const floodCache = useRef<{ key: string; canvas: HTMLCanvasElement } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,7 +157,7 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
   }, [file]);
 
   useEffect(() => {
-    const baseImg = useOriginal ? originalImg : cutoutImg;
+    const baseImg = mode === "cutout" ? cutoutImg : originalImg;
     if (!baseImg || !canvasRef.current) return;
     const canvas = canvasRef.current;
     const maxW = 800;
@@ -114,10 +170,26 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
     if (!ctx) return;
     ctx.clearRect(0, 0, W, H);
 
-    if (useOriginal && originalImg) {
-      ctx.drawImage(originalImg, 0, 0, W, H);
+    if (mode === "original") {
+      if (originalImg) ctx.drawImage(originalImg, 0, 0, W, H);
       return;
     }
+
+    if (mode === "colorbg") {
+      if (!originalImg) return;
+      ctx.fillStyle = BG_COLORS[fillColor];
+      ctx.fillRect(0, 0, W, H);
+      const key = `${W}x${H}:${bgThreshold}`;
+      if (!floodCache.current || floodCache.current.key !== key) {
+        floodCache.current = { key, canvas: removeBgByFlood(originalImg, W, H, bgThreshold) };
+      }
+      ctx.globalAlpha = opacity / 100;
+      ctx.drawImage(floodCache.current.canvas, 0, 0, W, H);
+      ctx.globalAlpha = 1;
+      return;
+    }
+
+    // mode === "cutout"
     if (!cutoutImg) return;
 
     if (bgType === "blur" && originalImg) {
@@ -125,7 +197,7 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
       ctx.drawImage(originalImg, 0, 0, W, H);
       ctx.filter = "none";
     } else if (bgType !== "transparent") {
-      ctx.fillStyle = BG_COLORS[bgType as keyof typeof BG_COLORS];
+      ctx.fillStyle = BG_COLORS[bgType as FillColor];
       ctx.fillRect(0, 0, W, H);
     }
 
@@ -154,7 +226,7 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
     ctx.globalAlpha = opacity / 100;
     ctx.drawImage(fg, 0, 0, W, H);
     ctx.globalAlpha = 1;
-  }, [cutoutImg, originalImg, bgType, bgBlur, opacity, balance, useOriginal]);
+  }, [cutoutImg, originalImg, mode, bgType, bgBlur, opacity, balance, fillColor, bgThreshold]);
 
   const handleSave = () => {
     const canvas = canvasRef.current;
@@ -188,12 +260,12 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
         <canvas ref={canvasRef} className="w-full h-auto block" data-testid="canvas-preview" />
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         <button
           type="button"
-          onClick={() => setUseOriginal(false)}
-          className={`rounded-md border-2 px-2.5 py-2 text-xs font-medium transition-colors ${
-            !useOriginal ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-slate-200 text-slate-600 hover:border-emerald-300"
+          onClick={() => setMode("cutout")}
+          className={`rounded-md border-2 px-2 py-2 text-xs font-medium transition-colors ${
+            mode === "cutout" ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-slate-200 text-slate-600 hover:border-emerald-300"
           }`}
           data-testid="button-mode-cutout"
         >
@@ -201,22 +273,78 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
         </button>
         <button
           type="button"
-          onClick={() => setUseOriginal(true)}
-          className={`rounded-md border-2 px-2.5 py-2 text-xs font-medium transition-colors ${
-            useOriginal ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-slate-200 text-slate-600 hover:border-emerald-300"
+          onClick={() => setMode("colorbg")}
+          className={`rounded-md border-2 px-2 py-2 text-xs font-medium transition-colors ${
+            mode === "colorbg" ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-slate-200 text-slate-600 hover:border-emerald-300"
+          }`}
+          data-testid="button-mode-colorbg"
+        >
+          ფერადი ფონი
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("original")}
+          className={`rounded-md border-2 px-2 py-2 text-xs font-medium transition-colors ${
+            mode === "original" ? "border-emerald-600 bg-emerald-50 text-emerald-900" : "border-slate-200 text-slate-600 hover:border-emerald-300"
           }`}
           data-testid="button-mode-original"
         >
-          ორიგინალი (ფონით)
+          ორიგინალი
         </button>
       </div>
-      {useOriginal && (
+
+      {mode === "original" && (
         <p className="text-[11px] text-emerald-700/80">
           სურათი ინახება ისე როგორც არის, ფონის მოცილების გარეშე — გამოიყენე როცა ამოჭრა პროდუქტს ჭამს.
         </p>
       )}
 
-      {!useOriginal && (
+      {mode === "colorbg" && (
+        <>
+          <p className="text-[11px] text-emerald-700/80">
+            თეთრი ფონი იცვლება შენ მიერ არჩეული ფერით, პროდუქტი კი ხელუხლებელი რჩება (AI არ ჭამს).
+          </p>
+          <div className="space-y-2">
+            <div className="text-xs font-medium text-emerald-900">ფონის ფერი</div>
+            <div className="flex flex-wrap gap-2">
+              {FILL_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setFillColor(opt.value)}
+                  className={`flex items-center gap-1.5 rounded-md border-2 px-2.5 py-1.5 text-xs transition-colors ${
+                    fillColor === opt.value ? "border-emerald-600 bg-emerald-50" : "border-slate-200 hover:border-emerald-300"
+                  }`}
+                  data-testid={`button-fill-${opt.value}`}
+                >
+                  <span className="inline-block h-4 w-4 rounded border border-slate-300" style={{ background: opt.swatch }} />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="font-medium text-emerald-900">ფონის მგრძნობელობა</span>
+              <span className="text-emerald-800 tabular-nums">{bgThreshold}</span>
+            </div>
+            <input
+              type="range" min={10} max={120} step={5}
+              value={bgThreshold}
+              onChange={(e) => setBgThreshold(Number(e.target.value))}
+              className="w-full accent-emerald-600"
+              data-testid="slider-bg-threshold"
+            />
+            <div className="flex justify-between text-[10px] text-emerald-700/70">
+              <span>ნაკლები ფონი იცვლება</span>
+              <span>მეტი ფონი იცვლება</span>
+            </div>
+          </div>
+        </>
+      )}
+
+      {mode === "cutout" && (
       <>
       <div className="space-y-2">
         <div className="text-xs font-medium text-emerald-900">ფონი</div>
@@ -278,21 +406,23 @@ export function ImageEditor({ file, onSave, onCancel }: Props) {
           <span>მეტი ამოჭრა</span>
         </div>
       </div>
-
-      <div className="space-y-1">
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-medium text-emerald-900">პროდუქტის გამჭვირვალობა</span>
-          <span className="text-emerald-800 tabular-nums">{opacity}%</span>
-        </div>
-        <input
-          type="range" min={20} max={100} step={5}
-          value={opacity}
-          onChange={(e) => setOpacity(Number(e.target.value))}
-          className="w-full accent-emerald-600"
-          data-testid="slider-fg-opacity"
-        />
-      </div>
       </>
+      )}
+
+      {mode !== "original" && (
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-medium text-emerald-900">პროდუქტის გამჭვირვალობა</span>
+            <span className="text-emerald-800 tabular-nums">{opacity}%</span>
+          </div>
+          <input
+            type="range" min={20} max={100} step={5}
+            value={opacity}
+            onChange={(e) => setOpacity(Number(e.target.value))}
+            className="w-full accent-emerald-600"
+            data-testid="slider-fg-opacity"
+          />
+        </div>
       )}
 
       <div className="flex gap-2 pt-1">
