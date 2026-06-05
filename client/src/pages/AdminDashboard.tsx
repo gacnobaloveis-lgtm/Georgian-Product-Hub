@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush, ChevronDown, ChevronRight, Archive, FileText, GripVertical, ArrowUp, ArrowDown, MessageCircle, Send, ArrowLeft as ArrowLeftIcon, Megaphone, Loader2, Flame, Package } from "lucide-react";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories";
 import { IconPicker, LucideIcon } from "@/components/IconPicker";
@@ -726,9 +726,30 @@ function SiteManagement() {
 }
 
 function InterestsSection() {
+  const { toast } = useToast();
   const { data, isLoading } = useQuery<{ productId: number; name: string; categoryName: string | null; count: number; lastAt: string | null }[]>({
     queryKey: ["/api/admin/product-interests"],
   });
+
+  const clearInterests = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", "/api/admin/product-interests");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/product-interests"] });
+      toast({ title: "გასუფთავდა", description: "მთვლელი განულდა" });
+    },
+    onError: () => toast({ title: "შეცდომა", variant: "destructive" }),
+  });
+
+  function handleClear() {
+    if (!data || data.length === 0) {
+      toast({ title: "ცარიელია", description: "გასასუფთავებელი არაფერია" });
+      return;
+    }
+    if (!window.confirm("ნამდვილად გასუფთავდეს ამოწურული პროდუქტების ინტერესის მთვლელი?")) return;
+    clearInterests.mutate();
+  }
 
   const GEO_MONTHS = ["იანვარი", "თებერვალი", "მარტი", "აპრილი", "მაისი", "ივნისი", "ივლისი", "აგვისტო", "სექტემბერი", "ოქტომბერი", "ნოემბერი", "დეკემბერი"];
   const formatMonth = (iso: string | null) => {
@@ -743,9 +764,22 @@ function InterestsSection() {
 
   return (
     <GlassPanel className="p-5 sm:p-7">
-      <div className="mb-4 flex items-center gap-2">
-        <Flame className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-semibold">ამოწურული პროდუქტების ინტერესი</h2>
+      <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Flame className="h-5 w-5 shrink-0 text-primary" />
+          <h2 className="truncate text-lg font-semibold">ამოწურული პროდუქტების ინტერესი</h2>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleClear}
+          disabled={clearInterests.isPending}
+          className="shrink-0 text-destructive hover:text-destructive"
+          data-testid="button-clear-interests"
+        >
+          <Trash2 className="mr-1 h-3.5 w-3.5" />
+          {clearInterests.isPending ? "სუფთავდება..." : "გასუფთავება"}
+        </Button>
       </div>
 
       <p className="mb-5 text-sm text-muted-foreground">

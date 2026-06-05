@@ -1248,6 +1248,16 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/product-interests", requireAdmin, async (_req, res) => {
+    try {
+      await storage.clearProductInterests();
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("Clear product interests error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.get("/api/admin/settings", requireAdmin, async (_req, res) => {
     try {
       const creditAmount = await storage.getSetting("referral_credit_amount") || "5";
