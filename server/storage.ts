@@ -55,6 +55,7 @@ export interface IStorage {
   getAnalyticsTotal(days: number): Promise<number>;
   recordProductInterest(productId: number, productName: string): Promise<void>;
   getProductInterests(): Promise<{ productId: number; name: string; categoryName: string | null; count: number; lastAt: Date | null }[]>;
+  clearProductInterests(): Promise<void>;
   getTermsSections(): Promise<TermsSection[]>;
   createTermsSection(section: InsertTermsSection): Promise<TermsSection>;
   updateTermsSection(id: number, updates: Partial<InsertTermsSection>): Promise<TermsSection | undefined>;
@@ -430,6 +431,10 @@ export class DatabaseStorage implements IStorage {
     }
     result.sort((a, b) => b.count - a.count);
     return result;
+  }
+
+  async clearProductInterests(): Promise<void> {
+    await db.delete(productInterests);
   }
 
   async getTermsSections(): Promise<TermsSection[]> {
