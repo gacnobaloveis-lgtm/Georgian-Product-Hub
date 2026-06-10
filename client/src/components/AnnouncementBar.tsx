@@ -11,7 +11,7 @@ export function AnnouncementBar() {
 
   return (
     <div
-      className="w-full bg-amber-500 text-amber-950"
+      className="sticky top-0 z-50 w-full bg-amber-500 text-amber-950 shadow-md"
       role="status"
       data-testid="bar-announcement"
     >
