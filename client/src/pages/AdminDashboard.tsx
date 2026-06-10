@@ -2816,6 +2816,31 @@ export default function AdminDashboard() {
   const isSalesAdmin = currentRole === "sales_admin";
   const isModerator = currentRole === "moderator";
 
+  const { data: newOrdersData } = useQuery<{ count: number }>({
+    queryKey: ["/api/admin/orders/new-count"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/orders/new-count", { credentials: "include" });
+      if (!res.ok) throw new Error("შეცდომა");
+      return res.json();
+    },
+    refetchInterval: 30000,
+  });
+  const newOrdersCount = newOrdersData?.count || 0;
+
+  const markOrdersSeen = useMutation({
+    mutationFn: async () => {
+      await fetch("/api/admin/orders/mark-seen", { method: "POST", credentials: "include" });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders/new-count"] });
+    },
+  });
+
+  function openOrders() {
+    setActiveSection("orders");
+    if (newOrdersCount > 0) markOrdersSeen.mutate();
+  }
+
   async function handleLogout() {
     await logout();
     setLocation("/");
@@ -3133,10 +3158,18 @@ export default function AdminDashboard() {
             )}
 
             <Card
-              className="cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-primary/40"
-              onClick={() => setActiveSection("orders")}
+              className="relative cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-primary/40"
+              onClick={openOrders}
               data-testid="card-section-orders"
             >
+              {newOrdersCount > 0 && (
+                <span
+                  className="absolute right-3 top-3 z-10 flex min-w-[2rem] items-center justify-center rounded-full bg-red-500 px-2 py-1 text-sm font-bold text-white shadow-md"
+                  data-testid="badge-new-orders"
+                >
+                  +{newOrdersCount}
+                </span>
+              )}
               <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
                   <ShoppingBag className="h-7 w-7 text-primary" />
