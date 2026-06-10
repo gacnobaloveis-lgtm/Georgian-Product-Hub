@@ -583,6 +583,83 @@ function ProductRow({ product }: { product: Product }) {
   );
 }
 
+function AnnouncementSection() {
+  const { toast } = useToast();
+  const { data, isLoading } = useQuery<{ enabled: boolean; text: string }>({
+    queryKey: ["/api/announcement"],
+  });
+  const [text, setText] = useState("");
+  const [enabled, setEnabled] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (data && !loaded) {
+      setText(data.text || "");
+      setEnabled(!!data.enabled);
+      setLoaded(true);
+    }
+  }, [data, loaded]);
+
+  const save = useMutation({
+    mutationFn: async (payload: { enabled: boolean; text: string }) => {
+      await apiRequest("PUT", "/api/admin/announcement", payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/announcement"] });
+      toast({ title: "შენახულია", description: "განცხადება განახლდა" });
+    },
+    onError: () => toast({ title: "შეცდომა", variant: "destructive" }),
+  });
+
+  return (
+    <GlassPanel className="p-5 sm:p-7">
+      <div className="mb-4 flex items-center gap-2">
+        <Megaphone className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-semibold">განცხადების ზოლი</h2>
+      </div>
+      <p className="mb-4 text-sm text-muted-foreground">
+        ჩართვისას საიტის ზედა ნაწილში ყველა მომხმარებელს გამოუჩნდება ეს ტექსტი (მაგ. „საიტი გაშვებულია სატესტო რეჟიმში").
+      </p>
+
+      {isLoading ? (
+        <Skeleton className="h-24 w-full" />
+      ) : (
+        <div className="space-y-4">
+          <label className="flex items-center gap-3 rounded-lg border border-card-border bg-card px-4 py-3 cursor-pointer" data-testid="toggle-announcement">
+            <input
+              type="checkbox"
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+              className="h-5 w-5 accent-primary"
+              data-testid="checkbox-announcement-enabled"
+            />
+            <span className="text-sm font-medium">განცხადება ჩართულია</span>
+          </label>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium">ტექსტი</label>
+            <Input
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="საიტი გაშვებულია სატესტო რეჟიმში"
+              maxLength={300}
+              data-testid="input-announcement-text"
+            />
+          </div>
+
+          <Button
+            onClick={() => save.mutate({ enabled, text })}
+            disabled={save.isPending}
+            data-testid="button-save-announcement"
+          >
+            {save.isPending ? "ინახება..." : "შენახვა"}
+          </Button>
+        </div>
+      )}
+    </GlassPanel>
+  );
+}
+
 function SiteManagement() {
   const { toast } = useToast();
   const { data: cats, isLoading } = useCategories();
@@ -2944,6 +3021,7 @@ export default function AdminDashboard() {
                 </Link>
               </div>
             </div>
+            <AnnouncementSection />
             <SiteManagement />
           </AnimatedShell>
         </div>
