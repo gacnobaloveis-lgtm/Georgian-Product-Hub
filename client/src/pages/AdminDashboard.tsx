@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush, ChevronDown, ChevronRight, Archive, FileText, GripVertical, ArrowUp, ArrowDown, MessageCircle, Send, ArrowLeft as ArrowLeftIcon, Megaphone, Loader2, Flame, Package } from "lucide-react";
+import { Pencil, Trash2, X, Check, Upload, ImageOff, Plus, Settings, FolderPlus, LogOut, Users, ShoppingBag, Gauge, Shield, Truck, BarChart3, Globe, ExternalLink, Paintbrush, ChevronDown, ChevronRight, Archive, FileText, GripVertical, ArrowUp, ArrowDown, MessageCircle, Send, ArrowLeft as ArrowLeftIcon, Megaphone, Loader2, Flame, Package, Search } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Link, useLocation } from "wouter";
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from "@/hooks/use-categories";
@@ -1228,6 +1228,14 @@ function UsersSection() {
   const { data: usersList, isLoading } = useAdminUsers();
   const { data: adminStatus } = useAdminStatus();
   const canDeleteUsers = adminStatus?.role === "admin" || !!(adminStatus as any)?.isAdmin;
+  const [search, setSearch] = useState("");
+
+  const query = search.trim().toLowerCase();
+  const filteredUsers = (usersList || []).filter((user) => {
+    if (!query) return true;
+    const fullName = `${user.firstName || ""} ${user.lastName || ""}`.toLowerCase();
+    return fullName.includes(query);
+  });
 
   return (
     <GlassPanel className="p-5 sm:p-7">
@@ -1235,6 +1243,19 @@ function UsersSection() {
         <Users className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-semibold">რეგისტრირებული მომხმარებლები</h2>
       </div>
+
+      {usersList && usersList.length > 0 && (
+        <div className="relative mb-4">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="ძებნა სახელით ან გვარით..."
+            className="pl-9"
+            data-testid="input-search-users"
+          />
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-2">
@@ -1244,6 +1265,10 @@ function UsersSection() {
         </div>
       ) : !usersList || usersList.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">მომხმარებლები ჯერ არ არის რეგისტრირებული</p>
+      ) : filteredUsers.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground" data-testid="text-no-users-found">
+          ვერ მოიძებნა მომხმარებელი „{search}"
+        </p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm" data-testid="table-users">
@@ -1257,13 +1282,13 @@ function UsersSection() {
               </tr>
             </thead>
             <tbody>
-              {usersList.map((user, index) => (
+              {filteredUsers.map((user, index) => (
                 <UserRow key={user.id} user={user} index={index} canDelete={canDeleteUsers} />
               ))}
             </tbody>
           </table>
           <p className="mt-3 text-xs text-muted-foreground" data-testid="text-users-count">
-            სულ: {usersList.length} მომხმარებელი
+            {query ? `ნაპოვნია: ${filteredUsers.length} / ${usersList.length}` : `სულ: ${usersList.length} მომხმარებელი`}
           </p>
         </div>
       )}
