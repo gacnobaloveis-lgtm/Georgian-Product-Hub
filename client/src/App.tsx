@@ -21,6 +21,7 @@ import { AdminChatWidget } from "@/components/AdminChatWidget";
 import { BroadcastNotification } from "@/components/BroadcastNotification";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { MaintenanceOverlay } from "@/components/MaintenanceOverlay";
+import { AnnouncementBar } from "@/components/AnnouncementBar";
 import { useEffect } from "react";
 
 function useOnlinePing() {
@@ -67,6 +68,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <CartContext.Provider value={cart}>
         <TooltipProvider>
+          <AnnouncementBar />
           <Router />
           <AdminChatWidget />
           <BroadcastNotification />
