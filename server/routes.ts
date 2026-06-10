@@ -1351,6 +1351,30 @@ export async function registerRoutes(
     }
   });
 
+  // ─── Site announcement bar (განცხადება) ───
+  app.get("/api/announcement", async (_req, res) => {
+    try {
+      const enabled = (await storage.getSetting("announcement_enabled")) === "1";
+      const text = (await storage.getSetting("announcement_text")) || "";
+      res.json({ enabled, text });
+    } catch {
+      res.json({ enabled: false, text: "" });
+    }
+  });
+
+  app.put("/api/admin/announcement", requireAdmin, async (req, res) => {
+    try {
+      const text = typeof req.body?.text === "string" ? req.body.text.slice(0, 300) : "";
+      const enabled = req.body?.enabled ? "1" : "0";
+      await storage.setSetting("announcement_text", text);
+      await storage.setSetting("announcement_enabled", enabled);
+      res.json({ enabled: enabled === "1", text });
+    } catch (err) {
+      console.error("Announcement save error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   // ─── Ad banners (სარეკლამო სახლი) ───
   app.get("/api/ads", async (_req, res) => {
     try {
