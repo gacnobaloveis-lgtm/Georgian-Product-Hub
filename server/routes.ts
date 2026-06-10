@@ -1064,6 +1064,30 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/orders/new-count", requireAdmin, async (_req, res) => {
+    try {
+      const lastSeen = Number((await storage.getSetting("orders_last_seen_id")) || "0");
+      const allOrders = await storage.getOrders();
+      const count = allOrders.filter((o) => o.id > lastSeen).length;
+      res.json({ count });
+    } catch (err) {
+      console.error("New orders count error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.post("/api/admin/orders/mark-seen", requireAdmin, async (_req, res) => {
+    try {
+      const allOrders = await storage.getOrders();
+      const maxId = allOrders.reduce((m, o) => Math.max(m, o.id), 0);
+      await storage.setSetting("orders_last_seen_id", String(maxId));
+      res.json({ success: true, lastSeenId: maxId });
+    } catch (err) {
+      console.error("Mark orders seen error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.delete("/api/admin/orders/all", requireAdmin, async (_req, res) => {
     try {
       const count = await storage.deleteAllOrders();
