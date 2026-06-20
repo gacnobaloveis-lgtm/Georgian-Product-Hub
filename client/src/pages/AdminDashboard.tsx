@@ -1343,11 +1343,17 @@ function StockRow({ product }: { product: Product }) {
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
-            <div
-              className={`h-full rounded-full transition-all ${barColor}`}
-              style={{ width: `${Math.max(percent, stock > 0 ? 4 : 0)}%` }}
-            />
+          <div
+            className={`h-2.5 flex-1 overflow-hidden rounded-full ${
+              stock === 0 ? "border border-dashed border-muted-foreground/40 bg-transparent" : "bg-muted"
+            }`}
+          >
+            {stock > 0 && (
+              <div
+                className={`h-full rounded-full transition-all ${barColor}`}
+                style={{ width: `${Math.max(percent, 4)}%` }}
+              />
+            )}
           </div>
           <span className={`w-10 flex-shrink-0 text-right text-xs font-semibold ${textColor}`} data-testid={`stock-percent-${product.id}`}>
             {percent}%
