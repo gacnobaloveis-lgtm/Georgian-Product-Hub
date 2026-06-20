@@ -1296,6 +1296,121 @@ function UsersSection() {
   );
 }
 
+function StockRow({ product }: { product: Product }) {
+  const stock = product.stock || 0;
+  const sold = product.soldCount || 0;
+  const total = stock + sold;
+  const percent = total > 0 ? Math.round((stock / total) * 100) : 0;
+
+  let barColor = "bg-green-500";
+  let textColor = "text-green-600";
+  if (stock <= 4 || percent <= 20) {
+    barColor = "bg-red-500";
+    textColor = "text-red-600";
+  } else if (percent <= 50) {
+    barColor = "bg-yellow-500";
+    textColor = "text-yellow-600";
+  }
+
+  return (
+    <div
+      className="flex items-center gap-3 rounded-lg border border-muted bg-card/50 p-3"
+      data-testid={`stock-row-${product.id}`}
+    >
+      <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-md bg-muted">
+        {product.imageUrl ? (
+          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <ImageOff className="h-5 w-5 text-muted-foreground" />
+          </div>
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <p className="truncate text-sm font-medium" data-testid={`stock-name-${product.id}`}>
+            {product.name}
+          </p>
+          <span className={`flex-shrink-0 text-xs font-semibold ${textColor}`} data-testid={`stock-remaining-${product.id}`}>
+            დარჩა {stock} ერთეული
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-muted">
+            <div
+              className={`h-full rounded-full transition-all ${barColor}`}
+              style={{ width: `${Math.max(percent, stock > 0 ? 4 : 0)}%` }}
+            />
+          </div>
+          <span className={`w-10 flex-shrink-0 text-right text-xs font-semibold ${textColor}`} data-testid={`stock-percent-${product.id}`}>
+            {percent}%
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StockControlSection() {
+  const { data: products, isLoading } = useProducts();
+  const [search, setSearch] = useState("");
+
+  const query = search.trim().toLowerCase();
+  const list = (products || [])
+    .filter((p) => !query || p.name.toLowerCase().includes(query))
+    .slice()
+    .sort((a, b) => (a.stock || 0) - (b.stock || 0));
+
+  const lowCount = (products || []).filter((p) => (p.stock || 0) <= 4).length;
+
+  return (
+    <GlassPanel className="p-5 sm:p-7">
+      <div className="mb-4 flex items-center gap-2">
+        <Package className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-semibold">მარაგების კონტროლი</h2>
+        {lowCount > 0 && (
+          <span className="ml-auto rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-semibold text-red-600" data-testid="text-low-stock-count">
+            ამოწურვადი: {lowCount}
+          </span>
+        )}
+      </div>
+
+      {products && products.length > 0 && (
+        <div className="relative mb-4">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="ძებნა პროდუქტის სახელით..."
+            className="pl-9"
+            data-testid="input-search-stock"
+          />
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-16 w-full" />
+        </div>
+      ) : !products || products.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground">პროდუქტები ჯერ არ არის დამატებული</p>
+      ) : list.length === 0 ? (
+        <p className="py-6 text-center text-sm text-muted-foreground" data-testid="text-no-stock-found">
+          ვერ მოიძებნა პროდუქტი „{search}"
+        </p>
+      ) : (
+        <div className="space-y-2.5">
+          {list.map((product) => (
+            <StockRow key={product.id} product={product} />
+          ))}
+        </div>
+      )}
+    </GlassPanel>
+  );
+}
+
 function groupOrdersByUser24h(orders: Order[]) {
   const sorted = [...orders].sort((a, b) => {
     const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -2829,7 +2944,7 @@ function TermsSectionsManager() {
 }
 
 
-type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms" | "ads" | "tutorials" | "interests";
+type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms" | "ads" | "tutorials" | "interests" | "stock";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>(null);
@@ -2911,6 +3026,29 @@ export default function AdminDashboard() {
               </div>
             </div>
             <UsersSection />
+          </AnimatedShell>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeSection === "stock") {
+    return (
+      <div className="min-h-screen bg-mesh">
+        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+          <AnimatedShell className="space-y-6">
+            <div className="flex items-center justify-between">
+              <TopBar title="ადმინ პანელი" subtitle="მარაგების კონტროლი" />
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setActiveSection(null)} data-testid="button-back">
+                  უკან
+                </Button>
+                <Link href="/">
+                  <Button variant="ghost" size="sm" data-testid="link-homepage">მთავარი</Button>
+                </Link>
+              </div>
+            </div>
+            <StockControlSection />
           </AnimatedShell>
         </div>
       </div>
@@ -3235,6 +3373,20 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             )}
+
+            <Card
+              className="cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-primary/40"
+              onClick={() => setActiveSection("stock")}
+              data-testid="card-section-stock"
+            >
+              <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                  <Package className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold">მარაგების კონტროლი</h3>
+                <p className="text-sm text-muted-foreground">პროდუქტების მარაგის ნახვა და კონტროლი</p>
+              </CardContent>
+            </Card>
 
             {isFullAdmin && (
               <Card
