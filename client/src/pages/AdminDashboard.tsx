@@ -1296,6 +1296,13 @@ function UsersSection() {
   );
 }
 
+function isLowStock(product: Product) {
+  const stock = product.stock || 0;
+  const total = stock + (product.soldCount || 0);
+  const percent = total > 0 ? Math.round((stock / total) * 100) : 0;
+  return stock <= 4 || percent <= 20;
+}
+
 function StockRow({ product }: { product: Product }) {
   const stock = product.stock || 0;
   const sold = product.soldCount || 0;
@@ -1304,7 +1311,7 @@ function StockRow({ product }: { product: Product }) {
 
   let barColor = "bg-green-500";
   let textColor = "text-green-600";
-  if (stock <= 4 || percent <= 20) {
+  if (isLowStock(product)) {
     barColor = "bg-red-500";
     textColor = "text-red-600";
   } else if (percent <= 50) {
@@ -1361,7 +1368,7 @@ function StockControlSection() {
     .slice()
     .sort((a, b) => (a.stock || 0) - (b.stock || 0));
 
-  const lowCount = (products || []).filter((p) => (p.stock || 0) <= 4).length;
+  const lowCount = (products || []).filter((p) => isLowStock(p)).length;
 
   return (
     <GlassPanel className="p-5 sm:p-7">
