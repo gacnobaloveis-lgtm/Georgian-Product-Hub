@@ -38,10 +38,10 @@ const apiLimiter = rateLimit({
 });
 app.use("/api/", apiLimiter);
 
-// Relaxed rate limiter for login endpoints (kept high to avoid blocking normal use)
+// Relaxed login limiter — high enough to never block normal use, but keeps brute-force protection
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "ძალიან ბევრი შეყვანის მცდელობა. 15 წუთში სცადეთ." },
@@ -50,10 +50,11 @@ const authLimiter = rateLimit({
 app.use("/api/login", authLimiter);
 app.use("/api/admin/login", rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 1000,
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "ადმინ შესვლის მცდელობა ამოიწურა. 15 წუთში სცადეთ." },
+  skipSuccessfulRequests: true,
 }));
 app.use("/api/flitt/pay", rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
