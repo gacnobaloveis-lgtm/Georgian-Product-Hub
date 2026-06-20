@@ -31,17 +31,17 @@ app.use(
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 10000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "ძალიან ბევრი მოთხოვნა. სცადეთ მოგვიანებით." },
 });
 app.use("/api/", apiLimiter);
 
-// Strict rate limiter for login/payment endpoints (brute-force protection)
+// Relaxed rate limiter for login endpoints (kept high to avoid blocking normal use)
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "ძალიან ბევრი შეყვანის მცდელობა. 15 წუთში სცადეთ." },
@@ -50,7 +50,7 @@ const authLimiter = rateLimit({
 app.use("/api/login", authLimiter);
 app.use("/api/admin/login", rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "ადმინ შესვლის მცდელობა ამოიწურა. 15 წუთში სცადეთ." },
