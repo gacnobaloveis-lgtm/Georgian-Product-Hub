@@ -1297,24 +1297,21 @@ function UsersSection() {
 }
 
 function isLowStock(product: Product) {
-  const stock = product.stock || 0;
-  const total = stock + (product.soldCount || 0);
-  const percent = total > 0 ? Math.round((stock / total) * 100) : 0;
-  return stock <= 4 || percent <= 20;
+  return (product.stock || 0) <= 4;
 }
 
-function StockRow({ product }: { product: Product }) {
+function StockRow({ product, maxStock }: { product: Product; maxStock: number }) {
   const stock = product.stock || 0;
-  const sold = product.soldCount || 0;
-  const total = stock + sold;
-  const percent = total > 0 ? Math.round((stock / total) * 100) : 0;
+  const percent = maxStock > 0 ? Math.round((stock / maxStock) * 100) : 0;
 
   let barColor = "bg-green-500";
   let textColor = "text-green-600";
-  if (isLowStock(product)) {
+  if (stock === 0) {
+    textColor = "text-muted-foreground";
+  } else if (percent <= 33) {
     barColor = "bg-red-500";
     textColor = "text-red-600";
-  } else if (percent <= 50) {
+  } else if (percent <= 66) {
     barColor = "bg-yellow-500";
     textColor = "text-yellow-600";
   }
@@ -1371,6 +1368,7 @@ function StockControlSection() {
     .sort((a, b) => (a.stock || 0) - (b.stock || 0));
 
   const lowCount = (products || []).filter((p) => isLowStock(p)).length;
+  const maxStock = Math.max(1, ...(products || []).map((p) => p.stock || 0));
 
   return (
     <GlassPanel className="p-5 sm:p-7">
@@ -1412,7 +1410,7 @@ function StockControlSection() {
       ) : (
         <div className="space-y-2.5">
           {list.map((product) => (
-            <StockRow key={product.id} product={product} />
+            <StockRow key={product.id} product={product} maxStock={maxStock} />
           ))}
         </div>
       )}
