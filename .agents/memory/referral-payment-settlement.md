@@ -32,6 +32,20 @@ path is directly exploitable for free balance.
 persisted as `flitt_order_id` on EVERY order in the payment at `/api/flitt/pay` time
 so the Status query + settlement can find the whole group.
 
+**Canonical host matters for the callback.** Apex `spiningebi.ge` 301-redirects to
+`www.spiningebi.ge`, and Flitt's server-to-server POST callback does NOT follow 301s,
+so an apex `server_callback_url` silently drops every settlement. Always build the
+Flitt `server_callback_url`/`response_url` from the **www** host (normalize APP_URL,
+defaulting to `https://www.spiningebi.ge`). Without this, settlement falls back to the
+success-page `/api/flitt/confirm` only (works only if the buyer returns).
+
+**Verifying real payments:** FLITT_MERCHANT_ID + FLITT_SECRET_KEY are present in the
+Replit dev env too, so you can query Flitt's `Status({order_id})` directly from a repo-
+root node script (SDK `@flittpayments/flitt-node-js-sdk`) using the `flitt_order_id`
+stored on each order. `order_status` values seen: `approved` (paid), `processing`
+(in progress), `created` (opened, never paid), `expired` (window lapsed). An order stuck
+`awaiting_payment` is CORRECT when Flitt says it was never `approved` — not a bug.
+
 **Amount is always server-authoritative.** Order price is computed server-side from
 the DB product (`discountPrice < originalPrice ? discountPrice : originalPrice` × qty)
 in BOTH `/api/orders` and `/api/orders/credit`; client `productPrice`/`productName`
