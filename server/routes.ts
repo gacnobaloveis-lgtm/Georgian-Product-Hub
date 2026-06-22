@@ -2532,7 +2532,12 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         return res.status(400).json({ message: "არასწორი თანხა" });
       }
 
-      const appUrl = (process.env.APP_URL || "https://spiningebi.ge").replace(/\/$/, "");
+      // Always use the canonical www host: the apex spiningebi.ge 301-redirects
+      // to www, and Flitt's server-to-server POST callback does NOT follow 301s,
+      // so an apex callback URL would silently drop every payment confirmation.
+      const appUrl = (process.env.APP_URL || "https://www.spiningebi.ge")
+        .replace(/\/$/, "")
+        .replace(/:\/\/spiningebi\.ge/, "://www.spiningebi.ge");
       const amountTetri = Math.round(totalGel * 100); // GEL → tetri
       const oid = String(ids[0]);
 
