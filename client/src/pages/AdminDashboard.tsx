@@ -1579,7 +1579,7 @@ function OrdersSection() {
   const renderOrderGroups = (groups: ReturnType<typeof groupOrdersByUser24h>, prefix: string) => (
     <div className="space-y-3">
       {groups.map((group, gIdx) => {
-        const totalPrice = group.orders.reduce((sum, o) => sum + Number(o.productPrice) * (o.quantity || 1), 0);
+        const totalPrice = group.orders.reduce((sum, o) => sum + Number(o.productPrice), 0);
         return (
           <div key={gIdx} className="rounded-lg border border-card-border bg-card overflow-hidden" data-testid={`order-group-${prefix}-${gIdx}`}>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 bg-muted/40 px-4 py-3 border-b border-muted/50">
@@ -1696,7 +1696,7 @@ function OrdersSection() {
               <span className="text-sm font-semibold text-foreground">მიმდინარე თვე — {MONTH_NAMES_KA[now.getMonth()]} {now.getFullYear()}</span>
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{currentMonthOrders.length} შეკვეთა</span>
               <span className="text-xs font-semibold text-primary">
-                ₾{currentMonthOrders.reduce((s, o) => s + Number(o.productPrice) * (o.quantity || 1), 0).toFixed(2)}
+                ₾{currentMonthOrders.reduce((s, o) => s + Number(o.productPrice), 0).toFixed(2)}
               </span>
             </div>
             {currentMonthOrders.length === 0 ? (
@@ -1716,7 +1716,7 @@ function OrdersSection() {
                 {archiveMonthKeys.map((monthKey) => {
                   const [year, month] = monthKey.split("-").map(Number);
                   const monthOrders = ordersByMonth[monthKey];
-                  const monthRevenue = monthOrders.reduce((s, o) => s + Number(o.productPrice) * (o.quantity || 1), 0);
+                  const monthRevenue = monthOrders.reduce((s, o) => s + Number(o.productPrice), 0);
                   const isOpen = openMonths.has(monthKey);
                   const monthGroups = groupOrdersByUser24h(monthOrders);
                   return (
