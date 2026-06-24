@@ -36,6 +36,19 @@ function CreditRateInfo() {
   );
 }
 
+function CreditEquivalent({ credit }: { credit: number }) {
+  const { data } = useQuery<{ credit_to_gel: string }>({
+    queryKey: ["/api/credit-info"],
+  });
+  const rate = data?.credit_to_gel ? Number(data.credit_to_gel) : null;
+  if (rate === null || credit <= 0) return null;
+  return (
+    <p className="text-[11px] text-white/55" data-testid="text-credit-equivalent">
+      ≈ {(credit * rate).toFixed(2)} ₾
+    </p>
+  );
+}
+
 const GEORGIAN_CITIES = [
   "თბილისი", "ქუთაისი", "ბათუმი", "რუსთავი", "ფოთი",
   "ზუგდიდი", "გორი", "თელავი", "ახალციხე", "ოზურგეთი",
@@ -260,8 +273,9 @@ export default function MyProfile() {
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-white/65">ჩემი კრედიტი</p>
                   <p className="text-lg font-bold text-emerald-300" data-testid="text-profile-credit">
-                    ₾{Number(profile?.myCredit || 0).toFixed(2)}
+                    {Number(profile?.myCredit || 0).toFixed(2)} კრედიტი
                   </p>
+                  <CreditEquivalent credit={Number(profile?.myCredit || 0)} />
                   <CreditRateInfo />
                 </div>
               </div>
