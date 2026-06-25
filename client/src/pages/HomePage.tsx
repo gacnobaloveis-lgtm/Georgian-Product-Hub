@@ -778,6 +778,21 @@ export default function HomePage() {
   const displayOnline = onlineData ? onlineData.count : null;
 
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem("welcomeSeen")) {
+        const t = setTimeout(() => setWelcomeOpen(true), 600);
+        return () => clearTimeout(t);
+      }
+    } catch {}
+  }, []);
+
+  const closeWelcome = () => {
+    try { localStorage.setItem("welcomeSeen", "1"); } catch {}
+    setWelcomeOpen(false);
+  };
 
   interface VisualPublic {
     selectedLogo: number | null;
@@ -1368,6 +1383,47 @@ export default function HomePage() {
               data-testid="button-install-cancel"
             >
               არა, მადლობა
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={welcomeOpen} onOpenChange={(o) => { if (!o) closeWelcome(); }}>
+        <DialogContent className="max-w-md w-[92vw] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl" data-testid="dialog-welcome">
+          <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 px-6 pt-8 pb-6 text-center">
+            <div className="mx-auto mb-3 h-20 w-20 rounded-2xl bg-white/20 p-2.5 backdrop-blur-sm shadow-lg ring-2 ring-white/30">
+              <img src={fishermanLogo} alt="spiningebi.ge" className="h-full w-full object-contain drop-shadow-lg" />
+            </div>
+            <h2 className="text-xl font-bold text-white">მოგესალმებით, მეგობარო!</h2>
+            <p className="text-emerald-100 text-sm mt-1">spiningebi.ge — სათევზაო აღჭურვილობა</p>
+          </div>
+          <div className="px-6 py-5">
+            <DialogHeader className="sr-only">
+              <DialogTitle>მოგესალმებით</DialogTitle>
+              <DialogDescription>მისალმება ახალ ვიზიტორებს</DialogDescription>
+            </DialogHeader>
+            <p className="text-sm leading-relaxed text-gray-700">
+              თქვენ იმყოფებით ონლაინ მაღაზიის პლატფორმაზე <strong>სპინინგები.გე</strong>. გთავაზობთ სპინინგით სათევზაო აღჭურვილობას. ჩვენთან შეძენილი პროდუქცია მიეწოდება საქართველოს მთელ ტერიტორიაზე საკურიერო მომსახურებით.
+            </p>
+            <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2.5">
+                <span className="text-sm font-medium text-gray-700">ქალაქები</span>
+                <span className="text-sm font-bold text-emerald-700">10.50 ₾</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2.5">
+                <span className="text-sm font-medium text-gray-700">რეგიონები და სოფლები</span>
+                <span className="text-sm font-bold text-emerald-700">15.10 ₾</span>
+              </div>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-gray-700">
+              გაიარეთ მარტივი ავტორიზაცია და შეიძინეთ თქვენთვის სასურველი სასპინინგე ინვენტარი.
+            </p>
+            <button
+              onClick={closeWelcome}
+              className="mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3.5 text-base font-bold text-white shadow-lg hover:from-emerald-700 hover:to-teal-700 transition-all active:scale-[0.98]"
+              data-testid="button-welcome-close"
+            >
+              დავიწყოთ
             </button>
           </div>
         </DialogContent>
