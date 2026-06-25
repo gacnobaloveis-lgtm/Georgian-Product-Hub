@@ -1394,13 +1394,13 @@ export default function HomePage() {
       <Dialog open={welcomeOpen} onOpenChange={(o) => { if (!o) closeWelcome(); }}>
         <DialogContent
           data-testid="dialog-welcome"
-          className="max-w-md w-[92vw] p-0 overflow-hidden rounded-2xl border border-white/20 shadow-2xl bg-white/55 backdrop-blur-2xl [&>button]:hidden"
+          className="max-w-md w-[92vw] max-h-[88vh] overflow-y-auto p-0 rounded-2xl border border-white/20 shadow-2xl bg-white/55 backdrop-blur-2xl [&>button]:hidden"
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
         >
-          <div className="bg-gradient-to-br from-emerald-600/85 via-emerald-700/85 to-teal-800/85 px-6 pt-8 pb-6 text-center">
-            <div className="mx-auto mb-3 h-20 w-20 rounded-2xl bg-white/20 p-2.5 backdrop-blur-sm shadow-lg ring-2 ring-white/30">
+          <div className="bg-gradient-to-br from-emerald-600/85 via-emerald-700/85 to-teal-800/85 px-6 pt-6 pb-5 text-center">
+            <div className="mx-auto mb-2.5 h-16 w-16 rounded-2xl bg-white/20 p-2 backdrop-blur-sm shadow-lg ring-2 ring-white/30">
               <img src={fishermanLogo} alt="spiningebi.ge" className="h-full w-full object-contain drop-shadow-lg" />
             </div>
             <h2 className="text-xl font-bold text-white">მოგესალმებით, მეგობარო!</h2>
