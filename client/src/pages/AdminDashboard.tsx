@@ -2404,8 +2404,8 @@ function AdsManager() {
   }
 
   function addBanner() {
-    if (banners.length >= 3) {
-      toast({ variant: "destructive", title: "ლიმიტი", description: "მაქსიმუმ 3 ბანერი" });
+    if (banners.length >= 9) {
+      toast({ variant: "destructive", title: "ლიმიტი", description: "მაქსიმუმ 9 ბანერი" });
       return;
     }
     setBanners((prev) => [...prev, { imageUrl: "", linkUrl: "" }]);
@@ -2481,7 +2481,7 @@ function AdsManager() {
             <Megaphone className="h-4 w-4 text-primary" /> სარეკლამო ბანერები
           </h3>
           <p className="text-xs text-muted-foreground">
-            მაქსიმუმ 3 ბანერი. პროდუქტის გვერდზე ნაჩვენებია მონაცვლეობით (ყოველ 4.5 წამში). თითო ბანერი = სურათი + არჩევითი ბმული.
+            მაქსიმუმ 9 ბანერი. პროდუქტის გვერდზე ნაჩვენებია მონაცვლეობით (ყოველ 4.5 წამში). თითო ბანერი = სურათი + არჩევითი ბმული.
           </p>
         </CardContent>
       </Card>
@@ -2560,8 +2560,8 @@ function AdsManager() {
       ))}
 
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" onClick={addBanner} disabled={banners.length >= 3} data-testid="button-add-banner">
-          <Plus className="mr-1 h-4 w-4" /> დამატება ({banners.length}/3)
+        <Button type="button" variant="outline" onClick={addBanner} disabled={banners.length >= 9} data-testid="button-add-banner">
+          <Plus className="mr-1 h-4 w-4" /> დამატება ({banners.length}/9)
         </Button>
         <Button type="button" onClick={handleSave} disabled={saving} data-testid="button-save-ads">
           {saving ? <><Loader2 className="mr-1 h-4 w-4 animate-spin" /> ინახება...</> : <><Check className="mr-1 h-4 w-4" /> შენახვა</>}
