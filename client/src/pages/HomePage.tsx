@@ -1420,6 +1420,10 @@ export default function HomePage() {
                 <span className="text-sm font-medium text-gray-700">რეგიონები და სოფლები</span>
                 <span className="text-sm font-bold text-emerald-700">15.10 ₾</span>
               </div>
+              <div className="flex items-center justify-between rounded-lg bg-emerald-100 px-3 py-2.5">
+                <span className="text-sm font-medium text-gray-700">ქუთაისის ტერიტორია</span>
+                <span className="text-sm font-bold text-emerald-700">უფასო</span>
+              </div>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-gray-700">
               გაიარეთ მარტივი ავტორიზაცია და შეიძინეთ თქვენთვის სასურველი სასპინინგე ინვენტარი.
