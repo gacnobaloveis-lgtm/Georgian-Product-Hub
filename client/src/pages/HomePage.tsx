@@ -740,7 +740,7 @@ export default function HomePage() {
   const [, setLocation] = useLocation();
   const { data: products, isLoading } = useProducts();
   const { data: categories } = useCategories();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [heroSlide, setHeroSlide] = useState(0);
   useEffect(() => {
@@ -780,19 +780,19 @@ export default function HomePage() {
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
+  // Show the welcome dialog on every visit for non-authenticated users; once the
+  // user is authenticated, never show it again.
   useEffect(() => {
-    try {
-      if (!localStorage.getItem("welcomeSeen")) {
-        const t = setTimeout(() => setWelcomeOpen(true), 600);
-        return () => clearTimeout(t);
-      }
-    } catch {}
-  }, []);
+    if (authLoading) return;
+    if (isAuthenticated) {
+      setWelcomeOpen(false);
+      return;
+    }
+    const t = setTimeout(() => setWelcomeOpen(true), 600);
+    return () => clearTimeout(t);
+  }, [authLoading, isAuthenticated]);
 
-  const closeWelcome = () => {
-    try { localStorage.setItem("welcomeSeen", "1"); } catch {}
-    setWelcomeOpen(false);
-  };
+  const closeWelcome = () => setWelcomeOpen(false);
 
   interface VisualPublic {
     selectedLogo: number | null;
@@ -1389,7 +1389,13 @@ export default function HomePage() {
       </Dialog>
 
       <Dialog open={welcomeOpen} onOpenChange={(o) => { if (!o) closeWelcome(); }}>
-        <DialogContent className="max-w-md w-[92vw] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl" data-testid="dialog-welcome">
+        <DialogContent
+          className="max-w-md w-[92vw] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl [&>button]:hidden"
+          data-testid="dialog-welcome"
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+        >
           <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 px-6 pt-8 pb-6 text-center">
             <div className="mx-auto mb-3 h-20 w-20 rounded-2xl bg-white/20 p-2.5 backdrop-blur-sm shadow-lg ring-2 ring-white/30">
               <img src={fishermanLogo} alt="spiningebi.ge" className="h-full w-full object-contain drop-shadow-lg" />
