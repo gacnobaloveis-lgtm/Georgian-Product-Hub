@@ -1429,7 +1429,7 @@ export async function registerRoutes(
       const isSafeLink = (s: string) => /^https?:\/\//i.test(s);
       const cleaned = incoming
         .filter((b: any) => b && typeof b.imageUrl === "string" && isSafeImg(b.imageUrl.trim()))
-        .slice(0, 3)
+        .slice(0, 9)
         .map((b: any) => {
           const img = sanitizeString(String(b.imageUrl).trim());
           const rawLink = typeof b.linkUrl === "string" ? b.linkUrl.trim() : "";
