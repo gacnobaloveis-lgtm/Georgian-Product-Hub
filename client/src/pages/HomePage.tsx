@@ -1394,7 +1394,7 @@ export default function HomePage() {
       <Dialog open={welcomeOpen} onOpenChange={(o) => { if (!o) closeWelcome(); }}>
         <DialogContent
           data-testid="dialog-welcome"
-          className="max-w-md w-[92vw] max-h-[88vh] overflow-y-auto p-0 rounded-2xl border border-white/20 shadow-2xl bg-white/55 backdrop-blur-2xl [&>button]:hidden"
+          className="max-w-md w-[92vw] max-h-[88vh] overflow-y-auto p-0 rounded-2xl border border-white/20 shadow-2xl bg-slate-900/55 backdrop-blur-2xl text-white [&>button]:hidden"
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -1411,24 +1411,24 @@ export default function HomePage() {
               <DialogTitle>მოგესალმებით</DialogTitle>
               <DialogDescription>მისალმება ახალ ვიზიტორებს</DialogDescription>
             </DialogHeader>
-            <p className="text-sm leading-relaxed text-gray-700">
+            <p className="text-sm leading-relaxed text-white drop-shadow">
               თქვენ იმყოფებით ონლაინ მაღაზიის პლატფორმაზე <strong>spiningebi.ge</strong>. გთავაზობთ სპინინგით სათევზაო აღჭურვილობას. ჩვენთან შეძენილი პროდუქცია მიეწოდება საქართველოს მთელ ტერიტორიაზე საკურიერო მომსახურებით.
             </p>
             <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2.5">
-                <span className="text-sm font-medium text-gray-700">ქალაქები</span>
-                <span className="text-sm font-bold text-emerald-700">10.50 ₾</span>
+              <div className="flex items-center justify-between rounded-lg bg-white/10 border border-white/15 px-3 py-2.5">
+                <span className="text-sm font-medium text-white">ქალაქები</span>
+                <span className="text-sm font-bold text-emerald-300">10.50 ₾</span>
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2.5">
-                <span className="text-sm font-medium text-gray-700">რეგიონები და სოფლები</span>
-                <span className="text-sm font-bold text-emerald-700">15.10 ₾</span>
+              <div className="flex items-center justify-between rounded-lg bg-white/10 border border-white/15 px-3 py-2.5">
+                <span className="text-sm font-medium text-white">რეგიონები და სოფლები</span>
+                <span className="text-sm font-bold text-emerald-300">15.10 ₾</span>
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-emerald-100 px-3 py-2.5">
-                <span className="text-sm font-medium text-gray-700">ქუთაისის ტერიტორია</span>
-                <span className="text-sm font-bold text-emerald-700">უფასო</span>
+              <div className="flex items-center justify-between rounded-lg bg-white/15 border border-white/20 px-3 py-2.5">
+                <span className="text-sm font-medium text-white">ქუთაისის ტერიტორია</span>
+                <span className="text-sm font-bold text-emerald-300">უფასო</span>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-gray-700">
+            <p className="mt-4 text-sm leading-relaxed text-white drop-shadow">
               გაიარეთ მარტივი ავტორიზაცია და შეიძინეთ თქვენთვის სასურველი სასპინინგე ინვენტარი.
             </p>
             <button
