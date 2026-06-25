@@ -736,6 +736,8 @@ function SearchDrawer({
   );
 }
 
+let welcomeShownThisLoad = false;
+
 export default function HomePage() {
   const [, setLocation] = useLocation();
   const { data: products, isLoading } = useProducts();
@@ -781,15 +783,21 @@ export default function HomePage() {
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
-  // Show the welcome dialog on every visit for non-authenticated users; once the
-  // user is authenticated, never show it again.
+  // Show the welcome dialog only once per page load (browser open/refresh) for
+  // non-authenticated users. Navigating within the app (e.g. browsing products
+  // and returning to the homepage) will not re-trigger it because the flag lives
+  // at module scope and only resets on a full page reload.
   useEffect(() => {
     if (authLoading) return;
     if (isAuthenticated) {
       setWelcomeOpen(false);
       return;
     }
-    const t = setTimeout(() => setWelcomeOpen(true), 600);
+    if (welcomeShownThisLoad) return;
+    const t = setTimeout(() => {
+      welcomeShownThisLoad = true;
+      setWelcomeOpen(true);
+    }, 600);
     return () => clearTimeout(t);
   }, [authLoading, isAuthenticated]);
 
