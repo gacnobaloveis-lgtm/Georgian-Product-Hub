@@ -1421,7 +1421,7 @@ export default function HomePage() {
               </div>
               <div className="flex items-center justify-between rounded-lg bg-white/10 border border-white/15 px-3 py-2 sm:py-2.5">
                 <span className="text-xs sm:text-sm font-medium text-white">რეგიონები და სოფლები</span>
-                <span className="text-xs sm:text-sm font-bold text-emerald-300">15.10 ₾</span>
+                <span className="text-xs sm:text-sm font-bold text-emerald-300">15.50 ₾</span>
               </div>
               <div className="flex items-center justify-between rounded-lg bg-white/15 border border-white/20 px-3 py-2 sm:py-2.5">
                 <span className="text-xs sm:text-sm font-medium text-white">ქუთაისის ტერიტორია</span>
