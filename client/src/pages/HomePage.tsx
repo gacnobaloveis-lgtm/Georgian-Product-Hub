@@ -1394,46 +1394,46 @@ export default function HomePage() {
       <Dialog open={welcomeOpen} onOpenChange={(o) => { if (!o) closeWelcome(); }}>
         <DialogContent
           data-testid="dialog-welcome"
-          className="max-w-md w-[92vw] max-h-[88vh] overflow-y-auto p-0 rounded-2xl border border-white/20 shadow-2xl bg-white/55 backdrop-blur-2xl [&>button]:hidden"
+          className="max-w-md w-[92vw] max-h-[88vh] overflow-y-auto p-0 rounded-2xl border border-white/20 shadow-2xl bg-slate-900/55 backdrop-blur-2xl text-white [&>button]:hidden"
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
         >
-          <div className="bg-gradient-to-br from-emerald-600/85 via-emerald-700/85 to-teal-800/85 px-6 pt-6 pb-5 text-center">
-            <div className="mx-auto mb-2.5 h-16 w-16 rounded-2xl bg-white/20 p-2 backdrop-blur-sm shadow-lg ring-2 ring-white/30">
+          <div className="bg-gradient-to-br from-emerald-600/85 via-emerald-700/85 to-teal-800/85 px-6 pt-4 pb-3.5 sm:pt-6 sm:pb-5 text-center">
+            <div className="mx-auto mb-2 h-12 w-12 sm:h-16 sm:w-16 rounded-2xl bg-white/20 p-2 backdrop-blur-sm shadow-lg ring-2 ring-white/30">
               <img src={fishermanLogo} alt="spiningebi.ge" className="h-full w-full object-contain drop-shadow-lg" />
             </div>
-            <h2 className="text-xl font-bold text-white">მოგესალმებით, მეგობარო!</h2>
-            <p className="text-emerald-100 text-sm mt-1">spiningebi.ge — სათევზაო აღჭურვილობა</p>
+            <h2 className="text-lg sm:text-xl font-bold text-white">მოგესალმებით, მეგობარო!</h2>
+            <p className="text-emerald-100 text-xs sm:text-sm mt-0.5 sm:mt-1">spiningebi.ge — სათევზაო აღჭურვილობა</p>
           </div>
-          <div className="px-6 py-5">
+          <div className="px-5 py-4 sm:px-6 sm:py-5">
             <DialogHeader className="sr-only">
               <DialogTitle>მოგესალმებით</DialogTitle>
               <DialogDescription>მისალმება ახალ ვიზიტორებს</DialogDescription>
             </DialogHeader>
-            <p className="text-sm leading-relaxed text-gray-700">
+            <p className="text-xs sm:text-sm leading-snug sm:leading-relaxed text-white drop-shadow">
               თქვენ იმყოფებით ონლაინ მაღაზიის პლატფორმაზე <strong>spiningebi.ge</strong>. გთავაზობთ სპინინგით სათევზაო აღჭურვილობას. ჩვენთან შეძენილი პროდუქცია მიეწოდება საქართველოს მთელ ტერიტორიაზე საკურიერო მომსახურებით.
             </p>
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2.5">
-                <span className="text-sm font-medium text-gray-700">ქალაქები</span>
-                <span className="text-sm font-bold text-emerald-700">10.50 ₾</span>
+            <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
+              <div className="flex items-center justify-between rounded-lg bg-white/10 border border-white/15 px-3 py-2 sm:py-2.5">
+                <span className="text-xs sm:text-sm font-medium text-white">ქალაქები</span>
+                <span className="text-xs sm:text-sm font-bold text-emerald-300">10.50 ₾</span>
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2.5">
-                <span className="text-sm font-medium text-gray-700">რეგიონები და სოფლები</span>
-                <span className="text-sm font-bold text-emerald-700">15.10 ₾</span>
+              <div className="flex items-center justify-between rounded-lg bg-white/10 border border-white/15 px-3 py-2 sm:py-2.5">
+                <span className="text-xs sm:text-sm font-medium text-white">რეგიონები და სოფლები</span>
+                <span className="text-xs sm:text-sm font-bold text-emerald-300">15.10 ₾</span>
               </div>
-              <div className="flex items-center justify-between rounded-lg bg-emerald-100 px-3 py-2.5">
-                <span className="text-sm font-medium text-gray-700">ქუთაისის ტერიტორია</span>
-                <span className="text-sm font-bold text-emerald-700">უფასო</span>
+              <div className="flex items-center justify-between rounded-lg bg-white/15 border border-white/20 px-3 py-2 sm:py-2.5">
+                <span className="text-xs sm:text-sm font-medium text-white">ქუთაისის ტერიტორია</span>
+                <span className="text-xs sm:text-sm font-bold text-emerald-300">უფასო</span>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-relaxed text-gray-700">
+            <p className="mt-3 sm:mt-4 text-xs sm:text-sm leading-snug sm:leading-relaxed text-white drop-shadow">
               გაიარეთ მარტივი ავტორიზაცია და შეიძინეთ თქვენთვის სასურველი სასპინინგე ინვენტარი.
             </p>
             <button
               onClick={() => { closeWelcome(); setAuthDefaultTab("register"); setAuthDialogOpen(true); }}
-              className="mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3.5 text-base font-bold text-white shadow-lg hover:from-emerald-700 hover:to-teal-700 transition-all active:scale-[0.98]"
+              className="mt-4 sm:mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3 sm:py-3.5 text-sm sm:text-base font-bold text-white shadow-lg hover:from-emerald-700 hover:to-teal-700 transition-all active:scale-[0.98]"
               data-testid="button-welcome-close"
             >
               დავიწყოთ
