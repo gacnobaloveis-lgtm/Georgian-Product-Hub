@@ -1394,7 +1394,7 @@ export default function HomePage() {
       <Dialog open={welcomeOpen} onOpenChange={(o) => { if (!o) closeWelcome(); }}>
         <DialogContent
           data-testid="dialog-welcome"
-          className="max-w-md w-[92vw] max-h-[88vh] overflow-y-auto p-0 rounded-2xl border border-white/20 shadow-2xl bg-slate-900/55 backdrop-blur-2xl text-white [&>button]:hidden"
+          className="max-w-md w-[92vw] max-h-[88vh] overflow-y-auto p-0 rounded-2xl border border-white/20 shadow-2xl bg-slate-900/55 backdrop-blur-2xl text-white"
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -1431,13 +1431,6 @@ export default function HomePage() {
             <p className="mt-3 sm:mt-4 text-xs sm:text-sm leading-snug sm:leading-relaxed text-white drop-shadow">
               გაიარეთ მარტივი ავტორიზაცია და შეიძინეთ თქვენთვის სასურველი სასპინინგე ინვენტარი.
             </p>
-            <button
-              onClick={() => { closeWelcome(); setAuthDefaultTab("register"); setAuthDialogOpen(true); }}
-              className="mt-4 sm:mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3 sm:py-3.5 text-sm sm:text-base font-bold text-white shadow-lg hover:from-emerald-700 hover:to-teal-700 transition-all active:scale-[0.98]"
-              data-testid="button-welcome-close"
-            >
-              დავიწყოთ
-            </button>
           </div>
         </DialogContent>
       </Dialog>
