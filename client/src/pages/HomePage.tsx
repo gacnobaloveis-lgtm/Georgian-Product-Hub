@@ -1390,13 +1390,13 @@ export default function HomePage() {
 
       <Dialog open={welcomeOpen} onOpenChange={(o) => { if (!o) closeWelcome(); }}>
         <DialogContent
-          className="max-w-md w-[92vw] p-0 overflow-hidden rounded-2xl border-0 shadow-2xl [&>button]:hidden"
           data-testid="dialog-welcome"
+          className="max-w-md w-[92vw] p-0 overflow-hidden rounded-2xl border border-white/20 shadow-2xl bg-white/75 backdrop-blur-2xl [&>button]:hidden"
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
         >
-          <div className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 px-6 pt-8 pb-6 text-center">
+          <div className="bg-gradient-to-br from-emerald-600/85 via-emerald-700/85 to-teal-800/85 px-6 pt-8 pb-6 text-center">
             <div className="mx-auto mb-3 h-20 w-20 rounded-2xl bg-white/20 p-2.5 backdrop-blur-sm shadow-lg ring-2 ring-white/30">
               <img src={fishermanLogo} alt="spiningebi.ge" className="h-full w-full object-contain drop-shadow-lg" />
             </div>
@@ -1409,7 +1409,7 @@ export default function HomePage() {
               <DialogDescription>მისალმება ახალ ვიზიტორებს</DialogDescription>
             </DialogHeader>
             <p className="text-sm leading-relaxed text-gray-700">
-              თქვენ იმყოფებით ონლაინ მაღაზიის პლატფორმაზე <strong>სპინინგები.გე</strong>. გთავაზობთ სპინინგით სათევზაო აღჭურვილობას. ჩვენთან შეძენილი პროდუქცია მიეწოდება საქართველოს მთელ ტერიტორიაზე საკურიერო მომსახურებით.
+              თქვენ იმყოფებით ონლაინ მაღაზიის პლატფორმაზე <strong>spiningebi.ge</strong>. გთავაზობთ სპინინგით სათევზაო აღჭურვილობას. ჩვენთან შეძენილი პროდუქცია მიეწოდება საქართველოს მთელ ტერიტორიაზე საკურიერო მომსახურებით.
             </p>
             <div className="mt-4 space-y-2">
               <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2.5">
@@ -1425,7 +1425,7 @@ export default function HomePage() {
               გაიარეთ მარტივი ავტორიზაცია და შეიძინეთ თქვენთვის სასურველი სასპინინგე ინვენტარი.
             </p>
             <button
-              onClick={closeWelcome}
+              onClick={() => { closeWelcome(); setAuthDialogOpen(true); }}
               className="mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3.5 text-base font-bold text-white shadow-lg hover:from-emerald-700 hover:to-teal-700 transition-all active:scale-[0.98]"
               data-testid="button-welcome-close"
             >
