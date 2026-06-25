@@ -383,7 +383,7 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
     fetch(`/api/products/${product.id}/view`, { method: "POST" }).catch(() => {});
   };
 
-  const handleShare = (e: React.MouseEvent) => {
+  const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const baseUrl = window.location.origin;
@@ -391,15 +391,6 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
     if (referralCode) {
       productUrl += `?ref=${referralCode}`;
     }
-    const appId = fbConfig?.appId;
-    // Share Dialog (needs app_id) lets the user pick where to post — their own
-    // timeline, a group, a page they manage, or Messenger. The plain sharer only
-    // posts to the user's own timeline, so prefer the dialog when we have an id.
-    const fbUrl = appId
-      ? `https://www.facebook.com/dialog/share?app_id=${appId}&display=popup&href=${encodeURIComponent(productUrl)}&redirect_uri=${encodeURIComponent(productUrl)}`
-      : `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
-
-    const popup = window.open(fbUrl, "_blank", "width=600,height=600,noopener=no");
 
     const recordShare = () => {
       fetch(`/api/products/${product.id}/share`, { method: "POST" })
@@ -407,26 +398,31 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
         .catch(() => {});
     };
 
-    if (!popup) {
-      window.location.href = fbUrl;
+    // Mobile: use the native share sheet — the only reliable path on phones,
+    // where popup-close detection never works. Count the share when the user
+    // completes it (promise resolves); a cancel rejects and is not counted.
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: product.name, url: productUrl });
+        recordShare();
+      } catch {
+        // user cancelled the share sheet — do not count
+      }
       return;
     }
 
-    const openedAt = Date.now();
-    const checker = setInterval(() => {
-      try {
-        if (popup.closed) {
-          clearInterval(checker);
-          if (Date.now() - openedAt >= 3000) {
-            recordShare();
-          }
-        }
-      } catch {
-        clearInterval(checker);
-      }
-    }, 700);
+    // Desktop fallback: open the Facebook share dialog. Count optimistically on
+    // open, since cross-origin popup-close timing is unreliable.
+    const appId = fbConfig?.appId;
+    const fbUrl = appId
+      ? `https://www.facebook.com/dialog/share?app_id=${appId}&display=popup&href=${encodeURIComponent(productUrl)}&redirect_uri=${encodeURIComponent(productUrl)}`
+      : `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(productUrl)}`;
 
-    setTimeout(() => clearInterval(checker), 5 * 60 * 1000);
+    const popup = window.open(fbUrl, "_blank", "width=600,height=600,noopener=no");
+    recordShare();
+    if (!popup) {
+      window.location.href = fbUrl;
+    }
   };
 
   return (
