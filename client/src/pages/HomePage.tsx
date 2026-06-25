@@ -763,6 +763,7 @@ export default function HomePage() {
   const [categoryDrawerOpen, setCategoryDrawerOpen] = useState(false);
   const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [authDefaultTab, setAuthDefaultTab] = useState<"login" | "register">("login");
   const [guideOpen, setGuideOpen] = useState(false);
   const [guideSiteOpen, setGuideSiteOpen] = useState(false);
   const [guideCreditOpen, setGuideCreditOpen] = useState(false);
@@ -902,6 +903,7 @@ export default function HomePage() {
     if (isAuthenticated) {
       window.location.href = "/profile";
     } else {
+      setAuthDefaultTab("login");
       setAuthDialogOpen(true);
     }
   };
@@ -1183,6 +1185,7 @@ export default function HomePage() {
       <AuthLoginDialog
         open={authDialogOpen}
         onOpenChange={setAuthDialogOpen}
+        defaultTab={authDefaultTab}
       />
 
       {categories && (
@@ -1391,7 +1394,7 @@ export default function HomePage() {
       <Dialog open={welcomeOpen} onOpenChange={(o) => { if (!o) closeWelcome(); }}>
         <DialogContent
           data-testid="dialog-welcome"
-          className="max-w-md w-[92vw] p-0 overflow-hidden rounded-2xl border border-white/20 shadow-2xl bg-white/75 backdrop-blur-2xl [&>button]:hidden"
+          className="max-w-md w-[92vw] p-0 overflow-hidden rounded-2xl border border-white/20 shadow-2xl bg-white/55 backdrop-blur-2xl [&>button]:hidden"
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
@@ -1429,7 +1432,7 @@ export default function HomePage() {
               გაიარეთ მარტივი ავტორიზაცია და შეიძინეთ თქვენთვის სასურველი სასპინინგე ინვენტარი.
             </p>
             <button
-              onClick={() => { closeWelcome(); setAuthDialogOpen(true); }}
+              onClick={() => { closeWelcome(); setAuthDefaultTab("register"); setAuthDialogOpen(true); }}
               className="mt-5 w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-3.5 text-base font-bold text-white shadow-lg hover:from-emerald-700 hover:to-teal-700 transition-all active:scale-[0.98]"
               data-testid="button-welcome-close"
             >
