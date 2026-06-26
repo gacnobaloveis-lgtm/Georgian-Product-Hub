@@ -4,5 +4,6 @@
 - [Image editor](image-editor.md) — 3 bg modes (cutout/colorbg/original); colorbg = border flood-fill on original (AI eats white products, can't be undone by balance slider).
 - [Product color variants](product-color-variants.md) — no stored image↔color map; product page pairs them by index when album image count == color count (imageColorMode).
 - [Referral/payment settlement](referral-payment-settlement.md) — referral credit + sold-count must gate on CONFIRMED Flitt payment (awaiting_payment → atomic claim); dual path callback + /payment/success confirm; /api/flitt/pay amount not yet bound.
+- [Product stock model](stock-model.md) — two stock sources: `stock` int (color-less) vs `colorStock` JSON (color products); branch on selectedColor for both decrement AND availability check, in card + credit paths.
 - [HomePage fixed bg stacking](layout-fixed-bg-stacking.md) — global top-level UI must be positioned z-50+ or the fixed z-0 mountain background paints over it (invisible despite being in DOM).
 - [Dev server backend reload](dev-server-restart.md) — dev backend uses tsx (no watch); backend/route edits need a workflow restart or new routes 404 to the SPA fallback.

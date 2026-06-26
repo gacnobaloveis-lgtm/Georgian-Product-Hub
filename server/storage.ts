@@ -37,6 +37,7 @@ export interface IStorage {
   deleteAllOrders(): Promise<number>;
   incrementSoldCount(productId: number, qty: number): Promise<void>;
   decrementColorStock(productId: number, color: string, qty: number): Promise<void>;
+  decrementStock(productId: number, qty: number): Promise<void>;
   incrementViewCount(productId: number): Promise<void>;
   incrementShareCount(productId: number): Promise<void>;
   getUserByReferralCode(code: string): Promise<User | undefined>;
@@ -244,6 +245,15 @@ export class DatabaseStorage implements IStorage {
     colorStock[color] = Math.max(0, available - qty);
     await db.update(products)
       .set({ colorStock: JSON.stringify(colorStock) })
+      .where(eq(products.id, productId));
+  }
+
+  // Reduce the general (color-less) stock atomically, clamped at 0. Used for
+  // products without color variants, where the displayed "მარაგი" is the
+  // products.stock integer. Called only when a sale becomes real.
+  async decrementStock(productId: number, qty: number): Promise<void> {
+    await db.update(products)
+      .set({ stock: sql`GREATEST(0, COALESCE(${products.stock}, 0) - ${qty})` })
       .where(eq(products.id, productId));
   }
 

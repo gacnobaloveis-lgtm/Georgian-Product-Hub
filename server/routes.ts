@@ -908,6 +908,11 @@ export async function registerRoutes(
         if (available < orderQty) {
           return res.status(400).json({ message: `"${selectedColor}" ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
         }
+      } else {
+        const available = prod.stock ?? 0;
+        if (available < orderQty) {
+          return res.status(400).json({ message: `პროდუქტი ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
+        }
       }
 
       await storage.updateUserDetails(userId, {
@@ -984,6 +989,11 @@ export async function registerRoutes(
         if (available < orderQty) {
           return res.status(400).json({ message: `"${selectedColor}" ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
         }
+      } else {
+        const available = prod.stock ?? 0;
+        if (available < orderQty) {
+          return res.status(400).json({ message: `პროდუქტი ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
+        }
       }
 
       const creditToGelSetting = await storage.getSetting("credit_to_gel") || "1";
@@ -1025,6 +1035,8 @@ export async function registerRoutes(
       await storage.incrementSoldCount(Number(productId), orderQty);
       if (selectedColor) {
         await storage.decrementColorStock(Number(productId), String(selectedColor), orderQty);
+      } else {
+        await storage.decrementStock(Number(productId), orderQty);
       }
 
       console.log(`Credit order: user ${userId} spent ${creditNeeded} credits for order ${order.id}`);
@@ -2789,6 +2801,8 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     await storage.incrementSoldCount(order.productId, order.quantity);
     if (order.selectedColor) {
       await storage.decrementColorStock(order.productId, order.selectedColor, order.quantity);
+    } else {
+      await storage.decrementStock(order.productId, order.quantity);
     }
 
     // Award the referral credit now (and only now), with anti-fraud checks:
