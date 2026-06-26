@@ -908,6 +908,11 @@ export async function registerRoutes(
         if (available < orderQty) {
           return res.status(400).json({ message: `"${selectedColor}" ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
         }
+      } else {
+        const available = prod.stock ?? 0;
+        if (available < orderQty) {
+          return res.status(400).json({ message: `პროდუქტი ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
+        }
       }
 
       await storage.updateUserDetails(userId, {
@@ -983,6 +988,11 @@ export async function registerRoutes(
         const available = colorStock[selectedColor] ?? 0;
         if (available < orderQty) {
           return res.status(400).json({ message: `"${selectedColor}" ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
+        }
+      } else {
+        const available = prod.stock ?? 0;
+        if (available < orderQty) {
+          return res.status(400).json({ message: `პროდუქტი ამოწურულია ან არასაკმარისია (მარაგში: ${available})` });
         }
       }
 
