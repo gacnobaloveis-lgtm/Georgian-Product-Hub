@@ -1025,6 +1025,8 @@ export async function registerRoutes(
       await storage.incrementSoldCount(Number(productId), orderQty);
       if (selectedColor) {
         await storage.decrementColorStock(Number(productId), String(selectedColor), orderQty);
+      } else {
+        await storage.decrementStock(Number(productId), orderQty);
       }
 
       console.log(`Credit order: user ${userId} spent ${creditNeeded} credits for order ${order.id}`);
@@ -2789,6 +2791,8 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     await storage.incrementSoldCount(order.productId, order.quantity);
     if (order.selectedColor) {
       await storage.decrementColorStock(order.productId, order.selectedColor, order.quantity);
+    } else {
+      await storage.decrementStock(order.productId, order.quantity);
     }
 
     // Award the referral credit now (and only now), with anti-fraud checks:
