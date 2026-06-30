@@ -133,5 +133,5 @@ export type CreateProductRequest = InsertProduct;
 export type ProductResponse = Product;
 export type MediaResponse = Media;
 
-export { sessions, users, orders, referralLogs, siteSettings } from "./models/auth";
-export type { User, UpsertUser, Order, InsertOrder, ReferralLog, SiteSetting } from "./models/auth";
+export { sessions, users, orders, referralLogs, purchaseCreditLogs, siteSettings } from "./models/auth";
+export type { User, UpsertUser, Order, InsertOrder, ReferralLog, PurchaseCreditLog, SiteSetting } from "./models/auth";
