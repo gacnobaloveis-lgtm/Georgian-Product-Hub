@@ -334,6 +334,27 @@ async function ensureProductReviewTables() {
   }
 }
 
+async function ensurePurchaseCreditLogsTable() {
+  try {
+    const { pool } = await import("./db");
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS purchase_credit_logs (
+        id SERIAL PRIMARY KEY,
+        buyer_user_id VARCHAR NOT NULL,
+        order_id INTEGER NOT NULL,
+        product_name TEXT NOT NULL,
+        product_price VARCHAR NOT NULL,
+        credit_awarded NUMERIC(10,2) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_purchase_credit_logs_buyer ON purchase_credit_logs(buyer_user_id, created_at DESC)`);
+    console.log("[migrate] purchase_credit_logs table ensured");
+  } catch (err) {
+    console.error("[migrate] Error ensuring purchase_credit_logs table:", err);
+  }
+}
+
 async function migrateFilesToDb() {
   try {
     const { pool } = await import("./db");
@@ -506,6 +527,7 @@ async function initializeApp() {
     await ensureProductColumns();
     await ensureProductReviewTables();
     await ensureStockNotificationsTable();
+    await ensurePurchaseCreditLogsTable();
     await migrateFilesToDb();
     log("All migrations completed successfully");
   } catch (err: any) {
