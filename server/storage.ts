@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, productInterests, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
-import { users, orders, referralLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type InsertPageVisit } from "@shared/models/auth";
+import { users, orders, referralLogs, purchaseCreditLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type PurchaseCreditLog, type InsertPageVisit } from "@shared/models/auth";
 import { eq, desc, sql, lt, asc, and, isNull, ne } from "drizzle-orm";
 
 export interface IStorage {
@@ -47,6 +47,8 @@ export interface IStorage {
   setUserRole(userId: string, role: string): Promise<User | undefined>;
   getUser(id: string): Promise<User | undefined>;
   createReferralLog(log: { referrerUserId: string; buyerUserId: string; orderId: number; productName: string; productPrice: string; creditAwarded: number }): Promise<ReferralLog>;
+  createPurchaseCreditLog(log: { buyerUserId: string; orderId: number; productName: string; productPrice: string; creditAwarded: number }): Promise<PurchaseCreditLog>;
+  getPurchaseCreditLogs(): Promise<PurchaseCreditLog[]>;
   getReferralLogs(): Promise<ReferralLog[]>;
   hasReferralLogForBuyer(referrerUserId: string, buyerUserId: string): Promise<boolean>;
   getSetting(key: string): Promise<string | null>;
@@ -349,6 +351,21 @@ export class DatabaseStorage implements IStorage {
 
   async getReferralLogs(): Promise<ReferralLog[]> {
     return await db.select().from(referralLogs).orderBy(desc(referralLogs.createdAt));
+  }
+
+  async createPurchaseCreditLog(log: { buyerUserId: string; orderId: number; productName: string; productPrice: string; creditAwarded: number }): Promise<PurchaseCreditLog> {
+    const [entry] = await db.insert(purchaseCreditLogs).values({
+      buyerUserId: log.buyerUserId,
+      orderId: log.orderId,
+      productName: log.productName,
+      productPrice: log.productPrice,
+      creditAwarded: String(log.creditAwarded),
+    }).returning();
+    return entry;
+  }
+
+  async getPurchaseCreditLogs(): Promise<PurchaseCreditLog[]> {
+    return await db.select().from(purchaseCreditLogs).orderBy(desc(purchaseCreditLogs.createdAt));
   }
 
   async hasReferralLogForBuyer(referrerUserId: string, buyerUserId: string): Promise<boolean> {
