@@ -62,6 +62,18 @@ export const referralLogs = pgTable("referral_logs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Bonus credit awarded to the BUYER for completing a purchase (separate from
+// referral credit, which rewards the sharer). One row per awarded purchase.
+export const purchaseCreditLogs = pgTable("purchase_credit_logs", {
+  id: serial("id").primaryKey(),
+  buyerUserId: varchar("buyer_user_id").notNull(),
+  orderId: integer("order_id").notNull(),
+  productName: text("product_name").notNull(),
+  productPrice: varchar("product_price").notNull(),
+  creditAwarded: numeric("credit_awarded", { precision: 10, scale: 2 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const siteSettings = pgTable("site_settings", {
   key: varchar("key").primaryKey(),
   value: varchar("value").notNull(),
@@ -72,6 +84,7 @@ export type User = typeof users.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
 export type ReferralLog = typeof referralLogs.$inferSelect;
+export type PurchaseCreditLog = typeof purchaseCreditLogs.$inferSelect;
 export type SiteSetting = typeof siteSettings.$inferSelect;
 
 export const pageVisits = pgTable("page_visits", {
