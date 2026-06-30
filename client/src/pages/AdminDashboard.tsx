@@ -1759,7 +1759,7 @@ function AutoDravaSection() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editField, setEditField] = useState<"soldCount" | "viewCount">("soldCount");
   const [editValue, setEditValue] = useState("");
-  const [activeTab, setActiveTab] = useState<"stats" | "referrals" | "settings" | "contact">("stats");
+  const [activeTab, setActiveTab] = useState<"stats" | "referrals" | "purchaseCredit" | "settings" | "contact">("stats");
 
   const { data: referralLogs, isLoading: logsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/referral-logs"],
@@ -1770,7 +1770,7 @@ function AutoDravaSection() {
     },
   });
 
-  const { data: settings } = useQuery<{ referral_credit_amount: string; credit_to_gel: string }>({
+  const { data: settings } = useQuery<{ referral_credit_amount: string; credit_to_gel: string; purchase_credit_amount: string }>({
     queryKey: ["/api/admin/settings"],
     queryFn: async () => {
       const res = await fetch("/api/admin/settings", { credentials: "include" });
@@ -1779,14 +1779,25 @@ function AutoDravaSection() {
     },
   });
 
+  const { data: purchaseCreditLogs, isLoading: purchaseLogsLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/purchase-credit-logs"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/purchase-credit-logs", { credentials: "include" });
+      if (!res.ok) throw new Error("შეცდომა");
+      return res.json();
+    },
+  });
+
   const [creditAmount, setCreditAmount] = useState("");
   const [creditToGel, setCreditToGel] = useState("");
+  const [purchaseCreditAmount, setPurchaseCreditAmount] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
     if (settings) {
       setCreditAmount(settings.referral_credit_amount);
       setCreditToGel(settings.credit_to_gel);
+      setPurchaseCreditAmount(settings.purchase_credit_amount ?? "0");
     }
   }, [settings]);
 
@@ -1874,6 +1885,7 @@ function AutoDravaSection() {
         body: JSON.stringify({
           referral_credit_amount: creditAmount,
           credit_to_gel: creditToGel,
+          purchase_credit_amount: purchaseCreditAmount,
         }),
       });
       if (res.ok) {
@@ -1917,6 +1929,14 @@ function AutoDravaSection() {
           data-testid="tab-referrals"
         >
           გადაზიარებები
+        </Button>
+        <Button
+          variant={activeTab === "purchaseCredit" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveTab("purchaseCredit")}
+          data-testid="tab-purchase-credit"
+        >
+          შესყიდვის ბონუსი
         </Button>
         <Button
           variant={activeTab === "settings" ? "default" : "outline"}
@@ -2106,6 +2126,55 @@ function AutoDravaSection() {
         </div>
       )}
 
+      {activeTab === "purchaseCredit" && (
+        <div>
+          <h3 className="mb-3 text-sm font-semibold">შესყიდვის ბონუსები — ვის დაერიცხა</h3>
+          {purchaseLogsLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : !purchaseCreditLogs || purchaseCreditLogs.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">ბონუსები ჯერ არ დარიცხულა</p>
+          ) : (
+            <div className="space-y-2">
+              {purchaseCreditLogs.map((log: any) => (
+                <div
+                  key={log.id}
+                  className="rounded-lg border border-muted bg-muted/20 p-3"
+                  data-testid={`purchase-credit-log-${log.id}`}
+                >
+                  <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium truncate" data-testid={`text-pc-buyer-${log.id}`}>
+                        <span className="text-muted-foreground">მყიდველი:</span> {log.buyerName}
+                      </p>
+                      <p className="text-xs truncate">
+                        <span className="text-muted-foreground">პროდუქტი:</span> {log.productName}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="text-xs font-medium text-primary">₾{Number(log.productPrice).toFixed(2)}</span>
+                      <span className="inline-flex items-center rounded-full bg-green-100 border border-green-200 px-2 py-0.5 text-[10px] font-bold text-green-700">
+                        +{Number(log.creditAwarded).toFixed(0)} კრედიტი
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {log.createdAt ? new Date(log.createdAt).toLocaleDateString("ka-GE", {
+                          day: "numeric", month: "short", year: "numeric"
+                        }) : ""}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <p className="mt-2 text-xs text-muted-foreground">
+                სულ: {purchaseCreditLogs.length} ბონუსი, {purchaseCreditLogs.reduce((s: number, l: any) => s + Number(l.creditAwarded || 0), 0)} კრედიტი გაცემული
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
       {activeTab === "settings" && (
         <div>
           <h3 className="mb-4 text-sm font-semibold">კრედიტის პარამეტრები</h3>
@@ -2125,6 +2194,24 @@ function AutoDravaSection() {
               />
               <p className="mt-1 text-[10px] text-muted-foreground">
                 მაგ: 5 = გამზიარებელი მიიღებს 5 კრედიტს ყოველ გაყიდვაზე
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-4">
+              <label className="text-xs font-medium text-muted-foreground block mb-1.5">
+                რამდენ კრედიტს მიიღებს მყიდველი ყოველ შესყიდვაზე (ბონუსი)
+              </label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={purchaseCreditAmount}
+                onChange={(e) => setPurchaseCreditAmount(e.target.value)}
+                className="min-h-[44px]"
+                data-testid="input-purchase-credit-amount"
+              />
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                მაგ: 1 = ნებისმიერი ნივთის ყიდვისას მყიდველს დაერიცხება 1 კრედიტი. 0 = გამორთულია
               </p>
             </div>
 
