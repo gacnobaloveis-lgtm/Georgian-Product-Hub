@@ -941,6 +941,7 @@ export async function registerRoutes(
         address: sanitizeString(String(address)),
         phone: sanitizeString(String(phone)),
         status: "awaiting_payment",
+        paymentMethod: "card",
         refCode,
       });
 
@@ -1030,6 +1031,7 @@ export async function registerRoutes(
         address: sanitizeString(String(address)),
         phone: sanitizeString(String(phone)),
         status: "pending",
+        paymentMethod: "credit",
       });
 
       await storage.incrementSoldCount(Number(productId), orderQty);
