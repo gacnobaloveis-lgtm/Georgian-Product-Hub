@@ -2137,6 +2137,34 @@ function AutoDravaSection() {
 
       {activeTab === "purchaseCredit" && (
         <div>
+          <div className="mb-5 rounded-lg border border-emerald-200 bg-emerald-50/40 p-4">
+            <label className="text-xs font-medium text-muted-foreground block mb-1.5">
+              რამდენ კრედიტს მიიღებს მყიდველი ყოველ შესყიდვაზე (ბონუსი)
+            </label>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                value={purchaseCreditAmount}
+                onChange={(e) => setPurchaseCreditAmount(e.target.value)}
+                className="min-h-[44px] sm:max-w-[200px]"
+                data-testid="input-purchase-credit-amount-tab"
+              />
+              <Button
+                onClick={saveSettings}
+                disabled={savingSettings}
+                className="min-h-[44px]"
+                data-testid="button-save-purchase-credit"
+              >
+                {savingSettings ? "ინახება..." : "შენახვა"}
+              </Button>
+            </div>
+            <p className="mt-1.5 text-[10px] text-muted-foreground">
+              მაგ: 1 = ნებისმიერი ნივთის ყიდვისას მყიდველს დაერიცხება 1 კრედიტი. 0 = გამორთულია. (ერიცხება მხოლოდ ბარათით გადახდისას)
+            </p>
+          </div>
+
           <h3 className="mb-3 text-sm font-semibold">შესყიდვის ბონუსები — ვის დაერიცხა</h3>
           {purchaseLogsLoading ? (
             <div className="space-y-2">
