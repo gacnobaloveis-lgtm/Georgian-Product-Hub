@@ -14,6 +14,8 @@ Both are awarded ONLY inside `settlePaidOrder` (card flow), AFTER the atomic `ma
 
 `credit_to_gel` is the shared conversion rate (1 credit = X ₾) used for both display and spending.
 
+**Distinguishing card vs credit orders:** `orders.payment_method` (varchar NOT NULL DEFAULT 'card') is the explicit, authoritative marker — set to `'card'` in `/api/orders` and `'credit'` in `/api/orders/credit`. Do NOT infer payment type from `flitt_order_id` presence (fragile: paid card orders always have it, but awaiting/unpaid card orders may not). Admin orders table shows a blue "ბარათით" / purple "კრედიტით" badge. When this column was introduced, prod (Railway) had zero historical credit orders, so the blanket `'card'` default was correct with no backfill needed.
+
 **Why purchase bonus is NOT awarded in the credit-paid flow (`/api/orders/credit`):** awarding credit for spending credit creates a farming loop. Card (real-money) purchases only.
 
 **How to apply:** Any new "reward credit" must follow the same pattern: gate on confirmed payment inside settlePaidOrder, write a log row (who/order/product/amount), expose an admin GET endpoint + settings key. Award/log are non-transactional with catch-log (matches existing referral pattern) — acceptable, idempotency already guaranteed upstream.

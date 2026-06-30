@@ -1617,6 +1617,15 @@ function OrdersSection() {
                               გადაუხდელი
                             </span>
                           )}
+                          {(order as any).paymentMethod === "credit" ? (
+                            <span className="ml-2 inline-block rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-700 align-middle" data-testid={`badge-payment-${prefix}-${gIdx}-${oIdx}`}>
+                              კრედიტით
+                            </span>
+                          ) : (
+                            <span className="ml-2 inline-block rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 align-middle" data-testid={`badge-payment-${prefix}-${gIdx}-${oIdx}`}>
+                              ბარათით
+                            </span>
+                          )}
                         </td>
                         <td className="px-3 py-2.5 text-center">{order.quantity || 1}</td>
                         <td className="px-3 py-2.5 text-xs">{(order as any).selectedColor || "—"}</td>
