@@ -1217,6 +1217,24 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/purchase-credit-logs", requireAdmin, async (_req, res) => {
+    try {
+      const logs = await storage.getPurchaseCreditLogs();
+      const enriched = await Promise.all(logs.map(async (log) => {
+        const buyer = await storage.getUser(log.buyerUserId);
+        return {
+          ...log,
+          buyerName: buyer ? `${buyer.firstName || ""} ${buyer.lastName || ""}`.trim() || buyer.email : "—",
+          buyerEmail: buyer?.email || "—",
+        };
+      }));
+      res.json(enriched);
+    } catch (err) {
+      console.error("Purchase credit logs error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.get("/api/credit-info", async (_req, res) => {
     try {
       const creditToGel = await storage.getSetting("credit_to_gel") || "1";
@@ -1299,7 +1317,8 @@ export async function registerRoutes(
       const creditAmount = await storage.getSetting("referral_credit_amount") || "5";
       const creditToGel = await storage.getSetting("credit_to_gel") || "1";
       const creditVideoUrl = await storage.getSetting("credit_video_url") || "";
-      res.json({ referral_credit_amount: creditAmount, credit_to_gel: creditToGel, credit_video_url: creditVideoUrl });
+      const purchaseCreditAmount = await storage.getSetting("purchase_credit_amount") || "0";
+      res.json({ referral_credit_amount: creditAmount, credit_to_gel: creditToGel, credit_video_url: creditVideoUrl, purchase_credit_amount: purchaseCreditAmount });
     } catch (err) {
       res.status(500).json({ message: "შეცდომა" });
     }
@@ -1307,13 +1326,20 @@ export async function registerRoutes(
 
   app.put("/api/admin/settings", requireAdminOnly, async (req, res) => {
     try {
-      const { referral_credit_amount, credit_to_gel, credit_video_url } = req.body;
+      const { referral_credit_amount, credit_to_gel, credit_video_url, purchase_credit_amount } = req.body;
       if (referral_credit_amount !== undefined) {
         const val = Number(referral_credit_amount);
         if (isNaN(val) || val < 0) {
           return res.status(400).json({ message: "არასწორი კრედიტის რაოდენობა" });
         }
         await storage.setSetting("referral_credit_amount", String(val));
+      }
+      if (purchase_credit_amount !== undefined) {
+        const val = Number(purchase_credit_amount);
+        if (isNaN(val) || val < 0) {
+          return res.status(400).json({ message: "არასწორი ბონუს კრედიტის რაოდენობა" });
+        }
+        await storage.setSetting("purchase_credit_amount", String(val));
       }
       if (credit_to_gel !== undefined) {
         const val = Number(credit_to_gel);
@@ -2831,6 +2857,29 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         console.error("Referral credit error:", refErr);
       }
       await storage.clearOrderRef(ourOrderId);
+    }
+
+    // Award the BUYER a purchase bonus credit (separate from referral credit),
+    // a fixed admin-configurable amount per real (card) purchase. 0 = disabled.
+    // Only applies to card payments, not credit-paid orders, to avoid farming.
+    if (order.userId) {
+      try {
+        const purchaseSetting = await storage.getSetting("purchase_credit_amount");
+        const purchaseCredit = purchaseSetting ? Number(purchaseSetting) : 0;
+        if (purchaseCredit > 0) {
+          await storage.addCredit(order.userId, purchaseCredit);
+          await storage.createPurchaseCreditLog({
+            buyerUserId: order.userId,
+            orderId: order.id,
+            productName: order.productName,
+            productPrice: order.productPrice,
+            creditAwarded: purchaseCredit,
+          });
+          console.log(`Purchase credit: +${purchaseCredit} to buyer ${order.userId} for paid order ${order.id} (${source})`);
+        }
+      } catch (pcErr) {
+        console.error("Purchase credit error:", pcErr);
+      }
     }
     console.log(`[Flitt] order ${ourOrderId} settled via ${source}`);
     return true;
