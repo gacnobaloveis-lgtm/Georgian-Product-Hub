@@ -1034,12 +1034,7 @@ export async function registerRoutes(
         paymentMethod: "credit",
       });
 
-      await storage.incrementSoldCount(Number(productId), orderQty);
-      if (selectedColor) {
-        await storage.decrementColorStock(Number(productId), String(selectedColor), orderQty);
-      } else {
-        await storage.decrementStock(Number(productId), orderQty);
-      }
+      await applyStockDeduction(order, "credit");
 
       console.log(`Credit order: user ${userId} spent ${creditNeeded} credits for order ${order.id}`);
       res.status(201).json(order);
@@ -1133,8 +1128,17 @@ export async function registerRoutes(
       if (!status || !["pending", "shipped", "completed", "cancelled"].includes(status)) {
         return res.status(400).json({ message: "არასწორი სტატუსი" });
       }
+      const existing = await storage.getOrder(id);
       const updated = await storage.updateOrderStatus(id, status);
       if (!updated) return res.status(404).json({ message: "შეკვეთა ვერ მოიძებნა" });
+      // Realize the sale when the admin marks it shipped/completed. Many card
+      // orders never get a confirmed Flitt callback (they sit in
+      // awaiting_payment and the admin fulfils them manually), so stock would
+      // otherwise never be reduced. applyStockDeduction is idempotent via the
+      // stock_deducted flag, so orders already deducted (Flitt/credit) are safe.
+      if (existing && (status === "shipped" || status === "completed")) {
+        await applyStockDeduction(existing, `admin-${status}`);
+      }
       res.json(updated);
     } catch (err) {
       res.status(500).json({ message: "შეცდომა" });
@@ -2811,6 +2815,23 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     }
   });
 
+  // Reduce inventory for a realized sale exactly once. Uses the atomic
+  // stock_deducted claim so no path (Flitt settlement, credit purchase, admin
+  // marking shipped) can double-count. Branches on selectedColor per the
+  // two-source stock model. Returns true if this call performed the deduction.
+  async function applyStockDeduction(order: any, source: string): Promise<boolean> {
+    const claimed = await storage.markStockDeductedIfNot(order.id);
+    if (!claimed) return false;
+    await storage.incrementSoldCount(order.productId, order.quantity);
+    if (order.selectedColor) {
+      await storage.decrementColorStock(order.productId, order.selectedColor, order.quantity);
+    } else {
+      await storage.decrementStock(order.productId, order.quantity);
+    }
+    console.log(`[stock] deducted ${order.quantity} for product ${order.productId} (order ${order.id}, ${source})`);
+    return true;
+  }
+
   // Settle an order whose payment is confirmed real. Idempotent: only acts on
   // orders still in "awaiting_payment", so the callback and the success-page
   // confirmation can both call it without double-crediting.
@@ -2824,14 +2845,9 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     const claimed = await storage.markOrderPaidIfAwaiting(ourOrderId);
     if (!claimed) return false;
 
-    // The payment is real → count the sale and reduce the chosen color's stock
-    // now (not at checkout), so abandoned/unpaid card orders never eat inventory.
-    await storage.incrementSoldCount(order.productId, order.quantity);
-    if (order.selectedColor) {
-      await storage.decrementColorStock(order.productId, order.selectedColor, order.quantity);
-    } else {
-      await storage.decrementStock(order.productId, order.quantity);
-    }
+    // The payment is real → count the sale and reduce stock now (not at
+    // checkout), so abandoned/unpaid card orders never eat inventory.
+    await applyStockDeduction(order, source);
 
     // Award the referral credit now (and only now), with anti-fraud checks:
     // valid referrer, not self-referral, once per buyer.
