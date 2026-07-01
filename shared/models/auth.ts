@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar, serial, integer, text, numeric } from "drizzle-orm/pg-core";
+import { index, jsonb, pgTable, timestamp, varchar, serial, integer, text, numeric, boolean } from "drizzle-orm/pg-core";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -47,6 +47,7 @@ export const orders = pgTable("orders", {
   phone: varchar("phone").notNull(),
   status: varchar("status").notNull().default("pending"),
   paymentMethod: varchar("payment_method").notNull().default("card"),
+  stockDeducted: boolean("stock_deducted").notNull().default(false),
   refCode: varchar("ref_code"),
   flittOrderId: varchar("flitt_order_id"),
   createdAt: timestamp("created_at").defaultNow(),
