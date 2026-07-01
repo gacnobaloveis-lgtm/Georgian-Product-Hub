@@ -30,6 +30,7 @@ export interface IStorage {
   bindFlittOrderId(orderId: number, flittOrderId: string): Promise<boolean>;
   clearFlittOrderId(orderId: number): Promise<void>;
   markOrderPaidIfAwaiting(orderId: number): Promise<boolean>;
+  markStockDeductedIfNot(orderId: number): Promise<boolean>;
   getOrdersByUser(userId: string): Promise<Order[]>;
   updateOrderStatus(orderId: number, status: string): Promise<Order | undefined>;
   deleteOrdersOlderThan(date: Date): Promise<number>;
@@ -225,6 +226,19 @@ export class DatabaseStorage implements IStorage {
       .update(orders)
       .set({ status: "pending" })
       .where(and(eq(orders.id, orderId), eq(orders.status, "awaiting_payment")))
+      .returning({ id: orders.id });
+    return rows.length > 0;
+  }
+
+  // Atomically claim stock deduction for an order. Flips stock_deducted
+  // false → true and returns true only for the single caller that won the
+  // claim, so a sale's stock is reduced exactly once no matter which path
+  // realizes it (Flitt settlement, credit purchase, or admin marking shipped).
+  async markStockDeductedIfNot(orderId: number): Promise<boolean> {
+    const rows = await db
+      .update(orders)
+      .set({ stockDeducted: true })
+      .where(and(eq(orders.id, orderId), eq(orders.stockDeducted, false)))
       .returning({ id: orders.id });
     return rows.length > 0;
   }
