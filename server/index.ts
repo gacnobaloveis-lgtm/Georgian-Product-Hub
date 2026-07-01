@@ -338,7 +338,8 @@ async function ensureOrderColumns() {
   try {
     const { pool } = await import("./db");
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR NOT NULL DEFAULT 'card'`);
-    console.log("[migrate] orders payment_method column ensured");
+    await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_deducted BOOLEAN NOT NULL DEFAULT false`);
+    console.log("[migrate] orders payment_method/stock_deducted columns ensured");
   } catch (err) {
     console.error("[migrate] Error ensuring orders payment_method column:", err);
   }
