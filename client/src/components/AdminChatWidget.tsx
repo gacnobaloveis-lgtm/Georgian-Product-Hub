@@ -432,7 +432,7 @@ export function AdminChatWidget() {
                     <textarea
                       value={replyText} onChange={(e) => setReplyText(e.target.value)}
                       onKeyDown={handleKeyDown} placeholder="პასუხი... (Enter — გაგზავნა)"
-                      rows={5}
+                      rows={6}
                       className="flex-1 resize-none rounded-xl border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
                       data-testid="input-widget-reply"
                     />
