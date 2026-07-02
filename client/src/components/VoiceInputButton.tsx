@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 type Props = {
   onTranscript: (text: string) => void;
@@ -9,10 +10,9 @@ type Props = {
   "data-testid"?: string;
 };
 
-function getRecognition(): any | null {
+function getRecognitionCtor(): any | null {
   if (typeof window === "undefined") return null;
-  const Ctor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-  return Ctor ? new Ctor() : null;
+  return (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition || null;
 }
 
 export default function VoiceInputButton({
@@ -22,19 +22,21 @@ export default function VoiceInputButton({
   className = "",
   ...rest
 }: Props) {
-  const [supported, setSupported] = useState(false);
+  const { toast } = useToast();
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   const onTranscriptRef = useRef(onTranscript);
   onTranscriptRef.current = onTranscript;
 
   useEffect(() => {
-    const rec = getRecognition();
-    if (!rec) {
-      setSupported(false);
+    const Ctor = getRecognitionCtor();
+    if (!Ctor) return;
+    let rec: any;
+    try {
+      rec = new Ctor();
+    } catch {
       return;
     }
-    setSupported(true);
     rec.lang = lang;
     rec.continuous = false;
     rec.interimResults = false;
@@ -49,7 +51,16 @@ export default function VoiceInputButton({
       if (text) onTranscriptRef.current(text);
     };
     rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
+    rec.onerror = (e: any) => {
+      setListening(false);
+      if (e && (e.error === "not-allowed" || e.error === "service-not-allowed")) {
+        toast({
+          title: "მიკროფონზე წვდომა არ არის",
+          description: "გთხოვთ დაუშვათ მიკროფონის გამოყენება ბრაუზერის პარამეტრებში.",
+          variant: "destructive",
+        });
+      }
+    };
 
     recognitionRef.current = rec;
     return () => {
@@ -60,7 +71,7 @@ export default function VoiceInputButton({
         rec.stop();
       } catch {}
     };
-  }, [lang]);
+  }, [lang, toast]);
 
   useEffect(() => {
     if (disabled && listening) {
@@ -73,7 +84,14 @@ export default function VoiceInputButton({
 
   function toggle() {
     const rec = recognitionRef.current;
-    if (!rec) return;
+    if (!rec) {
+      toast({
+        title: "ხმოვანი შეყვანა მიუწვდომელია",
+        description:
+          "თქვენი ბრაუზერი ხმოვან შეყვანას არ უჭერს მხარს. სცადეთ Chrome-ით გახსნა.",
+      });
+      return;
+    }
     if (listening) {
       try {
         rec.stop();
@@ -89,8 +107,6 @@ export default function VoiceInputButton({
       setListening(false);
     }
   }
-
-  if (!supported) return null;
 
   return (
     <button
