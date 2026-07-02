@@ -62,6 +62,15 @@ export default function VoiceInputButton({
     };
   }, [lang]);
 
+  useEffect(() => {
+    if (disabled && listening) {
+      try {
+        recognitionRef.current?.stop();
+      } catch {}
+      setListening(false);
+    }
+  }, [disabled, listening]);
+
   function toggle() {
     const rec = recognitionRef.current;
     if (!rec) return;
