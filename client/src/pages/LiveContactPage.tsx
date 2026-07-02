@@ -313,14 +313,14 @@ export default function LiveContactPage() {
                   setInput(e.target.value);
                   const el = e.target;
                   el.style.height = "auto";
-                  el.style.height = Math.min(el.scrollHeight, 150) + "px";
+                  el.style.height = Math.min(el.scrollHeight, 200) + "px";
                 }}
                 onKeyDown={handleKeyDown}
                 onFocus={() => setTimeout(() => scrollToBottom(true), 300)}
                 placeholder="შეტყობინება..."
                 rows={1}
                 className="flex-1 resize-none rounded-xl border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 px-4 py-2.5 text-sm outline-none backdrop-blur-md focus:border-primary transition-colors"
-                style={{ minHeight: "44px", maxHeight: "150px" }}
+                style={{ minHeight: "44px", maxHeight: "200px" }}
                 data-testid="input-chat-message"
               />
               <VoiceInputButton
@@ -331,7 +331,7 @@ export default function LiveContactPage() {
                     const el = inputRef.current;
                     if (el) {
                       el.style.height = "auto";
-                      el.style.height = Math.min(el.scrollHeight, 150) + "px";
+                      el.style.height = Math.min(el.scrollHeight, 200) + "px";
                     }
                   });
                 }}
