@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { MessageCircle, X, Send, ArrowLeft, ChevronRight, Bell, BellOff, Megaphone, Trash2, Link2, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import VoiceInputButton from "@/components/VoiceInputButton";
 import { useAdminStatus } from "@/hooks/use-admin";
 import { queryClient } from "@/lib/queryClient";
 import { showNotification, requestNotificationPermission } from "@/lib/web-notification";
@@ -434,6 +435,14 @@ export function AdminChatWidget() {
                       rows={2}
                       className="flex-1 resize-none rounded-xl border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
                       data-testid="input-widget-reply"
+                    />
+                    <VoiceInputButton
+                      disabled={replyMutation.isPending}
+                      className="h-10 w-10"
+                      onTranscript={(t) =>
+                        setReplyText((prev) => (prev ? prev.trimEnd() + " " + t : t))
+                      }
+                      data-testid="button-voice-reply"
                     />
                     <Button onClick={handleSend} disabled={!replyText.trim() || replyMutation.isPending}
                       size="icon" className="h-10 w-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 shrink-0"

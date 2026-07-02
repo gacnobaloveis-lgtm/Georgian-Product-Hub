@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Send, ArrowLeft, MessageCircle, Lock, LogIn, UserPlus } from "lucide-react";
+import VoiceInputButton from "@/components/VoiceInputButton";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
@@ -321,6 +322,20 @@ export default function LiveContactPage() {
                 className="flex-1 resize-none rounded-xl border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 px-4 py-2.5 text-sm outline-none backdrop-blur-md focus:border-primary transition-colors"
                 style={{ minHeight: "44px", maxHeight: "120px" }}
                 data-testid="input-chat-message"
+              />
+              <VoiceInputButton
+                disabled={sendMutation.isPending}
+                onTranscript={(t) => {
+                  setInput((prev) => (prev ? prev.trimEnd() + " " + t : t));
+                  requestAnimationFrame(() => {
+                    const el = inputRef.current;
+                    if (el) {
+                      el.style.height = "auto";
+                      el.style.height = Math.min(el.scrollHeight, 120) + "px";
+                    }
+                  });
+                }}
+                data-testid="button-voice-chat"
               />
               <Button
                 onClick={handleSend}
