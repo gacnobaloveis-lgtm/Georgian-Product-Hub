@@ -325,9 +325,16 @@ export default function LiveContactPage() {
               />
               <VoiceInputButton
                 disabled={sendMutation.isPending}
-                onTranscript={(t) =>
-                  setInput((prev) => (prev ? prev.trimEnd() + " " + t : t))
-                }
+                onTranscript={(t) => {
+                  setInput((prev) => (prev ? prev.trimEnd() + " " + t : t));
+                  requestAnimationFrame(() => {
+                    const el = inputRef.current;
+                    if (el) {
+                      el.style.height = "auto";
+                      el.style.height = Math.min(el.scrollHeight, 120) + "px";
+                    }
+                  });
+                }}
                 data-testid="button-voice-chat"
               />
               <Button
