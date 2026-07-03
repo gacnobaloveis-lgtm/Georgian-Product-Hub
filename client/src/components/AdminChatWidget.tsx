@@ -106,6 +106,7 @@ export function AdminChatWidget() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedUserMeta, setSelectedUserMeta] = useState<{ firstName: string | null; lastName: string | null } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const replyTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(userSearch.trim()), 250);
@@ -259,6 +260,7 @@ export function AdminChatWidget() {
   function handleSend() {
     if (!replyText.trim() || !selectedUserId || replyMutation.isPending) return;
     replyMutation.mutate({ userId: selectedUserId, message: replyText.trim() });
+    if (replyTextareaRef.current) replyTextareaRef.current.style.height = "auto";
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -452,10 +454,17 @@ export function AdminChatWidget() {
                   )}
                   <div className="flex items-end gap-2 p-3 border-t border-white/10 shrink-0 bg-slate-950/60 backdrop-blur-md">
                     <textarea
-                      value={replyText} onChange={(e) => setReplyText(e.target.value)}
+                      ref={replyTextareaRef}
+                      value={replyText}
+                      onChange={(e) => {
+                        setReplyText(e.target.value);
+                        const el = e.target;
+                        el.style.height = "auto";
+                        el.style.height = Math.min(el.scrollHeight, 120) + "px";
+                      }}
                       onKeyDown={handleKeyDown} placeholder="პასუხი... (Enter — გაგზავნა)"
-                      rows={6}
-                      className="flex-1 resize-none rounded-xl border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
+                      rows={1}
+                      className="flex-1 resize-none rounded-xl border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 px-3 py-2 text-sm outline-none focus:border-emerald-500 transition-colors max-h-[120px] overflow-y-auto"
                       data-testid="input-widget-reply"
                     />
                     <VoiceInputButton
