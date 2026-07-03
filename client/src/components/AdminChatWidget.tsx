@@ -103,7 +103,14 @@ export function AdminChatWidget() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [userSearch, setUserSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedUserMeta, setSelectedUserMeta] = useState<{ firstName: string | null; lastName: string | null } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(userSearch.trim()), 250);
+    return () => clearTimeout(t);
+  }, [userSearch]);
 
   // Broadcast form state
   const [bcTitle, setBcTitle] = useState("");
@@ -160,15 +167,15 @@ export function AdminChatWidget() {
   const { data: searchResults = [] } = useQuery<
     { id: string; firstName: string | null; lastName: string | null; email: string | null }[]
   >({
-    queryKey: ["/api/chat/user-search", userSearch],
+    queryKey: ["/api/chat/user-search", debouncedSearch],
     queryFn: async () => {
-      const res = await fetch(`/api/chat/user-search?q=${encodeURIComponent(userSearch.trim())}`, {
+      const res = await fetch(`/api/chat/user-search?q=${encodeURIComponent(debouncedSearch)}`, {
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
-    enabled: !!isAdmin && userSearch.trim().length >= 1,
+    enabled: !!isAdmin && debouncedSearch.length >= 1,
   });
 
   const { data: broadcasts = [] } = useQuery<Broadcast[]>({
@@ -351,7 +358,7 @@ export function AdminChatWidget() {
 
             {selectedUserId && activeTab === "chat" && (
               <p className="flex-1 font-semibold text-sm truncate">
-                {selectedConv?.firstName || ""} {selectedConv?.lastName || ""}
+                {selectedConv?.firstName || selectedUserMeta?.firstName || ""} {selectedConv?.lastName || selectedUserMeta?.lastName || ""}
               </p>
             )}
 
@@ -388,7 +395,7 @@ export function AdminChatWidget() {
                         <div key={msg.id} className={`flex items-end gap-2 ${isUser ? "" : "justify-end"}`}>
                           {isUser && (
                             <div className="h-6 w-6 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-                              {(selectedConv?.firstName?.[0] || "მ").toUpperCase()}
+                              {(selectedConv?.firstName?.[0] || selectedUserMeta?.firstName?.[0] || "მ").toUpperCase()}
                             </div>
                           )}
                           <div className="max-w-[75%]">
@@ -514,7 +521,7 @@ export function AdminChatWidget() {
                           <p className="text-sm">მომხმარებელი ვერ მოიძებნა</p>
                         </div>
                       ) : searchResults.map((u) => (
-                        <button key={u.id} onClick={() => { setSelectedUserId(u.id); setUserSearch(""); setTestPushResult(null); }}
+                        <button key={u.id} onClick={() => { setSelectedUserId(u.id); setSelectedUserMeta({ firstName: u.firstName, lastName: u.lastName }); setUserSearch(""); setTestPushResult(null); }}
                           className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:shadow-sm bg-gray-50 border border-transparent hover:border-emerald-200"
                           data-testid={`button-search-user-${u.id}`}
                         >
@@ -538,7 +545,7 @@ export function AdminChatWidget() {
                     ) : conversations.map((conv) => {
                       const userPushCount = pushStats?.byUser?.[conv.userId] ?? 0;
                       return (
-                      <button key={conv.userId} onClick={() => { setSelectedUserId(conv.userId); setTestPushResult(null); }}
+                      <button key={conv.userId} onClick={() => { setSelectedUserId(conv.userId); setSelectedUserMeta({ firstName: conv.firstName, lastName: conv.lastName }); setTestPushResult(null); }}
                         className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:shadow-sm ${
                           conv.unread > 0 ? "bg-red-50 border border-red-100 hover:border-red-200" : "bg-gray-50 border border-transparent hover:border-gray-200"
                         }`}
