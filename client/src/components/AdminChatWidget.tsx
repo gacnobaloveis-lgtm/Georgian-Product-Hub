@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { MessageCircle, X, Send, ArrowLeft, ChevronRight, Bell, BellOff, Megaphone, Trash2, Link2, Image as ImageIcon } from "lucide-react";
+import { MessageCircle, X, Send, ArrowLeft, ChevronRight, Bell, BellOff, Megaphone, Trash2, Link2, Image as ImageIcon, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import VoiceInputButton from "@/components/VoiceInputButton";
 import { useAdminStatus } from "@/hooks/use-admin";
@@ -102,7 +102,15 @@ export function AdminChatWidget() {
   const [activeTab, setActiveTab] = useState<"chat" | "broadcast">("chat");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [userSearch, setUserSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedUserMeta, setSelectedUserMeta] = useState<{ firstName: string | null; lastName: string | null } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(userSearch.trim()), 250);
+    return () => clearTimeout(t);
+  }, [userSearch]);
 
   // Broadcast form state
   const [bcTitle, setBcTitle] = useState("");
@@ -154,6 +162,20 @@ export function AdminChatWidget() {
     },
     enabled: !!isAdmin && !!selectedUserId,
     refetchInterval: 4000,
+  });
+
+  const { data: searchResults = [] } = useQuery<
+    { id: string; firstName: string | null; lastName: string | null; email: string | null }[]
+  >({
+    queryKey: ["/api/chat/user-search", debouncedSearch],
+    queryFn: async () => {
+      const res = await fetch(`/api/chat/user-search?q=${encodeURIComponent(debouncedSearch)}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    enabled: !!isAdmin && debouncedSearch.length >= 1,
   });
 
   const { data: broadcasts = [] } = useQuery<Broadcast[]>({
@@ -336,7 +358,7 @@ export function AdminChatWidget() {
 
             {selectedUserId && activeTab === "chat" && (
               <p className="flex-1 font-semibold text-sm truncate">
-                {selectedConv?.firstName || ""} {selectedConv?.lastName || ""}
+                {selectedConv?.firstName || selectedUserMeta?.firstName || ""} {selectedConv?.lastName || selectedUserMeta?.lastName || ""}
               </p>
             )}
 
@@ -373,7 +395,7 @@ export function AdminChatWidget() {
                         <div key={msg.id} className={`flex items-end gap-2 ${isUser ? "" : "justify-end"}`}>
                           {isUser && (
                             <div className="h-6 w-6 shrink-0 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
-                              {(selectedConv?.firstName?.[0] || "მ").toUpperCase()}
+                              {(selectedConv?.firstName?.[0] || selectedUserMeta?.firstName?.[0] || "მ").toUpperCase()}
                             </div>
                           )}
                           <div className="max-w-[75%]">
@@ -470,8 +492,52 @@ export function AdminChatWidget() {
                       <p className="text-xs text-emerald-700">ზარი ჩართულია — ჩახ. ჩანართზეც გაისმება</p>
                     </div>
                   )}
+                  <div className="px-3 pt-3">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40 pointer-events-none" />
+                      <input
+                        value={userSearch}
+                        onChange={(e) => setUserSearch(e.target.value)}
+                        placeholder="მოძებნე მომხმარებელი სახელით/გვარით..."
+                        className="w-full rounded-xl border border-white/15 bg-slate-900/60 text-white placeholder:text-white/40 pl-8 pr-8 py-2 text-sm outline-none focus:border-emerald-500 transition-colors"
+                        data-testid="input-user-search"
+                      />
+                      {userSearch && (
+                        <button
+                          onClick={() => setUserSearch("")}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 text-white/50 hover:text-white"
+                          data-testid="button-clear-search"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex-1 overflow-y-auto p-3 space-y-1.5 min-h-0">
-                    {conversations.length === 0 ? (
+                    {userSearch.trim() ? (
+                      searchResults.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-3 text-white/65">
+                          <Search className="h-8 w-8 opacity-30" />
+                          <p className="text-sm">მომხმარებელი ვერ მოიძებნა</p>
+                        </div>
+                      ) : searchResults.map((u) => (
+                        <button key={u.id} onClick={() => { setSelectedUserId(u.id); setSelectedUserMeta({ firstName: u.firstName, lastName: u.lastName }); setUserSearch(""); setTestPushResult(null); }}
+                          className="w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:shadow-sm bg-gray-50 border border-transparent hover:border-emerald-200"
+                          data-testid={`button-search-user-${u.id}`}
+                        >
+                          <div className="h-10 w-10 shrink-0 rounded-full flex items-center justify-center text-sm font-bold bg-emerald-100 text-emerald-700">
+                            {(u.firstName?.[0] || u.email?.[0] || "მ").toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <span className="font-semibold text-sm text-white truncate block">
+                              {(u.firstName || "") + " " + (u.lastName || "")}
+                            </span>
+                            <p className="text-xs truncate text-white/65">{u.email || ""}</p>
+                          </div>
+                          <ChevronRight className="h-3.5 w-3.5 text-white/65 shrink-0" />
+                        </button>
+                      ))
+                    ) : conversations.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-full gap-3 text-white/65">
                         <MessageCircle className="h-8 w-8 opacity-30" />
                         <p className="text-sm">შეტყობინებები არ არის</p>
@@ -479,7 +545,7 @@ export function AdminChatWidget() {
                     ) : conversations.map((conv) => {
                       const userPushCount = pushStats?.byUser?.[conv.userId] ?? 0;
                       return (
-                      <button key={conv.userId} onClick={() => { setSelectedUserId(conv.userId); setTestPushResult(null); }}
+                      <button key={conv.userId} onClick={() => { setSelectedUserId(conv.userId); setSelectedUserMeta({ firstName: conv.firstName, lastName: conv.lastName }); setTestPushResult(null); }}
                         className={`w-full flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:shadow-sm ${
                           conv.unread > 0 ? "bg-red-50 border border-red-100 hover:border-red-200" : "bg-gray-50 border border-transparent hover:border-gray-200"
                         }`}

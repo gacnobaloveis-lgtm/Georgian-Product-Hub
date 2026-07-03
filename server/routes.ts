@@ -2213,6 +2213,30 @@ ${productList}`;
     }
   });
 
+  // Admin: search registered users by name/email (to start a new chat)
+  app.get("/api/chat/user-search", requireAdmin, async (req, res) => {
+    try {
+      const q = String(req.query.q || "").trim().toLowerCase();
+      if (!q) return res.json([]);
+      const all = await storage.getUsers();
+      const matches = all
+        .filter((u) => {
+          const full = `${u.firstName || ""} ${u.lastName || ""}`.toLowerCase();
+          return (
+            full.includes(q) ||
+            (u.email || "").toLowerCase().includes(q) ||
+            (u.phone || "").toLowerCase().includes(q)
+          );
+        })
+        .slice(0, 20)
+        .map((u) => ({ id: u.id, firstName: u.firstName, lastName: u.lastName, email: u.email }));
+      res.json(matches);
+    } catch (err) {
+      console.error("User search error:", err);
+      res.status(500).json({ message: "სერვერის შეცდომა" });
+    }
+  });
+
   // Admin: get all conversations
   app.get("/api/chat/conversations", requireAdmin, async (_req, res) => {
     try {
