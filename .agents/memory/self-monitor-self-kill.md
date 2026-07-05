@@ -20,3 +20,13 @@ services here. Boot-time fail-closed (missing SESSION_SECRET etc.) is a separate
 intentional case. If "site goes offline by itself, needs manual deploy" recurs, also
 check the initializeApp() catch (setupAuth/session store) which still exits in production
 if the DB is down AT boot.
+
+## railway.json restart policy (root cause of "needs manual deploy")
+`railway.json` had `restartPolicyType: ON_FAILURE` + `restartPolicyMaxRetries: 10`.
+If the app exited (self-kill, or DB-down-at-boot process.exit) 10 times in a row,
+Railway gave up and left the service with NO active deployment → site 404 → required
+a MANUAL redeploy. Changed to `restartPolicyType: ALWAYS` + `restartPolicyMaxRetries: 100`
+so Railway keeps restarting until the DB/app recovers on its own.
+**Why:** the "goes offline by itself, needs manual deploy" symptom was Railway's restart
+cap, not just the app. **How to apply:** railway.json is editable (it is NOT package.json);
+changes take effect on the next GitHub push → Railway rebuild.
