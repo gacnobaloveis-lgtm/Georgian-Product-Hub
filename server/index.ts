@@ -441,11 +441,12 @@ function startSelfMonitoring() {
     const health = await checkHealth();
     if (!health.ok) {
       consecutiveFailures++;
-      console.error(`[MONITOR] Health check failed (${consecutiveFailures}/${MAX_FAILURES}): ${health.details}`);
-      if (consecutiveFailures >= MAX_FAILURES) {
-        console.error("[MONITOR] Too many failures, restarting process...");
-        process.exit(1);
-      }
+      // NOTE: We intentionally do NOT kill the process on DB health failures.
+      // The pg connection pool recovers on its own once the database is reachable
+      // again. Calling process.exit here caused the app to permanently go offline
+      // (and require a manual redeploy) whenever Railway's managed Postgres had a
+      // brief blip or restart. Keep the app alive and let it self-heal.
+      console.error(`[MONITOR] Health check failed (${consecutiveFailures}): ${health.details}. Keeping process alive; pool will auto-recover.`);
     } else {
       if (consecutiveFailures > 0) {
         console.log(`[MONITOR] Health restored after ${consecutiveFailures} failures`);
