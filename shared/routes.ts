@@ -21,6 +21,10 @@ export const api = {
         weight: z.string().optional(),
         length: z.string().optional(),
         dimensions: z.string().optional(),
+        purchaseLimit: z.union([z.string(), z.number()]).optional().transform(v => {
+          const n = Number(v);
+          return v !== undefined && v !== "" && Number.isFinite(n) && n > 0 ? Math.floor(n) : undefined;
+        }),
       }),
       responses: {
         201: z.custom<typeof products.$inferSelect>(),
