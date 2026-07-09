@@ -32,6 +32,7 @@ interface FormState {
   weight: string;
   length: string;
   dimensions: string;
+  purchaseLimit: string;
 }
 
 const emptyForm: FormState = {
@@ -45,6 +46,7 @@ const emptyForm: FormState = {
   weight: "",
   length: "",
   dimensions: "",
+  purchaseLimit: "",
 };
 
 export default function AdminAddProduct() {
@@ -137,6 +139,9 @@ export default function AdminAddProduct() {
       if (form.weight.trim()) formData.append("weight", form.weight.trim());
       if (form.length.trim()) formData.append("length", form.length.trim());
       if (form.dimensions.trim()) formData.append("dimensions", form.dimensions.trim());
+      if (form.purchaseLimit.trim() && parseInt(form.purchaseLimit) > 0) {
+        formData.append("purchaseLimit", String(parseInt(form.purchaseLimit)));
+      }
 
       const created = await createMutation.mutateAsync(formData);
       toast({ title: "წარმატება", description: `პროდუქტი "${created.name}" დაემატა.` });
@@ -210,6 +215,12 @@ export default function AdminAddProduct() {
                   <label htmlFor="dimensions" className="text-sm font-medium">ზომა <span className="text-muted-foreground text-xs">(არჩევითი)</span></label>
                   <Input id="dimensions" value={form.dimensions} onChange={(e) => setField("dimensions", e.target.value)} placeholder="მაგ: M / 40×30 სმ" data-testid="input-dimensions" />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="purchaseLimit" className="text-sm font-medium">შესყიდვის ლიმიტი ერთ მომხმარებელზე <span className="text-muted-foreground text-xs">(არჩევითი — ცარიელი = შეუზღუდავი)</span></label>
+                <Input id="purchaseLimit" type="number" min="1" value={form.purchaseLimit} onChange={(e) => setField("purchaseLimit", e.target.value)} placeholder="მაგ: 2" data-testid="input-purchase-limit" />
+                <p className="text-xs text-muted-foreground">თუ მიუთითებთ მაგ. 2-ს, ერთი მომხმარებელი (ანგარიშით ან ტელეფონის ნომრით) ჯამში მაქსიმუმ 2 ცალს შეიძენს.</p>
               </div>
 
               <div className="space-y-3">

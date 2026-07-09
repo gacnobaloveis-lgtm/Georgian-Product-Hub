@@ -382,6 +382,7 @@ export async function registerRoutes(
         weight: input.weight ? sanitizeString(input.weight) : null,
         length: input.length ? sanitizeString(input.length) : null,
         dimensions: input.dimensions ? sanitizeString(input.dimensions) : null,
+        purchaseLimit: input.purchaseLimit ?? null,
       });
       res.status(201).json(product);
 
@@ -524,6 +525,10 @@ export async function registerRoutes(
       if (req.body.weight !== undefined) updates.weight = req.body.weight ? sanitizeString(String(req.body.weight)) : null;
       if (req.body.length !== undefined) updates.length = req.body.length ? sanitizeString(String(req.body.length)) : null;
       if (req.body.dimensions !== undefined) updates.dimensions = req.body.dimensions ? sanitizeString(String(req.body.dimensions)) : null;
+      if (req.body.purchaseLimit !== undefined) {
+        const lim = parseInt(String(req.body.purchaseLimit));
+        updates.purchaseLimit = Number.isFinite(lim) && lim > 0 ? lim : null;
+      }
       if (req.body.soldCount !== undefined) updates.soldCount = Number(req.body.soldCount) || 0;
       if (req.body.viewCount !== undefined) updates.viewCount = Number(req.body.viewCount) || 0;
       if (req.body.albumImages !== undefined) {
@@ -915,6 +920,13 @@ export async function registerRoutes(
         }
       }
 
+      // Per-customer purchase limit (set by admin on the product). Matched by
+      // account AND by phone number, so re-registering with the same phone
+      // doesn't bypass it. Enforcement happens atomically inside
+      // createOrderWithLimit (advisory locks), so parallel checkouts can't
+      // overshoot the cap.
+      const limit = prod.purchaseLimit ?? 0;
+
       await storage.updateUserDetails(userId, {
         address: sanitizeString(String(address)),
         city: sanitizeString(String(city)),
@@ -928,7 +940,7 @@ export async function registerRoutes(
       const refCookie = req.cookies?.ref;
       const refCode = refCookie && typeof refCookie === "string" ? refCookie : null;
 
-      const order = await storage.createOrder({
+      const orderPayload = {
         userId,
         productId: Number(productId),
         productName: sanitizeString(serverProductName),
@@ -943,7 +955,23 @@ export async function registerRoutes(
         status: "awaiting_payment",
         paymentMethod: "card",
         refCode,
-      });
+      };
+
+      let order;
+      if (limit > 0) {
+        const limited = await storage.createOrderWithLimit(orderPayload, limit);
+        if (!limited.order) {
+          const left = Math.max(0, limit - limited.already);
+          return res.status(400).json({
+            message: left > 0
+              ? `ამ პროდუქტზე მოქმედებს შეზღუდვა: მაქსიმუმ ${limit} ც. ერთ მომხმარებელზე. თქვენ შეგიძლიათ შეიძინოთ კიდევ ${left} ც.`
+              : `ამ პროდუქტზე მოქმედებს შეზღუდვა: მაქსიმუმ ${limit} ც. ერთ მომხმარებელზე. თქვენ ლიმიტი უკვე ამოწურეთ.`,
+          });
+        }
+        order = limited.order;
+      } else {
+        order = await storage.createOrder(orderPayload);
+      }
 
       // Single-use: consume the referral cookie now that it's stored on the order.
       if (refCode) res.clearCookie("ref");
@@ -997,6 +1025,22 @@ export async function registerRoutes(
         }
       }
 
+      // Per-customer purchase limit — fast pre-check before touching the
+      // user's credit; the authoritative, race-safe check happens atomically
+      // in createOrderWithLimit below.
+      const limit = prod.purchaseLimit ?? 0;
+      if (limit > 0) {
+        const already = await storage.getPurchasedQtyForLimit(Number(productId), userId, String(phone));
+        if (already + orderQty > limit) {
+          const left = Math.max(0, limit - already);
+          return res.status(400).json({
+            message: left > 0
+              ? `ამ პროდუქტზე მოქმედებს შეზღუდვა: მაქსიმუმ ${limit} ც. ერთ მომხმარებელზე. თქვენ შეგიძლიათ შეიძინოთ კიდევ ${left} ც.`
+              : `ამ პროდუქტზე მოქმედებს შეზღუდვა: მაქსიმუმ ${limit} ც. ერთ მომხმარებელზე. თქვენ ლიმიტი უკვე ამოწურეთ.`,
+          });
+        }
+      }
+
       const creditToGelSetting = await storage.getSetting("credit_to_gel") || "1";
       const creditToGel = Number(creditToGelSetting);
       const creditNeeded = totalPrice / creditToGel;
@@ -1018,7 +1062,7 @@ export async function registerRoutes(
         phone: sanitizeString(String(phone)),
       });
 
-      const order = await storage.createOrder({
+      const creditOrderPayload = {
         userId,
         productId: Number(productId),
         productName: sanitizeString(serverProductName),
@@ -1032,7 +1076,25 @@ export async function registerRoutes(
         phone: sanitizeString(String(phone)),
         status: "pending",
         paymentMethod: "credit",
-      });
+      };
+
+      let order;
+      if (limit > 0) {
+        const limited = await storage.createOrderWithLimit(creditOrderPayload, limit);
+        if (!limited.order) {
+          // Lost the race against a parallel order — give the credit back.
+          await storage.addCredit(userId, creditNeeded);
+          const left = Math.max(0, limit - limited.already);
+          return res.status(400).json({
+            message: left > 0
+              ? `ამ პროდუქტზე მოქმედებს შეზღუდვა: მაქსიმუმ ${limit} ც. ერთ მომხმარებელზე. თქვენ შეგიძლიათ შეიძინოთ კიდევ ${left} ც.`
+              : `ამ პროდუქტზე მოქმედებს შეზღუდვა: მაქსიმუმ ${limit} ც. ერთ მომხმარებელზე. თქვენ ლიმიტი უკვე ამოწურეთ.`,
+          });
+        }
+        order = limited.order;
+      } else {
+        order = await storage.createOrder(creditOrderPayload);
+      }
 
       await applyStockDeduction(order, "credit");
 

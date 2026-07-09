@@ -64,6 +64,7 @@ interface EditFormState {
   weight: string;
   length: string;
   dimensions: string;
+  purchaseLimit: string;
 }
 
 function ProductRow({ product }: { product: Product }) {
@@ -107,6 +108,7 @@ function ProductRow({ product }: { product: Product }) {
     weight: (product as any).weight || "",
     length: (product as any).length || "",
     dimensions: (product as any).dimensions || "",
+    purchaseLimit: product.purchaseLimit ? String(product.purchaseLimit) : "",
   });
 
   const [editForm, setEditForm] = useState<EditFormState>(defaultEditState());
@@ -224,6 +226,7 @@ function ProductRow({ product }: { product: Product }) {
     formData.append("weight", editForm.weight.trim());
     formData.append("length", editForm.length.trim());
     formData.append("dimensions", editForm.dimensions.trim());
+    formData.append("purchaseLimit", editForm.purchaseLimit.trim());
 
     try {
       await updateMutation.mutateAsync({ id: product.id, formData });
@@ -310,6 +313,17 @@ function ProductRow({ product }: { product: Product }) {
                 onChange={(e) => setEditForm((p) => ({ ...p, stock: e.target.value }))}
                 placeholder="0"
                 data-testid={`input-edit-stock-${product.id}`}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-muted-foreground">შესყიდვის ლიმიტი 1 მომხმარებელზე</label>
+              <Input
+                type="number"
+                min="1"
+                value={editForm.purchaseLimit}
+                onChange={(e) => setEditForm((p) => ({ ...p, purchaseLimit: e.target.value }))}
+                placeholder="ცარიელი = შეუზღუდავი"
+                data-testid={`input-edit-purchase-limit-${product.id}`}
               />
             </div>
             <div className="space-y-2">
