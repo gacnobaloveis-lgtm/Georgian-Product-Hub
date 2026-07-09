@@ -21,6 +21,7 @@ export const products = pgTable("products", {
   weight: text("weight"),
   length: text("length"),
   dimensions: text("dimensions"),
+  purchaseLimit: integer("purchase_limit"),
 });
 
 export const media = pgTable("media", {
