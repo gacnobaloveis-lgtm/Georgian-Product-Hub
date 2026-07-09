@@ -2719,6 +2719,10 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         amount: amountTetri,
         response_url: `${appUrl}/payment/success?oid=${encodeURIComponent(oid)}`,
         server_callback_url: `${appUrl}/api/flitt/callback`,
+        // Payment link expires after 15 minutes: purchase-limit counting only
+        // holds unpaid checkouts for 20 minutes, so an expired link must not
+        // be payable after the limit slot has been freed.
+        lifetime: 900,
       };
 
       if (cardOnly) {
