@@ -876,6 +876,44 @@ export async function registerRoutes(
     }
   });
 
+  // Per-user purchase allowance for limited products. Returns, for each
+  // requested product that has a purchaseLimit, how much this user has already
+  // bought (by account + phone, same logic the order endpoints enforce) and
+  // how much they can still buy. Used by the frontend to cap the quantity
+  // selector — the server-side check in /api/orders stays authoritative.
+  app.get("/api/purchase-allowance", async (req: any, res) => {
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+      const userId = req.user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      const ids = String(req.query.ids || "")
+        .split(",")
+        .map((s) => parseInt(s.trim(), 10))
+        .filter((n) => Number.isInteger(n) && n > 0)
+        .slice(0, 50);
+      if (ids.length === 0) return res.json({});
+
+      const user = await storage.getUser(userId);
+      const phone = String(user?.phone || "");
+
+      const result: Record<number, { limit: number; purchased: number; remaining: number }> = {};
+      for (const id of Array.from(new Set(ids))) {
+        const prod = await storage.getProduct(id);
+        const limit = prod?.purchaseLimit ?? 0;
+        if (!prod || !limit || limit <= 0) continue;
+        const purchased = await storage.getPurchasedQtyForLimit(id, userId, phone);
+        result[id] = { limit, purchased, remaining: Math.max(0, limit - purchased) };
+      }
+      res.json(result);
+    } catch (err) {
+      console.error("Purchase allowance error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.post("/api/orders", async (req: any, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
       return res.status(401).json({ message: "Unauthorized" });
