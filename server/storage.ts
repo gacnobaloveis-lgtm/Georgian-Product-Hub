@@ -32,6 +32,8 @@ export interface IStorage {
   markOrderPaidIfAwaiting(orderId: number): Promise<boolean>;
   markStockDeductedIfNot(orderId: number): Promise<boolean>;
   getOrdersByUser(userId: string): Promise<Order[]>;
+  getPurchasedQtyForLimit(productId: number, userId: string, phone: string): Promise<number>;
+  createOrderWithLimit(order: InsertOrder, limit: number): Promise<{ order?: Order; already: number }>;
   updateOrderStatus(orderId: number, status: string): Promise<Order | undefined>;
   deleteOrdersOlderThan(date: Date): Promise<number>;
   deleteOrder(orderId: number): Promise<boolean>;
@@ -290,6 +292,66 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(orders)
       .where(and(eq(orders.userId, userId), ne(orders.status, "awaiting_payment")))
       .orderBy(orders.createdAt);
+  }
+
+  // Counts how many units of a product a customer has already ordered, matched
+  // by user account OR by (normalized) phone number, so the same person can't
+  // dodge a per-customer purchase limit by registering another account with the
+  // same phone. Cancelled orders don't count; unpaid card checkouts only count
+  // for 48h so an abandoned checkout doesn't consume the limit forever.
+  private static limitPhoneKey(phone: string): string | null {
+    const digits = String(phone || "").replace(/\D/g, "");
+    const last9 = digits.slice(-9);
+    // Georgian numbers are 9 digits — only a full 9-digit tail counts as a
+    // reliable identity; anything shorter falls back to account-only matching.
+    return last9.length === 9 ? last9 : null;
+  }
+
+  private static limitConditions(productId: number, userId: string, phone: string) {
+    const last9 = DatabaseStorage.limitPhoneKey(phone);
+    const identityCond = last9
+      ? sql`(${orders.userId} = ${userId} OR RIGHT(regexp_replace(${orders.phone}, '\\D', '', 'g'), 9) = ${last9})`
+      : sql`${orders.userId} = ${userId}`;
+    return and(
+      eq(orders.productId, productId),
+      sql`(${orders.status} NOT IN ('awaiting_payment', 'cancelled') OR (${orders.status} = 'awaiting_payment' AND ${orders.createdAt} > NOW() - INTERVAL '48 hours'))`,
+      identityCond,
+    );
+  }
+
+  async getPurchasedQtyForLimit(productId: number, userId: string, phone: string): Promise<number> {
+    const [row] = await db
+      .select({ total: sql<number>`COALESCE(SUM(${orders.quantity}), 0)` })
+      .from(orders)
+      .where(DatabaseStorage.limitConditions(productId, userId, phone));
+    return Number(row?.total || 0);
+  }
+
+  // Race-safe order creation under a per-product purchase limit: takes
+  // transaction-scoped advisory locks on (product, account) and (product,
+  // phone) so two parallel checkouts can't both pass the count check and
+  // overshoot the cap. Returns { already } without an order when over limit.
+  async createOrderWithLimit(order: InsertOrder, limit: number): Promise<{ order?: Order; already: number }> {
+    return await db.transaction(async (tx) => {
+      const userKey = `plimit:${order.productId}:u:${order.userId}`;
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${userKey}))`);
+      const last9 = DatabaseStorage.limitPhoneKey(String(order.phone || ""));
+      if (last9) {
+        const phoneKey = `plimit:${order.productId}:p:${last9}`;
+        await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${phoneKey}))`);
+      }
+      const [row] = await tx
+        .select({ total: sql<number>`COALESCE(SUM(${orders.quantity}), 0)` })
+        .from(orders)
+        .where(DatabaseStorage.limitConditions(Number(order.productId), String(order.userId), String(order.phone || "")));
+      const already = Number(row?.total || 0);
+      const qty = Number(order.quantity || 1);
+      if (already + qty > limit) {
+        return { already };
+      }
+      const [newOrder] = await tx.insert(orders).values(order).returning();
+      return { order: newOrder, already };
+    });
   }
 
   async updateOrderStatus(orderId: number, status: string): Promise<Order | undefined> {
