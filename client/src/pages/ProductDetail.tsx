@@ -237,6 +237,17 @@ export default function ProductDetail() {
     queryKey: ["/api/contact-info"],
   });
 
+  // How much of a limited product this user can still buy (account + phone
+  // matched on the server). Only fetched when the product actually has a limit.
+  const { data: allowanceMap } = useQuery<Record<string, { limit: number; purchased: number; remaining: number }>>({
+    queryKey: ["/api/purchase-allowance", productId],
+    queryFn: async () => {
+      const res = await fetch(`/api/purchase-allowance?ids=${productId}`, { credentials: "include" });
+      return res.ok ? res.json() : {};
+    },
+    enabled: !!productId && isRealUser && Number(product?.purchaseLimit ?? 0) > 0,
+  });
+
   useEffect(() => {
     if (isAuthenticated && product) {
       const returnTo = sessionStorage.getItem("returnToProduct");
@@ -275,6 +286,16 @@ export default function ProductDetail() {
     setQuantity(1);
     setShowVideo(false);
   }, [productId]);
+
+  // If the allowance loads after the user already raised the quantity,
+  // clamp it back down to what they can still buy.
+  useEffect(() => {
+    if (!product || !allowanceMap) return;
+    const rem = allowanceMap[String(product.id)]?.remaining;
+    if (rem !== undefined) {
+      setQuantity(q => Math.max(1, Math.min(q, rem)));
+    }
+  }, [product, allowanceMap]);
 
   if (isLoading) {
     return (
@@ -332,7 +353,37 @@ export default function ProductDetail() {
   const rawMaxQuantity = selectedColorStock !== null ? selectedColorStock : (hasColors ? 0 : generalStock);
   const cartKey = `${product.id}_${effectiveColor || "default"}`;
   const inCartQty = cartItems.find(ci => `${ci.productId}_${ci.selectedColor || "default"}` === cartKey)?.quantity || 0;
-  const maxQuantity = Math.max(0, rawMaxQuantity - inCartQty);
+  const stockMaxQuantity = Math.max(0, rawMaxQuantity - inCartQty);
+
+  // Purchase limit (per user, all colors of the product combined): cap the
+  // selector by what the user can still buy. The server check stays the
+  // authoritative gate — this is UX only.
+  const purchaseLimit = Number(product.purchaseLimit ?? 0);
+  const allowance = purchaseLimit > 0 ? allowanceMap?.[String(product.id)] : undefined;
+  const productInCartQty = purchaseLimit > 0
+    ? cartItems.filter(ci => ci.productId === product.id).reduce((s, ci) => s + ci.quantity, 0)
+    : 0;
+  const limitRemaining = purchaseLimit > 0
+    ? Math.max(0, (allowance ? allowance.remaining : purchaseLimit) - productInCartQty)
+    : null;
+  const maxQuantity = limitRemaining !== null ? Math.min(stockMaxQuantity, limitRemaining) : stockMaxQuantity;
+  const limitExhausted = purchaseLimit > 0 && limitRemaining === 0;
+
+  const limitNotice = purchaseLimit > 0 ? (
+    <div
+      className={`mt-2 flex items-start gap-1.5 rounded-lg border px-3 py-2 text-xs sm:text-sm font-medium ${limitExhausted ? "border-red-400/40 bg-red-500/15 text-red-300" : "border-amber-400/40 bg-amber-500/15 text-amber-300"}`}
+      data-testid="text-purchase-limit"
+    >
+      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+      <span>
+        {limitExhausted
+          ? `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე — თქვენ ლიმიტი ამოწურეთ`
+          : allowance
+            ? `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე — შეგიძლიათ შეიძინოთ კიდევ ${limitRemaining} ც.`
+            : `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე`}
+      </span>
+    </div>
+  ) : null;
 
   const totalStock = hasColors ? Object.values(colorStock).reduce((a, b) => a + b, 0) : generalStock;
   const allOutOfStock = totalStock <= 0;
@@ -543,6 +594,8 @@ export default function ProductDetail() {
               </div>
             </div>
 
+            <div className="hidden lg:block">{limitNotice}</div>
+
             <ProductSpecs product={product} stockOverride={totalStock} className="hidden lg:grid mt-3" />
             <div className="hidden lg:block"><ProductReviews productId={product.id} onOpenChange={setReviewsOpen} /></div>
           </div>
@@ -670,6 +723,8 @@ export default function ProductDetail() {
           </div>
         </div>
 
+        <div className="lg:hidden">{limitNotice}</div>
+
         <ProductSpecs product={product} stockOverride={totalStock} className="lg:hidden mt-2 sm:mt-3" />
         <div className="lg:hidden"><ProductReviews productId={product.id} onOpenChange={setReviewsOpen} /></div>
 
@@ -678,6 +733,10 @@ export default function ProductDetail() {
             onClick={() => {
               if (hasColors && !effectiveColor) {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
+                return;
+              }
+              if (limitExhausted) {
+                toast({ variant: "destructive", title: "ლიმიტი ამოწურულია", description: `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე.` });
                 return;
               }
               if (maxQuantity <= 0) {
@@ -717,6 +776,10 @@ export default function ProductDetail() {
               }
               if (hasColors && !effectiveColor) {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
+                return;
+              }
+              if (limitExhausted) {
+                toast({ variant: "destructive", title: "ლიმიტი ამოწურულია", description: `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე.` });
                 return;
               }
               if (rawMaxQuantity <= 0) {
@@ -770,7 +833,7 @@ export default function ProductDetail() {
           productId={product.id}
           productName={product.name}
           productPrice={hasDiscount ? product.discountPrice! : product.originalPrice}
-          quantity={quantity}
+          quantity={Math.max(1, Math.min(quantity, maxQuantity || 1))}
           selectedColor={effectiveColor}
         />
 
