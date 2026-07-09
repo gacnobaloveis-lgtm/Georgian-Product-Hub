@@ -279,7 +279,8 @@ async function ensureProductColumns() {
     await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS weight text`);
     await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS length text`);
     await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS dimensions text`);
-    console.log("[migrate] products weight/length/dimensions columns ensured");
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS purchase_limit integer`);
+    console.log("[migrate] products weight/length/dimensions/purchase_limit columns ensured");
   } catch (err) {
     console.error("[migrate] Error ensuring products columns:", err);
   }
