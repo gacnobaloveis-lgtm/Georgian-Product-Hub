@@ -379,7 +379,7 @@ export default function ProductDetail() {
         {limitExhausted
           ? `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე — თქვენ ლიმიტი ამოწურეთ`
           : allowance
-            ? `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე — შეგიძლიათ შეიძინოთ კიდევ ${limitRemaining} ც.`
+            ? `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე — შეგიძლიათ შეიძინოთ ${limitRemaining} ც.`
             : `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე`}
       </span>
     </div>
