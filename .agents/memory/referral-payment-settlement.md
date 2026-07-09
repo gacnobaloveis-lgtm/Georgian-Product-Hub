@@ -64,3 +64,13 @@ flitt_order_id IS NULL RETURNING` (atomic). Binding happens BEFORE checkout and 
 rolled back (`clearFlittOrderId`) if checkout fails/has no URL, so retries work; a
 parallel/second pay on an already-bound order gets 409 instead of rebinding it (which
 would orphan the first payment's settlement).
+
+**Purchase-limit interaction (abandoned checkouts).** Unpaid `awaiting_payment`
+orders count toward a product's per-customer purchase limit for only 20 MINUTES
+(`limitConditions` in storage) so an abandoned card checkout frees the slot for a
+returning buyer. Three guards keep this from being exploitable: (1) Flitt checkout
+is created with `lifetime: 900` so payment links die at 15 min; (2) `/api/flitt/pay`
+refuses (and cancels) re-payment of a limited-product order older than 20 min —
+buyer must reorder, which re-checks the limit; (3) settlement logs a WARN when
+settling any order older than 25 min so overshoot can be reviewed. If the counting
+window is ever changed, change link lifetime and the re-pay cutoff in lockstep.

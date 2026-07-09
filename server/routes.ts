@@ -2694,6 +2694,19 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         if (ord.status !== "awaiting_payment") {
           return res.status(400).json({ message: "შეკვეთა გადახდას არ ელოდება" });
         }
+        // Purchase-limited products: unpaid checkouts stop counting toward the
+        // limit after 20 minutes (see storage.limitConditions), so a stale
+        // order must not be re-payable — otherwise paying it after the slot
+        // was freed (and re-used) would overshoot the limit. Cancel it and
+        // ask the buyer to place a fresh order, which re-checks the limit.
+        const prodForLimit = await storage.getProduct(Number(ord.productId));
+        if (Number(prodForLimit?.purchaseLimit ?? 0) > 0) {
+          const ageMs = Date.now() - new Date(ord.createdAt as any).getTime();
+          if (ageMs > 20 * 60 * 1000) {
+            try { await storage.updateOrderStatus(ord.id, "cancelled"); } catch {}
+            return res.status(400).json({ message: "გადახდის დრო ამოიწურა — გთხოვთ, გააკეთოთ ახალი შეკვეთა" });
+          }
+        }
         totalGel += Number(ord.productPrice);
       }
       if (!(totalGel > 0)) {
@@ -2719,6 +2732,10 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         amount: amountTetri,
         response_url: `${appUrl}/payment/success?oid=${encodeURIComponent(oid)}`,
         server_callback_url: `${appUrl}/api/flitt/callback`,
+        // Payment link expires after 15 minutes: purchase-limit counting only
+        // holds unpaid checkouts for 20 minutes, so an expired link must not
+        // be payable after the limit slot has been freed.
+        lifetime: 900,
       };
 
       if (cardOnly) {
@@ -2962,6 +2979,15 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
   async function settlePaidOrder(ourOrderId: number, source: string): Promise<boolean> {
     const order = await storage.getOrder(ourOrderId);
     if (!order || order.status !== "awaiting_payment") return false;
+
+    // Visibility guard: payment links expire after 15 min and stale limited
+    // orders can't be re-paid, so a confirmed payment for an order older than
+    // 25 min shouldn't normally happen. Settle it anyway (the money is real),
+    // but log it so a possible purchase-limit overshoot can be reviewed.
+    const settleAgeMs = Date.now() - new Date(order.createdAt as any).getTime();
+    if (settleAgeMs > 25 * 60 * 1000) {
+      console.warn(`[Flitt] settling STALE order ${order.id} (age ${Math.round(settleAgeMs / 60000)} min, ${source}) — check purchase-limit overshoot for product ${order.productId}`);
+    }
 
     // Atomically claim this order. Only the single caller that actually performs
     // the awaiting_payment → pending transition proceeds; concurrent callback +
