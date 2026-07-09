@@ -201,6 +201,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
         toast({ title: "შეკვეთა მიღებულია!", description: `"${productName}" (${quantity} ც.) კრედიტით შეძენილია.` });
         queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/purchase-allowance"] });
         onOpenChange(false);
       } else {
         const data = await res.json();
@@ -264,6 +265,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
         onSuccess={() => {
           setFlittPay(null);
           onOpenChange(false);
+          queryClient.invalidateQueries({ queryKey: ["/api/purchase-allowance"] });
           setPaymentSuccessOpen(true);
         }}
       />

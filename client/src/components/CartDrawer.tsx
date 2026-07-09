@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { FlittPaymentDialog } from "@/components/FlittPaymentDialog";
 import { PaymentSuccessDialog } from "@/components/PaymentSuccessDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -93,6 +94,19 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
   const [, navigate] = useLocation();
   const confirmedItemsRef = useRef<CartItem[]>([]);
   const pendingCheckoutItemsRef = useRef<CartItem[]>([]);
+
+  // Purchase-limit allowances for products in the cart (only products that
+  // actually have a limit come back). Used to cap the "+" button — the server
+  // check on order creation stays authoritative.
+  const allowanceIdsParam = Array.from(new Set(items.map(i => i.productId))).sort((a, b) => a - b).join(",");
+  const { data: allowances } = useQuery<Record<string, { limit: number; purchased: number; remaining: number }>>({
+    queryKey: ["/api/purchase-allowance", allowanceIdsParam],
+    queryFn: async () => {
+      const res = await fetch(`/api/purchase-allowance?ids=${allowanceIdsParam}`, { credentials: "include" });
+      return res.ok ? res.json() : {};
+    },
+    enabled: open && isRealUser && allowanceIdsParam.length > 0,
+  });
 
   useEffect(() => {
     const validKeys = new Set(items.map(i => cartKey(i)));
@@ -330,6 +344,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
         setSelected(new Set());
         queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/purchase-allowance"] });
         onOpenChange(false);
       }
     } catch {
@@ -396,6 +411,11 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                     {items.map(item => {
                       const key = cartKey(item);
                       const isSelected = activeSelected.has(key);
+                      const allowance = allowances?.[String(item.productId)];
+                      const productCartQty = items
+                        .filter(i => i.productId === item.productId)
+                        .reduce((s, i) => s + i.quantity, 0);
+                      const limitReached = !!allowance && productCartQty >= allowance.remaining;
                       return (
                         <div
                           key={key}
@@ -440,13 +460,21 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                               <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
                               <button
                                 onClick={() => updateQuantity(item.productId, item.selectedColor, item.quantity + 1)}
-                                disabled={item.quantity >= item.maxStock}
+                                disabled={item.quantity >= item.maxStock || limitReached}
                                 className="flex h-7 w-7 items-center justify-center rounded-full border border-muted hover:bg-muted transition-colors disabled:opacity-30"
                                 data-testid={`button-cart-plus-${item.productId}`}
                               >
                                 <Plus className="h-3 w-3" />
                               </button>
                             </div>
+                            {allowance && (
+                              <p className={`mt-1 flex items-center gap-1 text-[11px] font-medium ${limitReached ? "text-red-400" : "text-amber-300"}`} data-testid={`text-cart-limit-${item.productId}`}>
+                                <AlertCircle className="h-3 w-3 shrink-0" />
+                                {limitReached
+                                  ? `ლიმიტია ${allowance.limit} ც. — მეტის დამატება ვერ მოხერხდება`
+                                  : `ამ პროდუქტზე ლიმიტია ${allowance.limit} ც. ერთ მომხმარებელზე`}
+                              </p>
+                            )}
                           </div>
 
                           <button
@@ -723,6 +751,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
           onSuccess={() => {
             setFlittPay(null);
             onOpenChange(false);
+            queryClient.invalidateQueries({ queryKey: ["/api/purchase-allowance"] });
             setPaymentSuccessOpen(true);
           }}
         />
