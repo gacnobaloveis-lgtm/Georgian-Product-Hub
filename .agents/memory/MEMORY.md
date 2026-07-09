@@ -9,3 +9,4 @@
 - [Credit types](credit-types.md) — TWO separate credit awards: referral (to sharer, referral_logs) vs purchase bonus (to buyer, purchase_credit_logs); both awarded only in settlePaidOrder (card), never credit-paid flow.
 - [HomePage fixed bg stacking](layout-fixed-bg-stacking.md) — global top-level UI must be positioned z-50+ or the fixed z-0 mountain background paints over it (invisible despite being in DOM).
 - [Dev server backend reload](dev-server-restart.md) — dev backend uses tsx (no watch); backend/route edits need a workflow restart or new routes 404 to the SPA fallback.
+- [Purchase limit](purchase-limit.md) — per-customer cap matched by userId OR 9-digit phone tail; 48h awaiting_payment window; must stay atomic (advisory-lock create, no check-then-insert).
