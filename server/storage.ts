@@ -298,7 +298,8 @@ export class DatabaseStorage implements IStorage {
   // by user account OR by (normalized) phone number, so the same person can't
   // dodge a per-customer purchase limit by registering another account with the
   // same phone. Cancelled orders don't count; unpaid card checkouts only count
-  // for 48h so an abandoned checkout doesn't consume the limit forever.
+  // for 20 minutes (the Flitt payment link expires after 15) so an abandoned
+  // checkout frees the limit quickly instead of blocking a returning buyer.
   private static limitPhoneKey(phone: string): string | null {
     const digits = String(phone || "").replace(/\D/g, "");
     const last9 = digits.slice(-9);
@@ -314,7 +315,7 @@ export class DatabaseStorage implements IStorage {
       : sql`${orders.userId} = ${userId}`;
     return and(
       eq(orders.productId, productId),
-      sql`(${orders.status} NOT IN ('awaiting_payment', 'cancelled') OR (${orders.status} = 'awaiting_payment' AND ${orders.createdAt} > NOW() - INTERVAL '48 hours'))`,
+      sql`(${orders.status} NOT IN ('awaiting_payment', 'cancelled') OR (${orders.status} = 'awaiting_payment' AND ${orders.createdAt} > NOW() - INTERVAL '20 minutes'))`,
       identityCond,
     );
   }
