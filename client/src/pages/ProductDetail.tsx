@@ -368,19 +368,25 @@ export default function ProductDetail() {
     : null;
   const maxQuantity = limitRemaining !== null ? Math.min(stockMaxQuantity, limitRemaining) : stockMaxQuantity;
   const limitExhausted = purchaseLimit > 0 && limitRemaining === 0;
+  // Distinguish "already purchased the full limit" from "the cart already
+  // holds the full limit" — the latter can still be checked out from the cart.
+  const purchasedExhausted = purchaseLimit > 0 && !!allowance && allowance.remaining <= 0;
+  const cartFillsLimit = limitExhausted && !purchasedExhausted && productInCartQty > 0;
 
   const limitNotice = purchaseLimit > 0 ? (
     <div
-      className={`mt-2 flex items-start gap-1.5 rounded-lg border px-3 py-2 text-xs sm:text-sm font-medium ${limitExhausted ? "border-red-400/40 bg-red-500/15 text-red-300" : "border-amber-400/40 bg-amber-500/15 text-amber-300"}`}
+      className={`mt-2 flex items-start gap-1.5 rounded-lg border px-3 py-2 text-xs sm:text-sm font-medium ${purchasedExhausted ? "border-red-400/40 bg-red-500/15 text-red-300" : "border-amber-400/40 bg-amber-500/15 text-amber-300"}`}
       data-testid="text-purchase-limit"
     >
       <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
       <span>
-        {limitExhausted
-          ? `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე — თქვენ ლიმიტი ამოწურეთ`
-          : allowance
-            ? `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე — შეგიძლიათ შეიძინოთ ${limitRemaining} ც.`
-            : `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე`}
+        {cartFillsLimit
+          ? `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. — კალათაში უკვე გაქვთ ${productInCartQty} ც., შესაძენად გადადით კალათაში`
+          : limitExhausted
+            ? `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე — თქვენ ლიმიტი ამოწურეთ`
+            : allowance
+              ? `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე — შეგიძლიათ შეიძინოთ ${limitRemaining} ც.`
+              : `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე`}
       </span>
     </div>
   ) : null;
@@ -736,7 +742,13 @@ export default function ProductDetail() {
                 return;
               }
               if (limitExhausted) {
-                toast({ variant: "destructive", title: "ლიმიტი ამოწურულია", description: `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე.` });
+                toast({
+                  variant: "destructive",
+                  title: cartFillsLimit ? "ლიმიტი კალათაშია" : "ლიმიტი ამოწურულია",
+                  description: cartFillsLimit
+                    ? `კალათაში უკვე გაქვთ ${productInCartQty} ც. — შესაძენად გადადით კალათაში.`
+                    : `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე.`,
+                });
                 return;
               }
               if (maxQuantity <= 0) {
@@ -779,7 +791,13 @@ export default function ProductDetail() {
                 return;
               }
               if (limitExhausted) {
-                toast({ variant: "destructive", title: "ლიმიტი ამოწურულია", description: `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე.` });
+                toast({
+                  variant: "destructive",
+                  title: cartFillsLimit ? "ლიმიტი კალათაშია" : "ლიმიტი ამოწურულია",
+                  description: cartFillsLimit
+                    ? `კალათაში უკვე გაქვთ ${productInCartQty} ც. — შესაძენად გადადით კალათაში.`
+                    : `ამ პროდუქტზე ლიმიტია ${purchaseLimit} ც. ერთ მომხმარებელზე.`,
+                });
                 return;
               }
               if (rawMaxQuantity <= 0) {
