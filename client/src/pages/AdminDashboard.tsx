@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useProducts, useDeleteProduct, useUpdateProduct } from "@/hooks/use-products";
 import { AnimatedShell } from "@/components/AnimatedShell";
 import { GlassPanel } from "@/components/GlassPanel";
@@ -1816,6 +1816,28 @@ function AutoDravaSection() {
   const [purchaseCreditAmount, setPurchaseCreditAmount] = useState("");
   const [savingSettings, setSavingSettings] = useState(false);
 
+  const topUsers = useMemo(() => {
+    const map = new Map<string, { name: string; purchaseCredits: number; referralCredits: number; purchases: number; referrals: number; spent: number }>();
+    for (const log of purchaseCreditLogs || []) {
+      const key = log.buyerUserId || log.buyerName;
+      const entry = map.get(key) || { name: log.buyerName || "—", purchaseCredits: 0, referralCredits: 0, purchases: 0, referrals: 0, spent: 0 };
+      entry.purchaseCredits += Number(log.creditAwarded || 0);
+      entry.purchases += 1;
+      entry.spent += Number(log.productPrice || 0);
+      map.set(key, entry);
+    }
+    for (const log of referralLogs || []) {
+      const key = log.referrerUserId || log.referrerName;
+      const entry = map.get(key) || { name: log.referrerName || "—", purchaseCredits: 0, referralCredits: 0, purchases: 0, referrals: 0, spent: 0 };
+      entry.referralCredits += Number(log.creditAwarded || 0);
+      entry.referrals += 1;
+      map.set(key, entry);
+    }
+    return Array.from(map.values())
+      .map((u) => ({ ...u, total: u.purchaseCredits + u.referralCredits }))
+      .sort((a, b) => b.total - a.total || b.spent - a.spent);
+  }, [purchaseCreditLogs, referralLogs]);
+
   useEffect(() => {
     if (settings) {
       setCreditAmount(settings.referral_credit_amount);
@@ -2178,6 +2200,44 @@ function AutoDravaSection() {
               მაგ: 1 = ნებისმიერი ნივთის ყიდვისას მყიდველს დაერიცხება 1 კრედიტი. 0 = გამორთულია. (ერიცხება მხოლოდ ბარათით გადახდისას)
             </p>
           </div>
+
+          <h3 className="mb-3 text-sm font-semibold">🏆 ტოპ მომხმარებლები — ბონუსების მიხედვით</h3>
+          {topUsers.length === 0 ? (
+            <p className="mb-5 py-4 text-center text-sm text-muted-foreground">მონაცემები ჯერ არ არის</p>
+          ) : (
+            <div className="mb-6 space-y-1.5">
+              {topUsers.map((u: any, i: number) => (
+                <div
+                  key={u.name + i}
+                  className={`flex items-center justify-between gap-3 rounded-lg border px-3 py-2 ${
+                    i === 0 ? "border-amber-300 bg-amber-50/60" :
+                    i === 1 ? "border-slate-300 bg-slate-50/60" :
+                    i === 2 ? "border-orange-300 bg-orange-50/50" :
+                    "border-muted bg-muted/20"
+                  }`}
+                  data-testid={`row-top-user-${i}`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="shrink-0 w-6 text-center text-sm font-bold text-muted-foreground">
+                      {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold" data-testid={`text-top-user-name-${i}`}>{u.name}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {u.purchases > 0 && `${u.purchases} ყიდვა`}
+                        {u.purchases > 0 && u.spent > 0 && ` (₾${u.spent.toFixed(0)})`}
+                        {u.purchases > 0 && u.referrals > 0 && " · "}
+                        {u.referrals > 0 && `${u.referrals} გადაზიარება`}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="shrink-0 inline-flex items-center rounded-full bg-green-100 border border-green-200 px-2.5 py-0.5 text-xs font-bold text-green-700" data-testid={`text-top-user-credits-${i}`}>
+                    {u.total.toFixed(0)} კრედიტი
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <h3 className="mb-3 text-sm font-semibold">შესყიდვის ბონუსები — ვის დაერიცხა</h3>
           {purchaseLogsLoading ? (
