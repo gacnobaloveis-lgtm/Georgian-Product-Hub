@@ -2232,7 +2232,7 @@ function AutoDravaSection() {
                     </div>
                   </div>
                   <span className="shrink-0 inline-flex items-center rounded-full bg-green-100 border border-green-200 px-2.5 py-0.5 text-xs font-bold text-green-700" data-testid={`text-top-user-credits-${i}`}>
-                    {u.total.toFixed(0)} კრედიტი
+                    {u.total.toFixed(0)} კრედიტი (₾{(u.total * Number(settings?.credit_to_gel || 1)).toFixed(0)})
                   </span>
                 </div>
               ))}
