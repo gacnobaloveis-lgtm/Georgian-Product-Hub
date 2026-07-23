@@ -42,7 +42,7 @@ import heroCover2026 from "@assets/hero-cover-spiningebi-2026.webp";
 import heroCoverDesktop from "@assets/hero-cover-desktop-2026.webp";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 import RichTextDisplay from "@/components/RichTextDisplay";
-import { ChestPopup, useChestPromo, ChestCountdown, chestDiscountedPrice } from "@/components/ChestPromo";
+import { ChestPopup, useChestPromo, ChestCountdown, chestDiscountedPrice, chestPercentFor } from "@/components/ChestPromo";
 
 const mobileFooterBg = desktopFooterBg;
 
@@ -361,8 +361,9 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
   });
   const mainImage = product.imageUrl || null;
   const { promo, claimActive, claimExpiresAt } = useChestPromo();
+  const chestPct = chestPercentFor(promo, product.id);
   const chestActive = Boolean(
-    claimActive && promo?.productIds?.includes(product.id) && (promo?.percent || 0) > 0
+    claimActive && promo?.productIds?.includes(product.id) && chestPct > 0
   );
   const hasDiscount = product.discountPrice && Number(product.discountPrice) < Number(product.originalPrice);
   const discountPct =
@@ -443,7 +444,7 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
             />
             {chestActive ? (
               <span className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded bg-gradient-to-r from-amber-500 to-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow" data-testid={`badge-chest-${product.id}`}>
-                🎁 -{promo?.percent}%
+                🎁 -{chestPct}%
                 {claimExpiresAt && <ChestCountdown expiresAt={claimExpiresAt} />}
               </span>
             ) : hasDiscount && (
@@ -474,7 +475,7 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
                 <span className="text-xs font-bold text-amber-300 sm:text-sm" data-testid={`text-price-chest-${product.id}`}>
                   ₾{chestDiscountedPrice(
                     hasDiscount ? Number(product.discountPrice) : Number(product.originalPrice),
-                    promo?.percent || 0
+                    chestPct
                   ).toFixed(2)}
                 </span>
                 <span className="text-[10px] text-emerald-100/60 line-through sm:text-xs">

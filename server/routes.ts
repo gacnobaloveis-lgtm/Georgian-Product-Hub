@@ -929,21 +929,37 @@ export async function registerRoutes(
     return createHmac("sha256", secret).update(String(expiresAt)).digest("hex");
   };
 
-  async function getChestPromoConfig(): Promise<{ enabled: boolean; percent: number; timerMinutes: number; productIds: number[]; audience: "all" | "new" }> {
+  async function getChestPromoConfig(): Promise<{ enabled: boolean; percent: number; timerMinutes: number; productIds: number[]; audience: "all" | "new"; productPercents: Record<number, number> }> {
     try {
       const raw = await storage.getSetting("chest_promo");
-      if (!raw) return { enabled: false, percent: 0, timerMinutes: 0, productIds: [], audience: "new" };
+      if (!raw) return { enabled: false, percent: 0, timerMinutes: 0, productIds: [], audience: "new", productPercents: {} };
       const p = JSON.parse(raw);
+      const productPercents: Record<number, number> = {};
+      if (p.productPercents && typeof p.productPercents === "object") {
+        for (const [k, v] of Object.entries(p.productPercents)) {
+          const id = Number(k);
+          const pct = Number(v);
+          if (Number.isInteger(id) && id > 0 && Number.isFinite(pct) && pct > 0 && pct <= 90) {
+            productPercents[id] = pct;
+          }
+        }
+      }
       return {
         enabled: Boolean(p.enabled),
         percent: Math.min(90, Math.max(0, Number(p.percent) || 0)),
         timerMinutes: Math.min(1440, Math.max(1, Number(p.timerMinutes) || 0)),
         productIds: Array.isArray(p.productIds) ? p.productIds.map(Number).filter((n: number) => Number.isInteger(n) && n > 0) : [],
         audience: p.audience === "all" ? "all" : "new",
+        productPercents,
       };
     } catch {
-      return { enabled: false, percent: 0, timerMinutes: 0, productIds: [], audience: "new" };
+      return { enabled: false, percent: 0, timerMinutes: 0, productIds: [], audience: "new", productPercents: {} };
     }
+  }
+
+  // Per-product percent wins; falls back to the global percent.
+  function chestPercentFor(promo: Awaited<ReturnType<typeof getChestPromoConfig>>, productId: number): number {
+    return promo.productPercents[productId] || promo.percent;
   }
 
   // Returns the visitor's active chest claim expiry (ms) or null.
@@ -968,15 +984,18 @@ export async function registerRoutes(
     const claim = getActiveChestClaim(req);
     if (!claim) return unitPrice;
     const promo = await getChestPromoConfig();
-    if (!promo.enabled || promo.percent <= 0) return unitPrice;
+    if (!promo.enabled) return unitPrice;
     if (!promo.productIds.includes(productId)) return unitPrice;
-    return Math.round(unitPrice * (1 - promo.percent / 100) * 100) / 100;
+    const pct = chestPercentFor(promo, productId);
+    if (pct <= 0) return unitPrice;
+    return Math.round(unitPrice * (1 - pct / 100) * 100) / 100;
   }
 
   app.get("/api/chest-promo", async (req: any, res) => {
     try {
       const promo = await getChestPromoConfig();
-      if (!promo.enabled || promo.percent <= 0 || promo.productIds.length === 0) {
+      const hasAnyPercent = promo.percent > 0 || Object.keys(promo.productPercents).length > 0;
+      if (!promo.enabled || !hasAnyPercent || promo.productIds.length === 0) {
         return res.json({ enabled: false });
       }
       const claimExpiresAt = getActiveChestClaim(req);
@@ -990,7 +1009,8 @@ export async function registerRoutes(
   app.post("/api/chest-promo/claim", async (req: any, res) => {
     try {
       const promo = await getChestPromoConfig();
-      if (!promo.enabled || promo.percent <= 0 || promo.productIds.length === 0) {
+      const hasAnyPercent = promo.percent > 0 || Object.keys(promo.productPercents).length > 0;
+      if (!promo.enabled || !hasAnyPercent || promo.productIds.length === 0) {
         return res.status(400).json({ message: "აქცია აქტიური არ არის" });
       }
       // If the visitor already has an active claim, keep the original expiry —
@@ -1026,12 +1046,29 @@ export async function registerRoutes(
 
   app.post("/api/admin/chest-promo", requireAdmin, async (req, res) => {
     try {
-      const { enabled, percent, timerMinutes, productIds, audience } = req.body || {};
-      const pct = Number(percent);
+      const { enabled, percent, timerMinutes, productIds, audience, productPercents } = req.body || {};
+      const pct = Number(percent) || 0;
       const mins = Number(timerMinutes);
       const ids = Array.isArray(productIds) ? productIds.map(Number).filter((n: number) => Number.isInteger(n) && n > 0) : [];
-      if (enabled && (!Number.isFinite(pct) || pct <= 0 || pct > 90)) {
+      const perProduct: Record<number, number> = {};
+      if (productPercents && typeof productPercents === "object") {
+        for (const [k, v] of Object.entries(productPercents)) {
+          const id = Number(k);
+          const p = Number(v);
+          if (!Number.isInteger(id) || id <= 0 || !ids.includes(id)) continue;
+          if (!Number.isFinite(p) || p <= 0 || p > 90) {
+            return res.status(400).json({ message: "ინდივიდუალური პროცენტი უნდა იყოს 1-90" });
+          }
+          perProduct[id] = p;
+        }
+      }
+      if (enabled && pct > 0 && pct > 90) {
         return res.status(400).json({ message: "პროცენტი უნდა იყოს 1-90" });
+      }
+      // Every selected product must end up with a usable percent — either its
+      // own value or the global fallback.
+      if (enabled && ids.some((id: number) => !perProduct[id] && pct <= 0)) {
+        return res.status(400).json({ message: "მიუთითეთ ფასდაკლების % ყველა არჩეულ პროდუქტს (ან საერთო %)" });
       }
       if (enabled && (!Number.isFinite(mins) || mins < 1 || mins > 1440)) {
         return res.status(400).json({ message: "წამზომი უნდა იყოს 1-1440 წუთი" });
@@ -1045,6 +1082,7 @@ export async function registerRoutes(
         timerMinutes: mins || 0,
         productIds: ids,
         audience: audience === "all" ? "all" : "new",
+        productPercents: perProduct,
       }));
       res.json({ success: true });
     } catch (err) {

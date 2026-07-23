@@ -1811,7 +1811,7 @@ function AutoDravaSection() {
     },
   });
 
-  const { data: chestPromo } = useQuery<{ enabled: boolean; percent: number; timerMinutes: number; productIds: number[]; audience?: "all" | "new" }>({
+  const { data: chestPromo } = useQuery<{ enabled: boolean; percent: number; timerMinutes: number; productIds: number[]; audience?: "all" | "new"; productPercents?: Record<number, number> }>({
     queryKey: ["/api/admin/chest-promo"],
     queryFn: async () => {
       const res = await fetch("/api/admin/chest-promo", { credentials: "include" });
@@ -1825,6 +1825,7 @@ function AutoDravaSection() {
   const [promoPercent, setPromoPercent] = useState("");
   const [promoMinutes, setPromoMinutes] = useState("");
   const [promoProductIds, setPromoProductIds] = useState<number[]>([]);
+  const [promoProductPercents, setPromoProductPercents] = useState<Record<number, string>>({});
   const [promoLoaded, setPromoLoaded] = useState(false);
 
   useEffect(() => {
@@ -1834,6 +1835,9 @@ function AutoDravaSection() {
       setPromoPercent(chestPromo.percent ? String(chestPromo.percent) : "");
       setPromoMinutes(chestPromo.timerMinutes ? String(chestPromo.timerMinutes) : "");
       setPromoProductIds(chestPromo.productIds || []);
+      const pp: Record<number, string> = {};
+      for (const [k, v] of Object.entries(chestPromo.productPercents || {})) pp[Number(k)] = String(v);
+      setPromoProductPercents(pp);
       setPromoLoaded(true);
     }
   }, [chestPromo, promoLoaded]);
@@ -1850,6 +1854,11 @@ function AutoDravaSection() {
           percent: Number(promoPercent),
           timerMinutes: Number(promoMinutes),
           productIds: promoProductIds,
+          productPercents: Object.fromEntries(
+            Object.entries(promoProductPercents)
+              .filter(([id, v]) => promoProductIds.includes(Number(id)) && v !== "")
+              .map(([id, v]) => [id, Number(v)])
+          ),
         }),
       });
       if (!res.ok) {
@@ -2389,7 +2398,7 @@ function AutoDravaSection() {
             </div>
             <div className="mb-4 grid grid-cols-2 gap-3">
               <div>
-                <label className="mb-1 block text-xs text-muted-foreground">ფასდაკლება % (1-90)</label>
+                <label className="mb-1 block text-xs text-muted-foreground">საერთო % (თუ ინდივიდუალური ცარიელია)</label>
                 <Input
                   type="number"
                   min={1}
@@ -2439,6 +2448,23 @@ function AutoDravaSection() {
                     )}
                     <span className="flex-1 truncate">{p.name}</span>
                     <span className="text-xs text-muted-foreground">₾{p.discountPrice && Number(p.discountPrice) < Number(p.originalPrice) ? p.discountPrice : p.originalPrice}</span>
+                    {promoProductIds.includes(p.id) && (
+                      <span className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={90}
+                          value={promoProductPercents[p.id] ?? ""}
+                          onChange={(e) =>
+                            setPromoProductPercents((prev) => ({ ...prev, [p.id]: e.target.value }))
+                          }
+                          placeholder="%"
+                          className="h-7 w-16 text-xs"
+                          data-testid={`input-promo-percent-${p.id}`}
+                        />
+                        <span className="text-xs text-amber-500">%</span>
+                      </span>
+                    )}
                   </label>
                 ))}
               </div>
