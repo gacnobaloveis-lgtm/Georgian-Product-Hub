@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ფასდაკლების საჩუქარი</title>
+    <style>
+        /* საიტის ზოგადი ფონი (სტენდბაი რეჟიმი) */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f172a;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+        }
+
+        /* მთავარი კონტეინერი (მუქი ლურჯი გრადიენტი) */
+        .game-popup-container {
+            display: none; /* თავიდან მალულია, 3 წამში გამოჩნდება */
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            background: radial-gradient(circle, #1a2a6c, #0a1128);
+            border: 2px solid #00d2ff;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 210, 255, 0.5);
+            z-index: 9999;
+            overflow: hidden;
+            color: white;
+        }
+
+        /* უკანა ფონის მბრუნავი სხივები */
+        .glow-bg {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(0, 210, 255, 0.12), transparent 30%);
+            animation: rotateGlow 12s linear infinite;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .popup-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* გამჭვირვალე სკივრის სურათის ზომა და ანიმაცია */
+        .chest-image-wrapper {
+            margin-bottom: 15px;
+        }
+        .opened-chest-img {
+            width: 170px;
+            height: auto;
+            filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.7)); 
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        /* ტექსტების სტილი */
+        .main-title {
+            font-size: 32px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+            color: #fff;
+            text-shadow: 0 0 10px #00d2ff;
+        }
+        .subtitle {
+            font-size: 18px;
+            color: #a0aec0;
+            margin: 5px 0 20px 0;
+        }
+
+        .divider {
+            border: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #00d2ff, transparent);
+            margin-bottom: 20px;
+        }
+
+        /* ბარათების განლაგება */
+        .rewards-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .reward-card {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            border: 1px solid #60a5fa;
+            border-radius: 12px;
+            width: 90px;
+            padding: 15px 5px;
+            box-shadow: inset 0 0 10px rgba(255,255,255,0.2);
+            transition: transform 0.2s;
+        }
+        .reward-card:hover {
+            transform: scale(1.05);
+        }
+        .reward-icon {
+            font-size: 30px;
+            margin-bottom: 8px;
+        }
+        .reward-value {
+            font-size: 15px;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        /* ოქროსფერი ღილაკი */
+        .claim-btn {
+            background: linear-gradient(to right, #ffd700, #ff8c00);
+            color: #000;
+            border: none;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 12px 35px;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 140, 0, 0.4);
+            transition: transform 0.2s, background 0.2s;
+        }
+        .claim-btn:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+
+        /* CSS ანიმაციები */
+        @keyframes rotateGlow {
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-popup-container" id="giftPopup">
+        <!-- ანათებადი ლურჯი ფონი სხივების ეფექტით -->
+        <div class="glow-bg"></div>
+        
+        <div class="popup-content">
+            <!-- გამჭვირვალე გახსნილი სკივრი თვლებითა და მონეტებით -->
+            <div class="chest-image-wrapper">
+                <img src="https://pngtree.com" alt="Open Chest" class="opened-chest-img">
+            </div>
+            
+            <!-- მთავარი შეტყობინება -->
+            <h1 class="main-title">გილოცავთ!</h1>
+            <p class="subtitle">თქვენ გაქვთ ფასდაკლების საჩუქარი</p>
+            
+            <hr class="divider">
+            
+            <!-- საჩუქრების ბარათები -->
+            <div class="rewards-row">
+                <div class="reward-card">
+                    <div class="reward-icon">🪙</div>
+                    <div class="reward-value">-20%</div>
+                </div>
+                <div class="reward-card">
+                    <div class="reward-icon">💎</div>
+                    <div class="reward-value">SALE20</div>
+                </div>
+                <div class="reward-card">
+                    <div class="reward-icon">⚡</div>
+                    <div class="reward-value">FREE</div>
+                </div>
+            </div>
+            
+            <!-- დახურვის ღილაკი -->
+            <button class="claim-btn" onclick="closeGiftPopup()">საჩუქრის აღება</button>
+        </div>
+    </div>
+
+    <script>
+        // ფუნქცია, რომელიც აჩენს ფანჯარას
+        function showGiftPopup() {
+            const popup = document.getElementById('giftPopup');
+            if (popup) {
+                popup.style.display = 'block';
+            }
+        }
+
+        // საიტის ჩატვირთვიდან ზუსტად 3 წამში (3000 მილიწამში) გაეშვება ფუნქცია
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(showGiftPopup, 3000);
+        });
+
+        // ფანჯრის დახურვის ფუნქცია ღილაკზე დაჭერისას
+        function closeGiftPopup() {
+            document.getElementById('giftPopup').style.display = 'none';
+            alert("საჩუქარი წარმატებით გააქტიურდა!");
+        }
+    </script>
+</body>
+</html>
