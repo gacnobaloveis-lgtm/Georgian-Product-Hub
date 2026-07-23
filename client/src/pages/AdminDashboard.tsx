@@ -1811,7 +1811,7 @@ function AutoDravaSection() {
     },
   });
 
-  const { data: chestPromo } = useQuery<{ enabled: boolean; percent: number; timerMinutes: number; productIds: number[] }>({
+  const { data: chestPromo } = useQuery<{ enabled: boolean; percent: number; timerMinutes: number; productIds: number[]; audience?: "all" | "new" }>({
     queryKey: ["/api/admin/chest-promo"],
     queryFn: async () => {
       const res = await fetch("/api/admin/chest-promo", { credentials: "include" });
@@ -1821,6 +1821,7 @@ function AutoDravaSection() {
   });
 
   const [promoEnabled, setPromoEnabled] = useState(false);
+  const [promoAudience, setPromoAudience] = useState<"all" | "new">("new");
   const [promoPercent, setPromoPercent] = useState("");
   const [promoMinutes, setPromoMinutes] = useState("");
   const [promoProductIds, setPromoProductIds] = useState<number[]>([]);
@@ -1829,6 +1830,7 @@ function AutoDravaSection() {
   useEffect(() => {
     if (chestPromo && !promoLoaded) {
       setPromoEnabled(chestPromo.enabled);
+      setPromoAudience(chestPromo.audience === "all" ? "all" : "new");
       setPromoPercent(chestPromo.percent ? String(chestPromo.percent) : "");
       setPromoMinutes(chestPromo.timerMinutes ? String(chestPromo.timerMinutes) : "");
       setPromoProductIds(chestPromo.productIds || []);
@@ -1844,6 +1846,7 @@ function AutoDravaSection() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           enabled: promoEnabled,
+          audience: promoAudience,
           percent: Number(promoPercent),
           timerMinutes: Number(promoMinutes),
           productIds: promoProductIds,
@@ -2355,18 +2358,34 @@ function AutoDravaSection() {
             <p className="mb-4 text-xs text-muted-foreground">
               ახალი ვიზიტორები საიტზე შესვლიდან 1 წუთში დაინახავენ სასაჩუქრე ფანჯარას. საჩუქრის აღების შემდეგ არჩეულ პროდუქტებზე ჩაირთვება ფასდაკლება წამზომით.
             </p>
-            <div className="mb-4 flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="promo-enabled"
-                checked={promoEnabled}
-                onChange={(e) => setPromoEnabled(e.target.checked)}
-                className="h-4 w-4"
-                data-testid="checkbox-promo-enabled"
-              />
-              <label htmlFor="promo-enabled" className="text-sm font-medium">
-                აქცია ჩართულია
-              </label>
+            <div className="mb-4">
+              <label className="mb-2 block text-xs text-muted-foreground">აქციის რეჟიმი</label>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  variant={promoEnabled && promoAudience === "all" ? "default" : "outline"}
+                  onClick={() => { setPromoEnabled(true); setPromoAudience("all"); }}
+                  data-testid="button-promo-mode-all"
+                >
+                  ფასდაკლება ყველასთვის
+                </Button>
+                <Button
+                  size="sm"
+                  variant={promoEnabled && promoAudience === "new" ? "default" : "outline"}
+                  onClick={() => { setPromoEnabled(true); setPromoAudience("new"); }}
+                  data-testid="button-promo-mode-new"
+                >
+                  მხოლოდ ახალი მომხმარებლებისთვის
+                </Button>
+                <Button
+                  size="sm"
+                  variant={!promoEnabled ? "destructive" : "outline"}
+                  onClick={() => setPromoEnabled(false)}
+                  data-testid="button-promo-mode-off"
+                >
+                  გამორთვა
+                </Button>
+              </div>
             </div>
             <div className="mb-4 grid grid-cols-2 gap-3">
               <div>

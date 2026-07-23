@@ -929,19 +929,20 @@ export async function registerRoutes(
     return createHmac("sha256", secret).update(String(expiresAt)).digest("hex");
   };
 
-  async function getChestPromoConfig(): Promise<{ enabled: boolean; percent: number; timerMinutes: number; productIds: number[] }> {
+  async function getChestPromoConfig(): Promise<{ enabled: boolean; percent: number; timerMinutes: number; productIds: number[]; audience: "all" | "new" }> {
     try {
       const raw = await storage.getSetting("chest_promo");
-      if (!raw) return { enabled: false, percent: 0, timerMinutes: 0, productIds: [] };
+      if (!raw) return { enabled: false, percent: 0, timerMinutes: 0, productIds: [], audience: "new" };
       const p = JSON.parse(raw);
       return {
         enabled: Boolean(p.enabled),
         percent: Math.min(90, Math.max(0, Number(p.percent) || 0)),
         timerMinutes: Math.min(1440, Math.max(1, Number(p.timerMinutes) || 0)),
         productIds: Array.isArray(p.productIds) ? p.productIds.map(Number).filter((n: number) => Number.isInteger(n) && n > 0) : [],
+        audience: p.audience === "all" ? "all" : "new",
       };
     } catch {
-      return { enabled: false, percent: 0, timerMinutes: 0, productIds: [] };
+      return { enabled: false, percent: 0, timerMinutes: 0, productIds: [], audience: "new" };
     }
   }
 
@@ -1025,7 +1026,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/chest-promo", requireAdmin, async (req, res) => {
     try {
-      const { enabled, percent, timerMinutes, productIds } = req.body || {};
+      const { enabled, percent, timerMinutes, productIds, audience } = req.body || {};
       const pct = Number(percent);
       const mins = Number(timerMinutes);
       const ids = Array.isArray(productIds) ? productIds.map(Number).filter((n: number) => Number.isInteger(n) && n > 0) : [];
@@ -1043,6 +1044,7 @@ export async function registerRoutes(
         percent: pct || 0,
         timerMinutes: mins || 0,
         productIds: ids,
+        audience: audience === "all" ? "all" : "new",
       }));
       res.json({ success: true });
     } catch (err) {
