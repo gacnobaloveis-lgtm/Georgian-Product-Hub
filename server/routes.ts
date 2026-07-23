@@ -979,16 +979,18 @@ export async function registerRoutes(
   }
 
   // Applies the chest discount to a unit price if the visitor has a valid,
-  // unexpired claim and the product is part of the promo.
-  async function applyChestDiscount(req: any, productId: number, unitPrice: number): Promise<number> {
+  // unexpired claim and the product is part of the promo. Returns the (possibly
+  // reduced) price and whether the discount was actually applied — chest
+  // purchases don't earn the buyer purchase-bonus credit.
+  async function applyChestDiscount(req: any, productId: number, unitPrice: number): Promise<{ price: number; applied: boolean }> {
     const claim = getActiveChestClaim(req);
-    if (!claim) return unitPrice;
+    if (!claim) return { price: unitPrice, applied: false };
     const promo = await getChestPromoConfig();
-    if (!promo.enabled) return unitPrice;
-    if (!promo.productIds.includes(productId)) return unitPrice;
+    if (!promo.enabled) return { price: unitPrice, applied: false };
+    if (!promo.productIds.includes(productId)) return { price: unitPrice, applied: false };
     const pct = chestPercentFor(promo, productId);
-    if (pct <= 0) return unitPrice;
-    return Math.round(unitPrice * (1 - pct / 100) * 100) / 100;
+    if (pct <= 0) return { price: unitPrice, applied: false };
+    return { price: Math.round(unitPrice * (1 - pct / 100) * 100) / 100, applied: true };
   }
 
   app.get("/api/chest-promo", async (req: any, res) => {
@@ -1115,7 +1117,8 @@ export async function registerRoutes(
       const baseUnitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
         ? Number(prod.discountPrice)
         : Number(prod.originalPrice);
-      const unitPrice = await applyChestDiscount(req, Number(productId), baseUnitPrice);
+      const chest = await applyChestDiscount(req, Number(productId), baseUnitPrice);
+      const unitPrice = chest.price;
       const lineTotal = unitPrice * orderQty;
       const serverProductName = prod.name;
 
@@ -1171,6 +1174,7 @@ export async function registerRoutes(
         status: "awaiting_payment",
         paymentMethod: "card",
         refCode,
+        chestApplied: chest.applied,
       };
 
       let order;
@@ -1222,7 +1226,8 @@ export async function registerRoutes(
       const baseUnitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
         ? Number(prod.discountPrice)
         : Number(prod.originalPrice);
-      const unitPrice = await applyChestDiscount(req, Number(productId), baseUnitPrice);
+      const chestCredit = await applyChestDiscount(req, Number(productId), baseUnitPrice);
+      const unitPrice = chestCredit.price;
       const totalPrice = unitPrice * orderQty;
       const serverProductName = prod.name;
 
@@ -1293,6 +1298,7 @@ export async function registerRoutes(
         phone: sanitizeString(String(phone)),
         status: "pending",
         paymentMethod: "credit",
+        chestApplied: chestCredit.applied,
       };
 
       let order;
@@ -3209,7 +3215,8 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     // Award the BUYER a purchase bonus credit (separate from referral credit),
     // a fixed admin-configurable amount per real (card) purchase. 0 = disabled.
     // Only applies to card payments, not credit-paid orders, to avoid farming.
-    if (order.userId) {
+    // Chest-promo purchases are excluded — the discount is the reward.
+    if (order.userId && !order.chestApplied) {
       try {
         const purchaseSetting = await storage.getSetting("purchase_credit_amount");
         const purchaseCredit = purchaseSetting ? Number(purchaseSetting) : 0;
@@ -3294,8 +3301,37 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       if (!order || order.userId !== userId) {
         return res.status(404).json({ message: "Order not found" });
       }
+      // Sum the purchase-bonus credit awarded for this payment (whole Flitt
+      // group if it was a multi-item cart), so the success page can celebrate.
+      const bonusForGroup = async (): Promise<number> => {
+        try {
+          let ids: number[] = [ourOrderId];
+          if (order.flittOrderId) {
+            const group = await storage.getOrdersByFlittOrderId(order.flittOrderId);
+            if (group.length) ids = group.map((o: any) => o.id);
+          }
+          let total = await storage.getPurchaseCreditTotalForOrders(userId, ids);
+          if (total > 0) return total;
+          // Race guard: the Flitt callback may have claimed the settlement and
+          // still be mid-write on the purchase-credit log. If a bonus is
+          // configured, re-read briefly before reporting 0.
+          const configured = Number((await storage.getSetting("purchase_credit_amount")) || 0);
+          if (configured > 0) {
+            for (let i = 0; i < 3 && total === 0; i++) {
+              await new Promise((r) => setTimeout(r, 500));
+              total = await storage.getPurchaseCreditTotalForOrders(userId, ids);
+            }
+          }
+          return total;
+        } catch {
+          return 0;
+        }
+      };
+
       if (order.status !== "awaiting_payment") {
-        return res.json({ settled: false, status: order.status });
+        // Already settled (e.g. by the Flitt callback) — still report the bonus
+        // so the success page can show the celebration popup.
+        return res.json({ settled: false, status: order.status, bonusAwarded: await bonusForGroup() });
       }
       if (!order.flittOrderId) {
         return res.json({ settled: false, status: order.status });
@@ -3306,7 +3342,7 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       const r = statusResp?.response || statusResp;
       if (r?.order_status === "approved") {
         const settledCount = await settlePaidOrderGroup(order.flittOrderId, "confirm");
-        return res.json({ settled: settledCount > 0, status: "pending" });
+        return res.json({ settled: settledCount > 0, status: "pending", bonusAwarded: await bonusForGroup() });
       }
       return res.json({ settled: false, status: order.status, flittStatus: r?.order_status });
     } catch (err: any) {
