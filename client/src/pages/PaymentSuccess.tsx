@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { CheckCircle, ShoppingBag, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BonusCelebration } from "@/components/BonusCelebration";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const PAGE_BG_STYLE: React.CSSProperties = {
@@ -14,6 +15,8 @@ const PAGE_BG_STYLE: React.CSSProperties = {
 export default function PaymentSuccess() {
   const [, setLocation] = useLocation();
   const [countdown, setCountdown] = useState(10);
+  const [bonusPoints, setBonusPoints] = useState(0);
+  const [bonusOpen, setBonusOpen] = useState(false);
 
   const params = new URLSearchParams(window.location.search);
   const payId = params.get("payId") || params.get("transactionId") || "";
@@ -28,7 +31,19 @@ export default function PaymentSuccess() {
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ orderId: oid }),
-    }).catch(() => {});
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const bonus = Number(data?.bonusAwarded || 0);
+        // Show the celebration once per order (guard against page revisits).
+        const seenKey = `bonus_shown_${oid}`;
+        if (bonus > 0 && !sessionStorage.getItem(seenKey)) {
+          sessionStorage.setItem(seenKey, "1");
+          setBonusPoints(bonus);
+          setBonusOpen(true);
+        }
+      })
+      .catch(() => {});
   }, [oid]);
 
   useEffect(() => {
@@ -40,6 +55,7 @@ export default function PaymentSuccess() {
         // fall through
       }
     }
+    if (bonusOpen) return; // pause the auto-redirect while the bonus popup is open
     const timer = setInterval(() => {
       setCountdown((c) => {
         if (c <= 1) {
@@ -51,10 +67,15 @@ export default function PaymentSuccess() {
       });
     }, 1000);
     return () => clearInterval(timer);
-  }, [setLocation, payId]);
+  }, [setLocation, payId, bonusOpen]);
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4" style={PAGE_BG_STYLE}>
+      <BonusCelebration
+        points={bonusPoints}
+        open={bonusOpen}
+        onClose={() => setBonusOpen(false)}
+      />
       <div className="max-w-md w-full text-center space-y-6 rounded-2xl border border-white/20 bg-white/25 backdrop-blur-md shadow-2xl p-6 sm:p-8">
         <div className="flex justify-center">
           <div className="rounded-full bg-emerald-500/25 ring-1 ring-emerald-400/50 p-6 backdrop-blur-md">

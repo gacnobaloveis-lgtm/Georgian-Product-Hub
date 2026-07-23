@@ -1,0 +1,214 @@
+ეს ძალიან ეფექტური იდეაა — გეიმიფიკაცია (Gamification) მომხმარებლების ჩართულობას და კმაყოფილებას საგრძნობლად ზრდის!
+
+მოდით, ავაწყოთ სრული, მზა კოდი HTML, CSS (Tailwind) და JavaScript-ით, რომელიც მოიცავს:
+
+Canvas-ის ფოიერვერკისა და ვარსკვლავების აფეთქების ეფექტს (JS Confetti / Canvas Starburst).
+
+ხმის ეფექტს (Web Audio API-ით, რომ გარე აუდიო ფაილის ატვირთვა არ დაგჭირდეთ — ბრაუზერი თვითონ წარმოქმნის აფეთქებისა და ვარსკვლავების წკრიალის ხმას!).
+
+ლამაზ, თანამედროვე პოპ-აპ ფანჯარას დინამიური ბონუსის ქულებით.
+
+1. HTML & CSS Structure (Tailwind CSS)
+თქვენს HTML ფაილში ჩასვით ეს სტრუქტურა. პოპ-აპი თავიდან დამალულია და გამოჩნდება ფუნქციის გამოძახებისას.
+
+HTML
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bonus Celebration</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti ბიბლიოთეკა ვარსკვლავების ეფექტისთვის -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    @keyframes pulse-star {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.2) rotate(15deg); }
+    }
+    .star-animation {
+      animation: pulse-star 1.5s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex items-center justify-center p-4">
+
+  <!-- ტესტირებისთვის: ღილაკი, რომელიც სიმულაციას გაუკეთებს ყიდვას -->
+  <button onclick="triggerBonusReward(150)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-3 rounded-xl transition duration-200 shadow-lg shadow-amber-500/20 active:scale-95">
+    🛒 ტესტი: ყიდვის დასრულება (150 ბონუსი)
+  </button>
+
+  <!-- ბონუსის პოპ-აპ მოდალი -->
+  <div id="bonusModal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+    <div class="bg-slate-800/90 border border-amber-500/30 p-8 rounded-3xl max-w-sm w-full text-center shadow-2xl transform scale-90 transition-transform duration-300 relative overflow-hidden" id="modalCard">
+      
+      <!-- ფონური განათება -->
+      <div class="absolute -top-12 -left-12 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl"></div>
+      <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-yellow-500/20 rounded-full blur-2xl"></div>
+
+      <!-- ვარსკვლავის ხატულა -->
+      <div class="text-6xl mb-4 star-animation inline-block">⭐</div>
+
+      <!-- სათაური -->
+      <h2 class="text-2xl font-black text-amber-400 mb-2 tracking-wide uppercase">
+        გილოცავთ! 🎉
+      </h2>
+
+      <!-- ტექსტი ბონუსის რაოდენობით -->
+      <p class="text-slate-300 text-base mb-4">
+        შენაძენის გაკეთებისთვის თქვენ ავტომატურად დაგერიცხათ:
+      </p>
+
+      <div class="bg-slate-900/80 border border-amber-500/40 rounded-2xl py-4 my-2 shadow-inner">
+        <span id="bonusAmount" class="text-4xl font-extrabold text-amber-400 tracking-wider">0</span>
+        <span class="text-amber-500 font-bold text-lg block mt-1">ბონუს ქულა</span>
+      </div>
+
+      <p class="text-xs text-slate-400 mt-3 mb-6">
+        ✨ ბონუსებით შეგიძლიათ შეიძინოთ სასურველი ნივთები საიტზე.
+      </p>
+
+      <!-- დახურვის ღილაკი -->
+      <button onclick="closeBonusModal()" class="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg shadow-amber-500/20 active:scale-95">
+        მშვენიერია, მადლობა!
+      </button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+2. JavaScript Logic & Audio Effect (app.js)
+შექმენით app.js ფაილი და ჩასვით ეს კოდი. აქ არის Web Audio API-ით შექმნილი "აფეთქებისა" და "ვარსკვლავების წკრიალის" ხმა, ასე რომ MP3 ფაილის ჩამოტვირთვა და საიტზე ატვირთვა საერთოდ არ გჭირდებათ!
+
+JavaScript
+// ==========================================
+// 1. ხმის ეფექტის გენერატორი (Web Audio API)
+// ==========================================
+function playCelebrationSound() {
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  // აფეთქების/ბასის ხმა (Explosion / Boom)
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.8);
+
+  gain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.8);
+
+  // ვარსკვლავების ცვენის/წკრიალის ხმა (Sparkle Arpeggio)
+  const sparkleNotes = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98]; // C5, E5, G5, C6, E6, G6
+  sparkleNotes.forEach((freq, index) => {
+    const sOsc = audioCtx.createOscillator();
+    const sGain = audioCtx.createGain();
+
+    sOsc.type = 'sine';
+    sOsc.frequency.value = freq;
+
+    const startTime = audioCtx.currentTime + 0.1 + (index * 0.08);
+    
+    sGain.gain.setValueAtTime(0, startTime);
+    sGain.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+    sGain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.3);
+
+    sOsc.connect(sGain);
+    sGain.connect(audioCtx.destination);
+
+    sOsc.start(startTime);
+    sOsc.stop(startTime + 0.3);
+  });
+}
+
+// ==========================================
+// 2. ვარსკვლავების აფეთქება (Confetti Stars)
+// ==========================================
+function launchStarConfetti() {
+  const defaults = {
+    spread: 360,
+    ticks: 100,
+    gravity: 0.6,
+    decay: 0.94,
+    startVelocity: 30,
+    shapes: ['star'],
+    colors: ['#FFE15D', '#FFB100', '#FFF5E4', '#FFD700', '#FFA500']
+  };
+
+  // ცენტრიდან აფეთქება
+  confetti({
+    ...defaults,
+    particleCount: 80,
+    scalar: 1.2,
+    shapes: ['star']
+  });
+
+  // დამატებითი წვრილი ნაპერწკლები
+  confetti({
+    ...defaults,
+    particleCount: 50,
+    scalar: 0.75,
+    shapes: ['circle']
+  });
+}
+
+// ==========================================
+// 3. მთავარი ფუნქცია - ბონუსის დარიცხვა
+// ==========================================
+function triggerBonusReward(pointsAmount) {
+  const modal = document.getElementById('bonusModal');
+  const modalCard = document.getElementById('modalCard');
+  const bonusAmountEl = document.getElementById('bonusAmount');
+
+  // 1. ჩავწეროთ ბონუსის რაოდენობა
+  bonusAmountEl.textContent = `+${pointsAmount}`;
+
+  // 2. გამოვაჩინოთ მოდალი ანიმაციით
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    modal.classList.remove('opacity-0');
+    modalCard.classList.remove('scale-90');
+    modalCard.classList.add('scale-100');
+  }, 10);
+
+  // 3. ჩავრთოთ ხმა და ვარსკვლავების აფეთქება
+  playCelebrationSound();
+  launchStarConfetti();
+
+  // მეორე ტალღა ვარსკვლავების (ცოტა მოგვიანებით ეფექტისთვის)
+  setTimeout(() => {
+    launchStarConfetti();
+  }, 300);
+}
+
+// ==========================================
+// 4. მოდალის დახურვა
+// ==========================================
+function closeBonusModal() {
+  const modal = document.getElementById('bonusModal');
+  const modalCard = document.getElementById('modalCard');
+
+  modal.classList.add('opacity-0');
+  modalCard.classList.remove('scale-100');
+  modalCard.classList.add('scale-90');
+
+  setTimeout(() => {
+    modal.classList.add('hidden');
+  }, 300);
+}
+💡 როგორ გამოიყენებთ რეალურ საიტზე:
+როდესაც მომხმარებელი გადახდას დაასრულებს (მაგალითად, Checkout-ის ბოლო გვერდზე ან Backend-იდან წარმატებული პასუხის მიღებისას), უბრალოდ გამოიძახეთ ეს JavaScript ფუნქცია:
+
+JavaScript
+// მაგალითად: Backend-იდან მოგდით დარიცხული ბონუსი
+const earnedBonus = 25; // დინამიური ქულა სერვერიდან
+
+// იძახებთ ეფექტს:
+triggerBonusReward(earnedBonus);

@@ -3294,8 +3294,37 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       if (!order || order.userId !== userId) {
         return res.status(404).json({ message: "Order not found" });
       }
+      // Sum the purchase-bonus credit awarded for this payment (whole Flitt
+      // group if it was a multi-item cart), so the success page can celebrate.
+      const bonusForGroup = async (): Promise<number> => {
+        try {
+          let ids: number[] = [ourOrderId];
+          if (order.flittOrderId) {
+            const group = await storage.getOrdersByFlittOrderId(order.flittOrderId);
+            if (group.length) ids = group.map((o: any) => o.id);
+          }
+          let total = await storage.getPurchaseCreditTotalForOrders(userId, ids);
+          if (total > 0) return total;
+          // Race guard: the Flitt callback may have claimed the settlement and
+          // still be mid-write on the purchase-credit log. If a bonus is
+          // configured, re-read briefly before reporting 0.
+          const configured = Number((await storage.getSetting("purchase_credit_amount")) || 0);
+          if (configured > 0) {
+            for (let i = 0; i < 3 && total === 0; i++) {
+              await new Promise((r) => setTimeout(r, 500));
+              total = await storage.getPurchaseCreditTotalForOrders(userId, ids);
+            }
+          }
+          return total;
+        } catch {
+          return 0;
+        }
+      };
+
       if (order.status !== "awaiting_payment") {
-        return res.json({ settled: false, status: order.status });
+        // Already settled (e.g. by the Flitt callback) — still report the bonus
+        // so the success page can show the celebration popup.
+        return res.json({ settled: false, status: order.status, bonusAwarded: await bonusForGroup() });
       }
       if (!order.flittOrderId) {
         return res.json({ settled: false, status: order.status });
@@ -3306,7 +3335,7 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       const r = statusResp?.response || statusResp;
       if (r?.order_status === "approved") {
         const settledCount = await settlePaidOrderGroup(order.flittOrderId, "confirm");
-        return res.json({ settled: settledCount > 0, status: "pending" });
+        return res.json({ settled: settledCount > 0, status: "pending", bonusAwarded: await bonusForGroup() });
       }
       return res.json({ settled: false, status: order.status, flittStatus: r?.order_status });
     } catch (err: any) {
