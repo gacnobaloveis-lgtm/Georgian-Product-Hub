@@ -4,7 +4,9 @@
 This project is a web application designed for the Georgian market, featuring comprehensive product management, an image gallery, and a product catalog. The primary goal is to provide a localized e-commerce platform with all UI elements in Georgian, using the local currency (GEL ₾). The application supports various user roles, including a detailed admin panel for managing products, orders, users, and site settings, as well as a referral and analytics system to drive sales and track performance.
 
 ## User Preferences
-N/A
+- Never push/deploy to GitHub automatically — the user pushes changes themselves. Only prepare and verify files locally; push only when explicitly asked.
+- Do not poll the live site in long loops after a deploy (wastes checkpoints).
+- Communicate briefly in Georgian.
 
 ## System Architecture
 
