@@ -8,7 +8,7 @@ import sharp from "sharp";
 import { removeBackground } from "@imgly/background-removal-node";
 import path from "path";
 import fs from "fs";
-import { randomUUID, createHash, timingSafeEqual } from "crypto";
+import { randomUUID, createHash, createHmac, timingSafeEqual } from "crypto";
 import express from "express";
 import cookieParser from "cookie-parser";
 import https from "https";
@@ -914,6 +914,143 @@ export async function registerRoutes(
     }
   });
 
+  // ===== Chest promo (ფასდაკლების სკივრი) =====
+  // Config lives in site_settings under "chest_promo". The visitor's claim is a
+  // signed cookie (HMAC over the expiry), so the browser can't forge or extend
+  // the discount window. The discount itself is applied SERVER-SIDE at order
+  // creation, never trusted from the client.
+  const CHEST_COOKIE = "chest_claim";
+  // Fail closed: without SESSION_SECRET no claim can be signed or verified,
+  // so the promo simply stays unclaimable rather than using a guessable key.
+  const chestSecret = () => process.env.SESSION_SECRET || null;
+  const chestSign = (expiresAt: number): string | null => {
+    const secret = chestSecret();
+    if (!secret) return null;
+    return createHmac("sha256", secret).update(String(expiresAt)).digest("hex");
+  };
+
+  async function getChestPromoConfig(): Promise<{ enabled: boolean; percent: number; timerMinutes: number; productIds: number[] }> {
+    try {
+      const raw = await storage.getSetting("chest_promo");
+      if (!raw) return { enabled: false, percent: 0, timerMinutes: 0, productIds: [] };
+      const p = JSON.parse(raw);
+      return {
+        enabled: Boolean(p.enabled),
+        percent: Math.min(90, Math.max(0, Number(p.percent) || 0)),
+        timerMinutes: Math.min(1440, Math.max(1, Number(p.timerMinutes) || 0)),
+        productIds: Array.isArray(p.productIds) ? p.productIds.map(Number).filter((n: number) => Number.isInteger(n) && n > 0) : [],
+      };
+    } catch {
+      return { enabled: false, percent: 0, timerMinutes: 0, productIds: [] };
+    }
+  }
+
+  // Returns the visitor's active chest claim expiry (ms) or null.
+  function getActiveChestClaim(req: any): number | null {
+    const raw = req.cookies?.[CHEST_COOKIE];
+    if (!raw || typeof raw !== "string") return null;
+    const [expStr, sig] = raw.split(".");
+    const expiresAt = Number(expStr);
+    if (!Number.isFinite(expiresAt) || !sig) return null;
+    const expected = chestSign(expiresAt);
+    if (!expected || sig.length !== expected.length) return null;
+    try {
+      if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+    } catch { return null; }
+    if (Date.now() > expiresAt) return null;
+    return expiresAt;
+  }
+
+  // Applies the chest discount to a unit price if the visitor has a valid,
+  // unexpired claim and the product is part of the promo.
+  async function applyChestDiscount(req: any, productId: number, unitPrice: number): Promise<number> {
+    const claim = getActiveChestClaim(req);
+    if (!claim) return unitPrice;
+    const promo = await getChestPromoConfig();
+    if (!promo.enabled || promo.percent <= 0) return unitPrice;
+    if (!promo.productIds.includes(productId)) return unitPrice;
+    return Math.round(unitPrice * (1 - promo.percent / 100) * 100) / 100;
+  }
+
+  app.get("/api/chest-promo", async (req: any, res) => {
+    try {
+      const promo = await getChestPromoConfig();
+      if (!promo.enabled || promo.percent <= 0 || promo.productIds.length === 0) {
+        return res.json({ enabled: false });
+      }
+      const claimExpiresAt = getActiveChestClaim(req);
+      res.json({ ...promo, claimExpiresAt });
+    } catch (err) {
+      console.error("Chest promo error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.post("/api/chest-promo/claim", async (req: any, res) => {
+    try {
+      const promo = await getChestPromoConfig();
+      if (!promo.enabled || promo.percent <= 0 || promo.productIds.length === 0) {
+        return res.status(400).json({ message: "აქცია აქტიური არ არის" });
+      }
+      // If the visitor already has an active claim, keep the original expiry —
+      // re-claiming must not restart the countdown.
+      const existing = getActiveChestClaim(req);
+      if (existing) return res.json({ expiresAt: existing });
+
+      const expiresAt = Date.now() + promo.timerMinutes * 60 * 1000;
+      const sig = chestSign(expiresAt);
+      if (!sig) {
+        return res.status(503).json({ message: "აქცია დროებით მიუწვდომელია" });
+      }
+      res.cookie(CHEST_COOKIE, `${expiresAt}.${sig}`, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        maxAge: promo.timerMinutes * 60 * 1000,
+      });
+      res.json({ expiresAt });
+    } catch (err) {
+      console.error("Chest claim error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.get("/api/admin/chest-promo", requireAdmin, async (_req, res) => {
+    try {
+      res.json(await getChestPromoConfig());
+    } catch (err) {
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.post("/api/admin/chest-promo", requireAdmin, async (req, res) => {
+    try {
+      const { enabled, percent, timerMinutes, productIds } = req.body || {};
+      const pct = Number(percent);
+      const mins = Number(timerMinutes);
+      const ids = Array.isArray(productIds) ? productIds.map(Number).filter((n: number) => Number.isInteger(n) && n > 0) : [];
+      if (enabled && (!Number.isFinite(pct) || pct <= 0 || pct > 90)) {
+        return res.status(400).json({ message: "პროცენტი უნდა იყოს 1-90" });
+      }
+      if (enabled && (!Number.isFinite(mins) || mins < 1 || mins > 1440)) {
+        return res.status(400).json({ message: "წამზომი უნდა იყოს 1-1440 წუთი" });
+      }
+      if (enabled && ids.length === 0) {
+        return res.status(400).json({ message: "აირჩიეთ მინიმუმ ერთი პროდუქტი" });
+      }
+      await storage.setSetting("chest_promo", JSON.stringify({
+        enabled: Boolean(enabled),
+        percent: pct || 0,
+        timerMinutes: mins || 0,
+        productIds: ids,
+      }));
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Chest promo save error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.post("/api/orders", async (req: any, res) => {
     if (!req.isAuthenticated || !req.isAuthenticated()) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -935,9 +1072,10 @@ export async function registerRoutes(
       if (!prod) {
         return res.status(404).json({ message: "პროდუქტი ვერ მოიძებნა" });
       }
-      const unitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
+      const baseUnitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
         ? Number(prod.discountPrice)
         : Number(prod.originalPrice);
+      const unitPrice = await applyChestDiscount(req, Number(productId), baseUnitPrice);
       const lineTotal = unitPrice * orderQty;
       const serverProductName = prod.name;
 
@@ -1041,9 +1179,10 @@ export async function registerRoutes(
       if (!prod) {
         return res.status(404).json({ message: "პროდუქტი ვერ მოიძებნა" });
       }
-      const unitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
+      const baseUnitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
         ? Number(prod.discountPrice)
         : Number(prod.originalPrice);
+      const unitPrice = await applyChestDiscount(req, Number(productId), baseUnitPrice);
       const totalPrice = unitPrice * orderQty;
       const serverProductName = prod.name;
 
