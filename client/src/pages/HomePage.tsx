@@ -42,7 +42,7 @@ import heroCover2026 from "@assets/hero-cover-spiningebi-2026.webp";
 import heroCoverDesktop from "@assets/hero-cover-desktop-2026.webp";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 import RichTextDisplay from "@/components/RichTextDisplay";
-import { ChestPopup, useChestPromo, ChestCountdown, chestDiscountedPrice, chestPercentFor } from "@/components/ChestPromo";
+import { ChestPopup, useChestPromo, ChestCountdown, chestDiscountedPrice, chestPercentFor, chestEligible } from "@/components/ChestPromo";
 
 const mobileFooterBg = desktopFooterBg;
 
@@ -362,9 +362,7 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
   const mainImage = product.imageUrl || null;
   const { promo, claimActive, claimExpiresAt } = useChestPromo();
   const chestPct = chestPercentFor(promo, product.id);
-  const chestActive = Boolean(
-    claimActive && promo?.productIds?.includes(product.id) && chestPct > 0
-  );
+  const chestActive = Boolean(claimActive && chestEligible(promo, product.id));
   const hasDiscount = product.discountPrice && Number(product.discountPrice) < Number(product.originalPrice);
   const discountPct =
     hasDiscount && Number(product.originalPrice) > 0
