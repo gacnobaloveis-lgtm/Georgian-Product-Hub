@@ -1782,7 +1782,7 @@ function AutoDravaSection() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editField, setEditField] = useState<"soldCount" | "viewCount">("soldCount");
   const [editValue, setEditValue] = useState("");
-  const [activeTab, setActiveTab] = useState<"stats" | "referrals" | "purchaseCredit" | "settings" | "contact">("stats");
+  const [activeTab, setActiveTab] = useState<"stats" | "referrals" | "purchaseCredit" | "promo" | "settings" | "contact">("stats");
 
   const { data: referralLogs, isLoading: logsLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/referral-logs"],
@@ -1808,6 +1808,60 @@ function AutoDravaSection() {
       const res = await fetch("/api/admin/purchase-credit-logs", { credentials: "include" });
       if (!res.ok) throw new Error("შეცდომა");
       return res.json();
+    },
+  });
+
+  const { data: chestPromo } = useQuery<{ enabled: boolean; percent: number; timerMinutes: number; productIds: number[] }>({
+    queryKey: ["/api/admin/chest-promo"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/chest-promo", { credentials: "include" });
+      if (!res.ok) throw new Error("შეცდომა");
+      return res.json();
+    },
+  });
+
+  const [promoEnabled, setPromoEnabled] = useState(false);
+  const [promoPercent, setPromoPercent] = useState("");
+  const [promoMinutes, setPromoMinutes] = useState("");
+  const [promoProductIds, setPromoProductIds] = useState<number[]>([]);
+  const [promoLoaded, setPromoLoaded] = useState(false);
+
+  useEffect(() => {
+    if (chestPromo && !promoLoaded) {
+      setPromoEnabled(chestPromo.enabled);
+      setPromoPercent(chestPromo.percent ? String(chestPromo.percent) : "");
+      setPromoMinutes(chestPromo.timerMinutes ? String(chestPromo.timerMinutes) : "");
+      setPromoProductIds(chestPromo.productIds || []);
+      setPromoLoaded(true);
+    }
+  }, [chestPromo, promoLoaded]);
+
+  const savePromoMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/admin/chest-promo", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          enabled: promoEnabled,
+          percent: Number(promoPercent),
+          timerMinutes: Number(promoMinutes),
+          productIds: promoProductIds,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "შეცდომა");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/chest-promo"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chest-promo"] });
+      toast({ title: "აქცია შენახულია ✅" });
+    },
+    onError: (err: any) => {
+      toast({ title: err.message || "შეცდომა", variant: "destructive" });
     },
   });
 
@@ -1982,6 +2036,14 @@ function AutoDravaSection() {
           data-testid="tab-purchase-credit"
         >
           შესყიდვის ბონუსი
+        </Button>
+        <Button
+          variant={activeTab === "promo" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setActiveTab("promo")}
+          data-testid="tab-promo"
+        >
+          🎁 აქციების ოთახი
         </Button>
         <Button
           variant={activeTab === "settings" ? "default" : "outline"}
@@ -2283,6 +2345,93 @@ function AutoDravaSection() {
               </p>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === "promo" && (
+        <div className="space-y-4">
+          <div className="rounded-lg border border-amber-400/30 bg-amber-500/5 p-4">
+            <h3 className="mb-1 text-base font-bold">🎁 ფასდაკლების სკივრი</h3>
+            <p className="mb-4 text-xs text-muted-foreground">
+              ახალი ვიზიტორები საიტზე შესვლიდან 1 წუთში დაინახავენ სასაჩუქრე ფანჯარას. საჩუქრის აღების შემდეგ არჩეულ პროდუქტებზე ჩაირთვება ფასდაკლება წამზომით.
+            </p>
+            <div className="mb-4 flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="promo-enabled"
+                checked={promoEnabled}
+                onChange={(e) => setPromoEnabled(e.target.checked)}
+                className="h-4 w-4"
+                data-testid="checkbox-promo-enabled"
+              />
+              <label htmlFor="promo-enabled" className="text-sm font-medium">
+                აქცია ჩართულია
+              </label>
+            </div>
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">ფასდაკლება % (1-90)</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={90}
+                  value={promoPercent}
+                  onChange={(e) => setPromoPercent(e.target.value)}
+                  placeholder="მაგ: 20"
+                  data-testid="input-promo-percent"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-muted-foreground">წამზომი (წუთი, 1-1440)</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={1440}
+                  value={promoMinutes}
+                  onChange={(e) => setPromoMinutes(e.target.value)}
+                  placeholder="მაგ: 60"
+                  data-testid="input-promo-minutes"
+                />
+              </div>
+            </div>
+            <div className="mb-4">
+              <label className="mb-2 block text-xs text-muted-foreground">
+                აირჩიეთ პროდუქტები ({promoProductIds.length} არჩეული)
+              </label>
+              <div className="max-h-64 space-y-1 overflow-y-auto rounded-md border p-2">
+                {products?.map((p) => (
+                  <label
+                    key={p.id}
+                    className="flex cursor-pointer items-center gap-2 rounded p-1.5 text-sm hover:bg-muted"
+                    data-testid={`promo-product-${p.id}`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={promoProductIds.includes(p.id)}
+                      onChange={(e) =>
+                        setPromoProductIds((prev) =>
+                          e.target.checked ? [...prev, p.id] : prev.filter((id) => id !== p.id)
+                        )
+                      }
+                      className="h-4 w-4"
+                    />
+                    {p.imageUrl && (
+                      <img src={p.imageUrl} alt="" className="h-8 w-8 rounded object-cover" />
+                    )}
+                    <span className="flex-1 truncate">{p.name}</span>
+                    <span className="text-xs text-muted-foreground">₾{p.discountPrice && Number(p.discountPrice) < Number(p.originalPrice) ? p.discountPrice : p.originalPrice}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+            <Button
+              onClick={() => savePromoMutation.mutate()}
+              disabled={savePromoMutation.isPending}
+              data-testid="button-save-promo"
+            >
+              {savePromoMutation.isPending ? "ინახება..." : "შენახვა"}
+            </Button>
+          </div>
         </div>
       )}
 
