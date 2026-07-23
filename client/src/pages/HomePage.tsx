@@ -1211,7 +1211,7 @@ export default function HomePage() {
 
       <CartDrawer open={cartDrawerOpen} onOpenChange={setCartDrawerOpen} />
 
-      <ChestPopup products={products || []} />
+      <ChestPopup products={products || []} suppressed={welcomeOpen} />
 
       <AuthLoginDialog
         open={authDialogOpen}
