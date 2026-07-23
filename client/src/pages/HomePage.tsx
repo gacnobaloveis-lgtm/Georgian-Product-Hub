@@ -42,6 +42,7 @@ import heroCover2026 from "@assets/hero-cover-spiningebi-2026.webp";
 import heroCoverDesktop from "@assets/hero-cover-desktop-2026.webp";
 import { BUILTIN_LOGOS } from "@/components/VisualSection";
 import RichTextDisplay from "@/components/RichTextDisplay";
+import { ChestPopup, useChestPromo, ChestCountdown, chestDiscountedPrice } from "@/components/ChestPromo";
 
 const mobileFooterBg = desktopFooterBg;
 
@@ -359,6 +360,10 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
     staleTime: Infinity,
   });
   const mainImage = product.imageUrl || null;
+  const { promo, claimActive, claimExpiresAt } = useChestPromo();
+  const chestActive = Boolean(
+    claimActive && promo?.productIds?.includes(product.id) && (promo?.percent || 0) > 0
+  );
   const hasDiscount = product.discountPrice && Number(product.discountPrice) < Number(product.originalPrice);
   const discountPct =
     hasDiscount && Number(product.originalPrice) > 0
@@ -436,7 +441,12 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
               loading="lazy"
               className="h-full w-full object-cover"
             />
-            {hasDiscount && (
+            {chestActive ? (
+              <span className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded bg-gradient-to-r from-amber-500 to-orange-500 px-1.5 py-0.5 text-[10px] font-bold text-white shadow" data-testid={`badge-chest-${product.id}`}>
+                🎁 -{promo?.percent}%
+                {claimExpiresAt && <ChestCountdown expiresAt={claimExpiresAt} />}
+              </span>
+            ) : hasDiscount && (
               <span className="absolute left-1.5 top-1.5 z-10 rounded bg-red-500 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow">
                 -{discountPct}%
               </span>
@@ -459,7 +469,19 @@ function ProductCard({ product, referralCode }: { product: Product; referralCode
           </div>
 
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            {hasDiscount ? (
+            {chestActive ? (
+              <>
+                <span className="text-xs font-bold text-amber-300 sm:text-sm" data-testid={`text-price-chest-${product.id}`}>
+                  ₾{chestDiscountedPrice(
+                    hasDiscount ? Number(product.discountPrice) : Number(product.originalPrice),
+                    promo?.percent || 0
+                  ).toFixed(2)}
+                </span>
+                <span className="text-[10px] text-emerald-100/60 line-through sm:text-xs">
+                  {formatPrice(hasDiscount ? product.discountPrice : product.originalPrice)}
+                </span>
+              </>
+            ) : hasDiscount ? (
               <>
                 <span className="text-xs font-bold text-emerald-300 sm:text-sm" data-testid={`text-price-discount-${product.id}`}>
                   {formatPrice(product.discountPrice)}
@@ -1189,6 +1211,8 @@ export default function HomePage() {
       />
 
       <CartDrawer open={cartDrawerOpen} onOpenChange={setCartDrawerOpen} />
+
+      <ChestPopup products={products || []} />
 
       <AuthLoginDialog
         open={authDialogOpen}
