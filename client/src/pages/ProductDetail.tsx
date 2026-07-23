@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
 import { queryClient } from "@/lib/queryClient";
+import { useChestPromo, ChestCountdown, chestDiscountedPrice, chestPercentFor } from "@/components/ChestPromo";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const PAGE_BG_STYLE: React.CSSProperties = {};
@@ -221,6 +222,7 @@ export default function ProductDetail() {
   const { user, isAuthenticated, isRealUser } = useAuth();
   const { toast } = useToast();
   const { addItem, items: cartItems } = useCart();
+  const { promo, claimActive, claimExpiresAt } = useChestPromo();
 
   const userCredit = Number((user as any)?.myCredit || 0);
 
@@ -339,6 +341,12 @@ export default function ProductDetail() {
 
   const currentImage = albumImages[selectedImage] || product.imageUrl || null;
   const hasDiscount = product.discountPrice && Number(product.discountPrice) < Number(product.originalPrice);
+  const basePrice = Number(hasDiscount ? product.discountPrice : product.originalPrice);
+  const chestPct = chestPercentFor(promo, product.id);
+  const chestActive = Boolean(
+    claimActive && promo?.productIds?.includes(product.id) && chestPct > 0
+  );
+  const finalPrice = chestActive ? chestDiscountedPrice(basePrice, chestPct) : basePrice;
   const youtubeId = extractYoutubeId(product.youtubeUrl);
 
   let colorStock: Record<string, number> = {};
@@ -510,7 +518,22 @@ export default function ProductDetail() {
             </h1>
 
             <div className="space-y-1" data-testid="text-product-price">
-              {hasDiscount ? (
+              {chestActive ? (
+                <div className="space-y-1">
+                  <div className="flex flex-wrap items-baseline gap-1 sm:gap-3">
+                    <span className="text-lg font-bold text-amber-300 sm:text-3xl" data-testid="text-price-chest-detail">
+                      ₾{finalPrice.toFixed(2)}
+                    </span>
+                    <span className="text-xs text-red-400 line-through sm:text-lg">
+                      ₾{basePrice.toFixed(2)}
+                    </span>
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 rounded bg-gradient-to-r from-amber-500 to-orange-500 px-2 py-0.5 text-xs font-bold text-white shadow" data-testid="badge-chest-detail">
+                    🎁 -{chestPct}%
+                    {claimExpiresAt && <ChestCountdown expiresAt={claimExpiresAt} />}
+                  </span>
+                </div>
+              ) : hasDiscount ? (
                 <div className="flex flex-wrap items-baseline gap-1 sm:gap-3">
                   <span className="text-lg font-bold text-white sm:text-3xl">
                     {formatPrice(product.discountPrice)}
@@ -755,7 +778,7 @@ export default function ProductDetail() {
                 setOutOfStockOpen(true);
                 return;
               }
-              const effectivePrice = Number(hasDiscount ? product.discountPrice : product.originalPrice);
+              const effectivePrice = finalPrice;
               const qtyToAdd = Math.min(quantity, maxQuantity);
               if (qtyToAdd <= 0) {
                 setOutOfStockOpen(true);
@@ -850,7 +873,7 @@ export default function ProductDetail() {
           onOpenChange={setPurchaseOpen}
           productId={product.id}
           productName={product.name}
-          productPrice={hasDiscount ? product.discountPrice! : product.originalPrice}
+          productPrice={String(finalPrice)}
           quantity={Math.max(1, Math.min(quantity, maxQuantity || 1))}
           selectedColor={effectiveColor}
         />
