@@ -50,6 +50,7 @@ export const orders = pgTable("orders", {
   stockDeducted: boolean("stock_deducted").notNull().default(false),
   refCode: varchar("ref_code"),
   flittOrderId: varchar("flitt_order_id"),
+  chestApplied: boolean("chest_applied").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

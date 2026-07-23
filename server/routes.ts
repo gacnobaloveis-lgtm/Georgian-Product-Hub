@@ -979,16 +979,18 @@ export async function registerRoutes(
   }
 
   // Applies the chest discount to a unit price if the visitor has a valid,
-  // unexpired claim and the product is part of the promo.
-  async function applyChestDiscount(req: any, productId: number, unitPrice: number): Promise<number> {
+  // unexpired claim and the product is part of the promo. Returns the (possibly
+  // reduced) price and whether the discount was actually applied — chest
+  // purchases don't earn the buyer purchase-bonus credit.
+  async function applyChestDiscount(req: any, productId: number, unitPrice: number): Promise<{ price: number; applied: boolean }> {
     const claim = getActiveChestClaim(req);
-    if (!claim) return unitPrice;
+    if (!claim) return { price: unitPrice, applied: false };
     const promo = await getChestPromoConfig();
-    if (!promo.enabled) return unitPrice;
-    if (!promo.productIds.includes(productId)) return unitPrice;
+    if (!promo.enabled) return { price: unitPrice, applied: false };
+    if (!promo.productIds.includes(productId)) return { price: unitPrice, applied: false };
     const pct = chestPercentFor(promo, productId);
-    if (pct <= 0) return unitPrice;
-    return Math.round(unitPrice * (1 - pct / 100) * 100) / 100;
+    if (pct <= 0) return { price: unitPrice, applied: false };
+    return { price: Math.round(unitPrice * (1 - pct / 100) * 100) / 100, applied: true };
   }
 
   app.get("/api/chest-promo", async (req: any, res) => {
@@ -1115,7 +1117,8 @@ export async function registerRoutes(
       const baseUnitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
         ? Number(prod.discountPrice)
         : Number(prod.originalPrice);
-      const unitPrice = await applyChestDiscount(req, Number(productId), baseUnitPrice);
+      const chest = await applyChestDiscount(req, Number(productId), baseUnitPrice);
+      const unitPrice = chest.price;
       const lineTotal = unitPrice * orderQty;
       const serverProductName = prod.name;
 
@@ -1171,6 +1174,7 @@ export async function registerRoutes(
         status: "awaiting_payment",
         paymentMethod: "card",
         refCode,
+        chestApplied: chest.applied,
       };
 
       let order;
@@ -1222,7 +1226,8 @@ export async function registerRoutes(
       const baseUnitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
         ? Number(prod.discountPrice)
         : Number(prod.originalPrice);
-      const unitPrice = await applyChestDiscount(req, Number(productId), baseUnitPrice);
+      const chestCredit = await applyChestDiscount(req, Number(productId), baseUnitPrice);
+      const unitPrice = chestCredit.price;
       const totalPrice = unitPrice * orderQty;
       const serverProductName = prod.name;
 
@@ -1293,6 +1298,7 @@ export async function registerRoutes(
         phone: sanitizeString(String(phone)),
         status: "pending",
         paymentMethod: "credit",
+        chestApplied: chestCredit.applied,
       };
 
       let order;
@@ -3209,7 +3215,8 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
     // Award the BUYER a purchase bonus credit (separate from referral credit),
     // a fixed admin-configurable amount per real (card) purchase. 0 = disabled.
     // Only applies to card payments, not credit-paid orders, to avoid farming.
-    if (order.userId) {
+    // Chest-promo purchases are excluded — the discount is the reward.
+    if (order.userId && !order.chestApplied) {
       try {
         const purchaseSetting = await storage.getSetting("purchase_credit_amount");
         const purchaseCredit = purchaseSetting ? Number(purchaseSetting) : 0;
