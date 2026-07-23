@@ -52,6 +52,7 @@ export interface IStorage {
   createReferralLog(log: { referrerUserId: string; buyerUserId: string; orderId: number; productName: string; productPrice: string; creditAwarded: number }): Promise<ReferralLog>;
   createPurchaseCreditLog(log: { buyerUserId: string; orderId: number; productName: string; productPrice: string; creditAwarded: number }): Promise<PurchaseCreditLog>;
   getPurchaseCreditLogs(): Promise<PurchaseCreditLog[]>;
+  getPurchaseCreditTotalForOrders(buyerUserId: string, orderIds: number[]): Promise<number>;
   getReferralLogs(): Promise<ReferralLog[]>;
   hasReferralLogForBuyer(referrerUserId: string, buyerUserId: string): Promise<boolean>;
   getSetting(key: string): Promise<string | null>;
@@ -443,6 +444,14 @@ export class DatabaseStorage implements IStorage {
 
   async getPurchaseCreditLogs(): Promise<PurchaseCreditLog[]> {
     return await db.select().from(purchaseCreditLogs).orderBy(desc(purchaseCreditLogs.createdAt));
+  }
+
+  async getPurchaseCreditTotalForOrders(buyerUserId: string, orderIds: number[]): Promise<number> {
+    if (!orderIds.length) return 0;
+    const rows = await db.select({ creditAwarded: purchaseCreditLogs.creditAwarded })
+      .from(purchaseCreditLogs)
+      .where(sql`${purchaseCreditLogs.buyerUserId} = ${buyerUserId} AND ${purchaseCreditLogs.orderId} IN (${sql.join(orderIds.map((id) => sql`${id}`), sql`, `)})`);
+    return rows.reduce((sum, r) => sum + Number(r.creditAwarded || 0), 0);
   }
 
   async hasReferralLogForBuyer(referrerUserId: string, buyerUserId: string): Promise<boolean> {
