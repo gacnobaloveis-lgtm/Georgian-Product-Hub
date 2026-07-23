@@ -11,6 +11,8 @@ To ship a change: edit files locally, then push the changed files to GitHub via 
 
 **Gotcha — /tmp gets wiped between turns/sessions.** `deploy_multi.mjs` and any cached source images frequently disappear. Recreate the script before deploying; keep its FILES array current with whatever you just edited. Don't assume it still exists.
 
+**Do NOT poll the live site in long loops after pushing** — the user complained this wastes checkpoints/money. After the GitHub PUTs return 200/201, tell the user the build takes ~10-15 min and check the marker at most once later (or let the user confirm). Also: user said they will do future pushes themselves — prepare/commit files locally and hand off instead of pushing, unless asked.
+
 **Verifying a deploy actually went live** (Railway build takes ~1-3 min): the GitHub commit succeeding (200/201) is NOT proof the site updated. Confirm by curling the live site: check `index.html` references the new hashed bundle, grep the live JS bundle for a string unique to your change, and curl the new asset URLs for 200.
 
 # Service worker caching gotcha
