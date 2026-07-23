@@ -9,7 +9,13 @@ export interface ChestPromoData {
   timerMinutes?: number;
   productIds?: number[];
   audience?: "all" | "new";
+  productPercents?: Record<number, number>;
   claimExpiresAt?: number | null;
+}
+
+export function chestPercentFor(promo: ChestPromoData | undefined, productId: number): number {
+  if (!promo) return 0;
+  return promo.productPercents?.[productId] || promo.percent || 0;
 }
 
 const SEEN_KEY = "chest_popup_seen";
@@ -129,7 +135,7 @@ export function ChestPopup({ products }: { products: Product[] }) {
                   <div className="mb-1.5 text-3xl">🪙</div>
                 )}
                 <div className="truncate text-[10px] text-blue-100">{p.name}</div>
-                <div className="text-sm font-bold text-white">-{promo.percent}%</div>
+                <div className="text-sm font-bold text-white">-{chestPercentFor(promo, p.id)}%</div>
               </div>
             )) : (
               <div
