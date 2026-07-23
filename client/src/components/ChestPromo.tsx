@@ -19,7 +19,17 @@ export function chestPercentFor(promo: ChestPromoData | undefined, productId: nu
 }
 
 const SEEN_KEY = "chest_popup_seen";
+const TIMER_KEY = "chest_timer_start";
 const POPUP_DELAY_MS = 60 * 1000;
+
+// Start the 60s countdown from the moment the app loads (any page), so a
+// visitor who lands on a product page and later returns to the home page gets
+// the popup immediately once the time has already passed.
+try {
+  if (!localStorage.getItem(TIMER_KEY)) {
+    localStorage.setItem(TIMER_KEY, String(Date.now()));
+  }
+} catch {}
 
 export function useChestPromo() {
   const { data: promo } = useQuery<ChestPromoData>({
@@ -69,6 +79,7 @@ export function ChestCountdown({ expiresAt, className }: { expiresAt: number; cl
 export function ChestPopup({ products }: { products: Product[] }) {
   const { promo } = useChestPromo();
   const [visible, setVisible] = useState(false);
+  const [page, setPage] = useState(0);
 
   const claimMutation = useMutation({
     mutationFn: async () => {
@@ -94,16 +105,34 @@ export function ChestPopup({ products }: { products: Product[] }) {
         if (localStorage.getItem(SEEN_KEY)) return;
       } catch {}
     }
+    // Count from the app-wide timer start, so time spent on product pages
+    // counts too — returning to the home page shows the popup right away.
+    let started = Date.now();
+    try {
+      const raw = Number(localStorage.getItem(TIMER_KEY) || 0);
+      if (raw > 0) started = raw;
+    } catch {}
+    const remaining = Math.max(0, POPUP_DELAY_MS - (Date.now() - started));
     const t = setTimeout(() => {
       setVisible(true);
       try { localStorage.setItem(SEEN_KEY, "1"); } catch {}
-    }, POPUP_DELAY_MS);
+    }, remaining);
     return () => clearTimeout(t);
   }, [promo?.enabled, promo?.claimExpiresAt]);
 
+  const allPromoProducts = products.filter((p) => promo?.productIds?.includes(p.id));
+  const pageCount = Math.max(1, Math.ceil(allPromoProducts.length / 3));
+
+  // Auto-rotate the pages every 3 seconds when there are more than 3 items.
+  useEffect(() => {
+    if (!visible || pageCount <= 1) return;
+    const t = setInterval(() => setPage((p) => (p + 1) % pageCount), 3000);
+    return () => clearInterval(t);
+  }, [visible, pageCount]);
+
   if (!visible || !promo?.enabled) return null;
 
-  const promoProducts = products.filter((p) => promo.productIds?.includes(p.id)).slice(0, 3);
+  const promoProducts = allPromoProducts.slice(page * 3, page * 3 + 3);
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4" data-testid="chest-popup-overlay">
@@ -147,6 +176,32 @@ export function ChestPopup({ products }: { products: Product[] }) {
               </div>
             )}
           </div>
+          {pageCount > 1 && (
+            <div className="mb-5 flex items-center justify-center gap-3" data-testid="chest-carousel-nav">
+              <button
+                onClick={() => setPage((p) => (p - 1 + pageCount) % pageCount)}
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-400/50 text-sm text-cyan-200 hover:bg-white/10"
+                data-testid="button-chest-prev"
+              >
+                ‹
+              </button>
+              {Array.from({ length: pageCount }).map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPage(i)}
+                  className={`h-2 w-2 rounded-full transition-all ${i === page ? "w-4 bg-cyan-300" : "bg-slate-500 hover:bg-slate-300"}`}
+                  data-testid={`dot-chest-page-${i}`}
+                />
+              ))}
+              <button
+                onClick={() => setPage((p) => (p + 1) % pageCount)}
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-400/50 text-sm text-cyan-200 hover:bg-white/10"
+                data-testid="button-chest-next"
+              >
+                ›
+              </button>
+            </div>
+          )}
           <button
             onClick={() => claimMutation.mutate()}
             disabled={claimMutation.isPending}
