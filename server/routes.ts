@@ -962,6 +962,44 @@ export async function registerRoutes(
     return promo.productPercents[productId] || promo.percent;
   }
 
+  // Long-lived signed cookie remembering which promo products this visitor has
+  // ALREADY bought with the chest discount — those never get the discount (or
+  // the popup) again, even if the promo restarts. Products the visitor didn't
+  // manage to buy in time are NOT recorded, so they stay eligible next round.
+  const CHEST_USED_COOKIE = "chest_used";
+  const chestUsedSign = (ids: string): string | null => {
+    const secret = chestSecret();
+    if (!secret) return null;
+    return createHmac("sha256", secret).update(`used:${ids}`).digest("hex");
+  };
+  function getChestUsed(req: any): number[] {
+    const raw = req.cookies?.[CHEST_USED_COOKIE];
+    if (!raw || typeof raw !== "string") return [];
+    const dot = raw.lastIndexOf(".");
+    if (dot <= 0) return [];
+    const ids = raw.slice(0, dot);
+    const sig = raw.slice(dot + 1);
+    const expected = chestUsedSign(ids);
+    if (!expected || sig.length !== expected.length) return [];
+    try {
+      if (!timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return [];
+    } catch { return []; }
+    return ids.split(",").map(Number).filter((n) => Number.isInteger(n) && n > 0);
+  }
+  function markChestUsed(req: any, res: any, productId: number) {
+    const current = getChestUsed(req);
+    if (current.includes(productId)) return;
+    const ids = [...current, productId].slice(-100).join(",");
+    const sig = chestUsedSign(ids);
+    if (!sig) return;
+    res.cookie(CHEST_USED_COOKIE, `${ids}.${sig}`, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+    });
+  }
+
   // Returns the visitor's active chest claim expiry (ms) or null.
   function getActiveChestClaim(req: any): number | null {
     const raw = req.cookies?.[CHEST_COOKIE];
@@ -985,6 +1023,8 @@ export async function registerRoutes(
   async function applyChestDiscount(req: any, productId: number, unitPrice: number): Promise<{ price: number; applied: boolean }> {
     const claim = getActiveChestClaim(req);
     if (!claim) return { price: unitPrice, applied: false };
+    // One chest purchase per product per visitor — ever.
+    if (getChestUsed(req).includes(productId)) return { price: unitPrice, applied: false };
     const promo = await getChestPromoConfig();
     if (!promo.enabled) return { price: unitPrice, applied: false };
     if (!promo.productIds.includes(productId)) return { price: unitPrice, applied: false };
@@ -1001,7 +1041,7 @@ export async function registerRoutes(
         return res.json({ enabled: false });
       }
       const claimExpiresAt = getActiveChestClaim(req);
-      res.json({ ...promo, claimExpiresAt });
+      res.json({ ...promo, claimExpiresAt, usedProductIds: getChestUsed(req) });
     } catch (err) {
       console.error("Chest promo error:", err);
       res.status(500).json({ message: "შეცდომა" });
@@ -1196,6 +1236,10 @@ export async function registerRoutes(
       // Single-use: consume the referral cookie now that it's stored on the order.
       if (refCode) res.clearCookie("ref");
 
+      // NOTE: card orders start unpaid — the chest "used" cookie is set only
+      // after Flitt confirms the payment (in /api/flitt/confirm), so an
+      // abandoned checkout doesn't burn the visitor's one-time discount.
+
       res.status(201).json(order);
     } catch (err) {
       console.error("Order create error:", err);
@@ -1320,6 +1364,8 @@ export async function registerRoutes(
       }
 
       await applyStockDeduction(order, "credit");
+
+      if (chestCredit.applied) markChestUsed(req, res, Number(productId));
 
       console.log(`Credit order: user ${userId} spent ${creditNeeded} credits for order ${order.id}`);
       res.status(201).json(order);
@@ -3328,9 +3374,25 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
         }
       };
 
+      // After a confirmed payment, remember which promo products were bought
+      // with the chest discount so they never get it again for this visitor.
+      const markChestUsedForGroup = async () => {
+        try {
+          let orders: any[] = [order];
+          if (order.flittOrderId) {
+            const group = await storage.getOrdersByFlittOrderId(order.flittOrderId);
+            if (group.length) orders = group;
+          }
+          for (const o of orders) {
+            if (o.chestApplied && o.productId) markChestUsed(req, res, Number(o.productId));
+          }
+        } catch {}
+      };
+
       if (order.status !== "awaiting_payment") {
         // Already settled (e.g. by the Flitt callback) — still report the bonus
         // so the success page can show the celebration popup.
+        if (order.status !== "cancelled") await markChestUsedForGroup();
         return res.json({ settled: false, status: order.status, bonusAwarded: await bonusForGroup() });
       }
       if (!order.flittOrderId) {
@@ -3342,6 +3404,7 @@ Sitemap: https://spiningebi.ge/sitemap.xml`
       const r = statusResp?.response || statusResp;
       if (r?.order_status === "approved") {
         const settledCount = await settlePaidOrderGroup(order.flittOrderId, "confirm");
+        await markChestUsedForGroup();
         return res.json({ settled: settledCount > 0, status: "pending", bonusAwarded: await bonusForGroup() });
       }
       return res.json({ settled: false, status: order.status, flittStatus: r?.order_status });
