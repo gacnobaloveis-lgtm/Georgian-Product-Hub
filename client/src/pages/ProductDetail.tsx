@@ -14,7 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/use-cart";
 import { queryClient } from "@/lib/queryClient";
-import { useChestPromo, ChestCountdown, chestDiscountedPrice, chestPercentFor } from "@/components/ChestPromo";
+import { useChestPromo, ChestCountdown, chestDiscountedPrice, chestPercentFor, chestEligible } from "@/components/ChestPromo";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const PAGE_BG_STYLE: React.CSSProperties = {};
@@ -343,9 +343,7 @@ export default function ProductDetail() {
   const hasDiscount = product.discountPrice && Number(product.discountPrice) < Number(product.originalPrice);
   const basePrice = Number(hasDiscount ? product.discountPrice : product.originalPrice);
   const chestPct = chestPercentFor(promo, product.id);
-  const chestActive = Boolean(
-    claimActive && promo?.productIds?.includes(product.id) && chestPct > 0
-  );
+  const chestActive = Boolean(claimActive && chestEligible(promo, product.id));
   const finalPrice = chestActive ? chestDiscountedPrice(basePrice, chestPct) : basePrice;
   const youtubeId = extractYoutubeId(product.youtubeUrl);
 
