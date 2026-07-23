@@ -202,6 +202,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
         queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
         queryClient.invalidateQueries({ queryKey: ["/api/purchase-allowance"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/chest-promo"] });
         onOpenChange(false);
       } else {
         const data = await res.json();
