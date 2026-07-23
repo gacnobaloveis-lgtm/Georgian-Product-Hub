@@ -85,7 +85,9 @@ export function ChestCountdown({ expiresAt, className }: { expiresAt: number; cl
   );
 }
 
-export function ChestPopup({ products }: { products: Product[] }) {
+// `suppressed` keeps the chest popup hidden while another welcome/info dialog
+// is open — it appears right after that dialog closes instead of stacking on top.
+export function ChestPopup({ products, suppressed = false }: { products: Product[]; suppressed?: boolean }) {
   const { promo } = useChestPromo();
   const [visible, setVisible] = useState(false);
   const [page, setPage] = useState(0);
@@ -105,6 +107,7 @@ export function ChestPopup({ products }: { products: Product[] }) {
   });
 
   useEffect(() => {
+    if (suppressed) return;
     if (!promo?.enabled) return;
     if (promo.claimExpiresAt) return;
     // Show the popup only if there's at least one promo product this visitor
@@ -124,7 +127,7 @@ export function ChestPopup({ products }: { products: Product[] }) {
       setVisible(true);
     }, remaining);
     return () => clearTimeout(t);
-  }, [promo?.enabled, promo?.claimExpiresAt, promo?.productIds, promo?.usedProductIds]);
+  }, [suppressed, promo?.enabled, promo?.claimExpiresAt, promo?.productIds, promo?.usedProductIds]);
 
   const allPromoProducts = products.filter((p) => chestEligible(promo, p.id));
   const pageCount = Math.max(1, Math.ceil(allPromoProducts.length / 3));
@@ -136,7 +139,7 @@ export function ChestPopup({ products }: { products: Product[] }) {
     return () => clearInterval(t);
   }, [visible, pageCount]);
 
-  if (!visible || !promo?.enabled) return null;
+  if (suppressed || !visible || !promo?.enabled) return null;
 
   const promoProducts = allPromoProducts.slice(page * 3, page * 3 + 3);
 
