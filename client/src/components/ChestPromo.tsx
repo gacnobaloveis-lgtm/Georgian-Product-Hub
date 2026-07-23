@@ -11,6 +11,16 @@ export interface ChestPromoData {
   audience?: "all" | "new";
   productPercents?: Record<number, number>;
   claimExpiresAt?: number | null;
+  usedProductIds?: number[];
+}
+
+// A product is eligible for the chest discount only if it's in the promo AND
+// this visitor hasn't already bought it with the chest discount before.
+export function chestEligible(promo: ChestPromoData | undefined, productId: number): boolean {
+  if (!promo?.enabled) return false;
+  if (!promo.productIds?.includes(productId)) return false;
+  if (promo.usedProductIds?.includes(productId)) return false;
+  return chestPercentFor(promo, productId) > 0;
 }
 
 export function chestPercentFor(promo: ChestPromoData | undefined, productId: number): number {
@@ -18,7 +28,6 @@ export function chestPercentFor(promo: ChestPromoData | undefined, productId: nu
   return promo.productPercents?.[productId] || promo.percent || 0;
 }
 
-const SEEN_KEY = "chest_popup_seen";
 const TIMER_KEY = "chest_timer_start";
 const POPUP_DELAY_MS = 60 * 1000;
 
@@ -98,13 +107,11 @@ export function ChestPopup({ products }: { products: Product[] }) {
   useEffect(() => {
     if (!promo?.enabled) return;
     if (promo.claimExpiresAt) return;
-    // "new" audience: show only to first-time visitors (localStorage flag).
-    // "all" audience: show to everyone who hasn't claimed yet.
-    if (promo.audience !== "all") {
-      try {
-        if (localStorage.getItem(SEEN_KEY)) return;
-      } catch {}
-    }
+    // Show the popup only if there's at least one promo product this visitor
+    // hasn't already bought with the chest discount. A visitor whose timer ran
+    // out WITHOUT a purchase stays eligible — the popup returns on next visit.
+    const anyEligible = (promo.productIds || []).some((id) => chestEligible(promo, id));
+    if (!anyEligible) return;
     // Count from the app-wide timer start, so time spent on product pages
     // counts too — returning to the home page shows the popup right away.
     let started = Date.now();
@@ -115,12 +122,11 @@ export function ChestPopup({ products }: { products: Product[] }) {
     const remaining = Math.max(0, POPUP_DELAY_MS - (Date.now() - started));
     const t = setTimeout(() => {
       setVisible(true);
-      try { localStorage.setItem(SEEN_KEY, "1"); } catch {}
     }, remaining);
     return () => clearTimeout(t);
-  }, [promo?.enabled, promo?.claimExpiresAt]);
+  }, [promo?.enabled, promo?.claimExpiresAt, promo?.productIds, promo?.usedProductIds]);
 
-  const allPromoProducts = products.filter((p) => promo?.productIds?.includes(p.id));
+  const allPromoProducts = products.filter((p) => chestEligible(promo, p.id));
   const pageCount = Math.max(1, Math.ceil(allPromoProducts.length / 3));
 
   // Auto-rotate the pages every 3 seconds when there are more than 3 items.
