@@ -8,6 +8,7 @@ export interface ChestPromoData {
   percent?: number;
   timerMinutes?: number;
   productIds?: number[];
+  audience?: "all" | "new";
   claimExpiresAt?: number | null;
 }
 
@@ -80,9 +81,13 @@ export function ChestPopup({ products }: { products: Product[] }) {
   useEffect(() => {
     if (!promo?.enabled) return;
     if (promo.claimExpiresAt) return;
-    try {
-      if (localStorage.getItem(SEEN_KEY)) return;
-    } catch {}
+    // "new" audience: show only to first-time visitors (localStorage flag).
+    // "all" audience: show to everyone who hasn't claimed yet.
+    if (promo.audience !== "all") {
+      try {
+        if (localStorage.getItem(SEEN_KEY)) return;
+      } catch {}
+    }
     const t = setTimeout(() => {
       setVisible(true);
       try { localStorage.setItem(SEEN_KEY, "1"); } catch {}
