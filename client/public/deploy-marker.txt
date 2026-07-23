@@ -1,1 +1,1 @@
-deploy-2026-07-23-chest-one-time-per-product
+deploy-2026-07-23-chest-popup-suppress
