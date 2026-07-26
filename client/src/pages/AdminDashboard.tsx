@@ -65,6 +65,8 @@ interface EditFormState {
   length: string;
   dimensions: string;
   purchaseLimit: string;
+  variantLabel: string;
+  variantOptions: string;
 }
 
 function ProductRow({ product }: { product: Product }) {
@@ -109,6 +111,13 @@ function ProductRow({ product }: { product: Product }) {
     length: (product as any).length || "",
     dimensions: (product as any).dimensions || "",
     purchaseLimit: product.purchaseLimit ? String(product.purchaseLimit) : "",
+    variantLabel: (product as any).variantLabel || "",
+    variantOptions: (() => {
+      try {
+        const arr = JSON.parse((product as any).variantOptions || "[]");
+        return Array.isArray(arr) ? arr.join(", ") : "";
+      } catch { return ""; }
+    })(),
   });
 
   const [editForm, setEditForm] = useState<EditFormState>(defaultEditState());
@@ -227,6 +236,9 @@ function ProductRow({ product }: { product: Product }) {
     formData.append("length", editForm.length.trim());
     formData.append("dimensions", editForm.dimensions.trim());
     formData.append("purchaseLimit", editForm.purchaseLimit.trim());
+    const variantOpts = editForm.variantOptions.split(",").map(v => v.trim()).filter(Boolean);
+    formData.append("variantLabel", variantOpts.length > 0 ? (editForm.variantLabel.trim() || "ვარიანტი") : "");
+    formData.append("variantOptions", JSON.stringify(variantOpts));
 
     try {
       await updateMutation.mutateAsync({ id: product.id, formData });
@@ -324,6 +336,24 @@ function ProductRow({ product }: { product: Product }) {
                 onChange={(e) => setEditForm((p) => ({ ...p, purchaseLimit: e.target.value }))}
                 placeholder="ცარიელი = შეუზღუდავი"
                 data-testid={`input-edit-purchase-limit-${product.id}`}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">ვარიანტის დასახელება (მაგ: ზომა)</label>
+              <Input
+                value={editForm.variantLabel}
+                onChange={(e) => setEditForm((p) => ({ ...p, variantLabel: e.target.value }))}
+                placeholder="მაგ: ზომა / წონა / სიგრძე"
+                data-testid={`input-edit-variant-label-${product.id}`}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">ვარიანტები (მძიმით გამოყოფილი)</label>
+              <Input
+                value={editForm.variantOptions}
+                onChange={(e) => setEditForm((p) => ({ ...p, variantOptions: e.target.value }))}
+                placeholder="მაგ: 5გრ, 10გრ, 15გრ"
+                data-testid={`input-edit-variant-options-${product.id}`}
               />
             </div>
             <div className="space-y-2">
@@ -1642,7 +1672,7 @@ function OrdersSection() {
                           )}
                         </td>
                         <td className="px-3 py-2.5 text-center">{order.quantity || 1}</td>
-                        <td className="px-3 py-2.5 text-xs">{(order as any).selectedColor || "—"}</td>
+                        <td className="px-3 py-2.5 text-xs">{[(order as any).selectedColor, (order as any).selectedVariant].filter(Boolean).join(" / ") || "—"}</td>
                         <td className="px-3 py-2.5 font-medium text-primary">₾{Number(order.productPrice).toFixed(2)}</td>
                         <td className="px-3 py-2.5 text-xs text-muted-foreground">
                           {order.createdAt ? new Date(order.createdAt).toLocaleDateString("ka-GE", {
