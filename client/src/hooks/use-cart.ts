@@ -7,11 +7,12 @@ export interface CartItem {
   imageUrl: string;
   quantity: number;
   selectedColor: string | null;
+  selectedVariant?: string | null;
   maxStock: number;
 }
 
-function cartKey(item: { productId: number; selectedColor: string | null }) {
-  return `${item.productId}_${item.selectedColor || "default"}`;
+function cartKey(item: { productId: number; selectedColor: string | null; selectedVariant?: string | null }) {
+  return `${item.productId}_${item.selectedColor || "default"}_${item.selectedVariant || ""}`;
 }
 
 function loadCart(): CartItem[] {
@@ -30,9 +31,9 @@ function saveCart(items: CartItem[]) {
 interface CartContextType {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (productId: number, selectedColor: string | null) => void;
-  updateQuantity: (productId: number, selectedColor: string | null, quantity: number) => void;
-  clearItems: (keys: { productId: number; selectedColor: string | null }[]) => void;
+  removeItem: (productId: number, selectedColor: string | null, selectedVariant?: string | null) => void;
+  updateQuantity: (productId: number, selectedColor: string | null, quantity: number, selectedVariant?: string | null) => void;
+  clearItems: (keys: { productId: number; selectedColor: string | null; selectedVariant?: string | null }[]) => void;
   clearAll: () => void;
   totalCount: number;
 }
@@ -63,21 +64,21 @@ export function useCartProvider() {
     });
   }, []);
 
-  const removeItem = useCallback((productId: number, selectedColor: string | null) => {
-    setItems(prev => prev.filter(i => cartKey(i) !== cartKey({ productId, selectedColor })));
+  const removeItem = useCallback((productId: number, selectedColor: string | null, selectedVariant?: string | null) => {
+    setItems(prev => prev.filter(i => cartKey(i) !== cartKey({ productId, selectedColor, selectedVariant })));
   }, []);
 
-  const updateQuantity = useCallback((productId: number, selectedColor: string | null, quantity: number) => {
+  const updateQuantity = useCallback((productId: number, selectedColor: string | null, quantity: number, selectedVariant?: string | null) => {
     setItems(prev =>
       prev.map(i =>
-        cartKey(i) === cartKey({ productId, selectedColor })
+        cartKey(i) === cartKey({ productId, selectedColor, selectedVariant })
           ? { ...i, quantity: Math.max(1, Math.min(i.maxStock, quantity)) }
           : i
       )
     );
   }, []);
 
-  const clearItems = useCallback((keys: { productId: number; selectedColor: string | null }[]) => {
+  const clearItems = useCallback((keys: { productId: number; selectedColor: string | null; selectedVariant?: string | null }[]) => {
     const keySet = new Set(keys.map(k => cartKey(k)));
     setItems(prev => prev.filter(i => !keySet.has(cartKey(i))));
   }, []);
