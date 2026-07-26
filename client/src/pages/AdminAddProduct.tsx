@@ -33,6 +33,8 @@ interface FormState {
   length: string;
   dimensions: string;
   purchaseLimit: string;
+  variantLabel: string;
+  variantOptions: string;
 }
 
 const emptyForm: FormState = {
@@ -47,6 +49,8 @@ const emptyForm: FormState = {
   length: "",
   dimensions: "",
   purchaseLimit: "",
+  variantLabel: "",
+  variantOptions: "",
 };
 
 export default function AdminAddProduct() {
@@ -142,6 +146,11 @@ export default function AdminAddProduct() {
       if (form.purchaseLimit.trim() && parseInt(form.purchaseLimit) > 0) {
         formData.append("purchaseLimit", String(parseInt(form.purchaseLimit)));
       }
+      const variantOpts = form.variantOptions.split(",").map(v => v.trim()).filter(Boolean);
+      if (variantOpts.length > 0) {
+        formData.append("variantLabel", form.variantLabel.trim() || "ვარიანტი");
+        formData.append("variantOptions", JSON.stringify(variantOpts));
+      }
 
       const created = await createMutation.mutateAsync(formData);
       toast({ title: "წარმატება", description: `პროდუქტი "${created.name}" დაემატა.` });
@@ -221,6 +230,13 @@ export default function AdminAddProduct() {
                 <label htmlFor="purchaseLimit" className="text-sm font-medium">შესყიდვის ლიმიტი ერთ მომხმარებელზე <span className="text-muted-foreground text-xs">(არჩევითი — ცარიელი = შეუზღუდავი)</span></label>
                 <Input id="purchaseLimit" type="number" min="1" value={form.purchaseLimit} onChange={(e) => setField("purchaseLimit", e.target.value)} placeholder="მაგ: 2" data-testid="input-purchase-limit" />
                 <p className="text-xs text-muted-foreground">თუ მიუთითებთ მაგ. 2-ს, ერთი მომხმარებელი (ანგარიშით ან ტელეფონის ნომრით) ჯამში მაქსიმუმ 2 ცალს შეიძენს.</p>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">ვარიანტები <span className="text-muted-foreground text-xs">(არჩევითი — მაგ: ზომა, წონა, სიგრძე)</span></label>
+                <Input value={form.variantLabel} onChange={(e) => setField("variantLabel", e.target.value)} placeholder="დასახელება — მაგ: ზომა" data-testid="input-variant-label" />
+                <Input value={form.variantOptions} onChange={(e) => setField("variantOptions", e.target.value)} placeholder="ვარიანტები მძიმით — მაგ: 5გრ, 10გრ, 15გრ" data-testid="input-variant-options" />
+                <p className="text-xs text-muted-foreground">თუ ვარიანტებს მიუთითებთ, მყიდველი ვალდებული იქნება აირჩიოს ერთ-ერთი ყიდვამდე.</p>
               </div>
 
               <div className="space-y-3">
