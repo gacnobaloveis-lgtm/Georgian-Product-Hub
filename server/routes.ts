@@ -49,6 +49,51 @@ function sanitizeString(input: string): string {
     .replace(/'/g, "&#x27;");
 }
 
+// Normalizes admin-supplied variant options into a JSON array string of
+// non-empty sanitized strings (max 50 options, 100 chars each).
+function sanitizeVariantOptions(raw: unknown): string {
+  let arr: unknown[] = [];
+  try {
+    if (typeof raw === "string") arr = JSON.parse(raw || "[]");
+    else if (Array.isArray(raw)) arr = raw;
+  } catch {}
+  const clean = (Array.isArray(arr) ? arr : [])
+    .filter((v): v is string => typeof v === "string")
+    .map(v => sanitizeString(v.trim()).slice(0, 100))
+    .filter(v => v.length > 0)
+    .slice(0, 50);
+  return JSON.stringify(clean);
+}
+
+// If a product defines variant options, an order MUST carry one of them.
+// Returns the sanitized variant or an error message.
+function validateOrderVariant(prod: { variantOptions?: string | null; variantLabel?: string | null }, selectedVariant: unknown): { ok: true; variant: string | null } | { ok: false; message: string } {
+  let options: string[] = [];
+  try {
+    const parsed = JSON.parse(prod.variantOptions || "[]");
+    if (Array.isArray(parsed)) options = parsed.filter((v): v is string => typeof v === "string");
+  } catch {}
+  // Canonicalize both sides identically: decode any stored HTML entities back
+  // to plain text, then sanitize once — so a client sending either the raw or
+  // the entity-encoded form of an option always matches.
+  const decode = (v: string) => v
+    .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&gt;/g, ">")
+    .replace(/&lt;/g, "<")
+    .replace(/&amp;/g, "&");
+  const canon = (v: string) => sanitizeString(decode(v.trim()));
+  const canonOptions = options.map(canon);
+  const chosen = typeof selectedVariant === "string" && selectedVariant.trim() ? canon(selectedVariant) : null;
+  if (options.length > 0) {
+    if (!chosen || !canonOptions.includes(chosen)) {
+      return { ok: false, message: `გთხოვთ აირჩიოთ ${prod.variantLabel || "ვარიანტი"}` };
+    }
+    return { ok: true, variant: chosen };
+  }
+  return { ok: true, variant: null };
+}
+
 // Strip tags + collapse whitespace/&nbsp; — used to detect "empty" rich text
 // content like Quill's blank state (`<p><br></p>`, `<p>&nbsp;</p>`, etc).
 function isRichTextEmpty(input: string | undefined | null): boolean {
@@ -383,6 +428,8 @@ export async function registerRoutes(
         length: input.length ? sanitizeString(input.length) : null,
         dimensions: input.dimensions ? sanitizeString(input.dimensions) : null,
         purchaseLimit: input.purchaseLimit ?? null,
+        variantLabel: input.variantLabel ? sanitizeString(String(input.variantLabel)) : null,
+        variantOptions: sanitizeVariantOptions(input.variantOptions),
       });
       res.status(201).json(product);
 
@@ -529,6 +576,8 @@ export async function registerRoutes(
         const lim = parseInt(String(req.body.purchaseLimit));
         updates.purchaseLimit = Number.isFinite(lim) && lim > 0 ? lim : null;
       }
+      if (req.body.variantLabel !== undefined) updates.variantLabel = req.body.variantLabel ? sanitizeString(String(req.body.variantLabel)) : null;
+      if (req.body.variantOptions !== undefined) updates.variantOptions = sanitizeVariantOptions(req.body.variantOptions);
       if (req.body.soldCount !== undefined) updates.soldCount = Number(req.body.soldCount) || 0;
       if (req.body.viewCount !== undefined) updates.viewCount = Number(req.body.viewCount) || 0;
       if (req.body.albumImages !== undefined) {
@@ -1141,7 +1190,7 @@ export async function registerRoutes(
       const userId = req.user?.claims?.sub;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const { productId, fullName, city, address, phone, quantity, selectedColor } = req.body;
+      const { productId, fullName, city, address, phone, quantity, selectedColor, selectedVariant } = req.body;
       if (!productId || !fullName || !city || !address || !phone) {
         return res.status(400).json({ message: "ყველა ველი აუცილებელია" });
       }
@@ -1157,6 +1206,11 @@ export async function registerRoutes(
       const baseUnitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
         ? Number(prod.discountPrice)
         : Number(prod.originalPrice);
+      const variantCheck = validateOrderVariant(prod, selectedVariant);
+      if (!variantCheck.ok) {
+        return res.status(400).json({ message: variantCheck.message });
+      }
+
       const chest = await applyChestDiscount(req, Number(productId), baseUnitPrice);
       const unitPrice = chest.price;
       const lineTotal = unitPrice * orderQty;
@@ -1206,6 +1260,7 @@ export async function registerRoutes(
         productPrice: String(lineTotal),
         quantity: orderQty,
         selectedColor: selectedColor ? sanitizeString(String(selectedColor)) : null,
+        selectedVariant: variantCheck.variant,
         fullName: sanitizeString(String(fullName)),
         country: "საქართველო",
         city: sanitizeString(String(city)),
@@ -1255,7 +1310,7 @@ export async function registerRoutes(
       const userId = req.user?.claims?.sub;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const { productId, quantity, selectedColor, fullName, city, address, phone } = req.body;
+      const { productId, quantity, selectedColor, selectedVariant, fullName, city, address, phone } = req.body;
       if (!productId || !quantity || !fullName || !city || !address || !phone) {
         return res.status(400).json({ message: "ყველა ველი აუცილებელია" });
       }
@@ -1270,6 +1325,11 @@ export async function registerRoutes(
       const baseUnitPrice = (prod.discountPrice && Number(prod.discountPrice) < Number(prod.originalPrice))
         ? Number(prod.discountPrice)
         : Number(prod.originalPrice);
+      const variantCheckCredit = validateOrderVariant(prod, selectedVariant);
+      if (!variantCheckCredit.ok) {
+        return res.status(400).json({ message: variantCheckCredit.message });
+      }
+
       const chestCredit = await applyChestDiscount(req, Number(productId), baseUnitPrice);
       const unitPrice = chestCredit.price;
       const totalPrice = unitPrice * orderQty;
@@ -1335,6 +1395,7 @@ export async function registerRoutes(
         productPrice: String(totalPrice),
         quantity: orderQty,
         selectedColor: selectedColor ? sanitizeString(String(selectedColor)) : null,
+        selectedVariant: variantCheckCredit.variant,
         fullName: sanitizeString(String(fullName)),
         country: "საქართველო",
         city: sanitizeString(String(city)),
