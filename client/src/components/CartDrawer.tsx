@@ -63,8 +63,8 @@ interface EditForm {
   phone: string;
 }
 
-function cartKey(item: { productId: number; selectedColor: string | null }) {
-  return `${item.productId}_${item.selectedColor || "default"}`;
+function cartKey(item: { productId: number; selectedColor: string | null; selectedVariant?: string | null }) {
+  return `${item.productId}_${item.selectedColor || "default"}_${item.selectedVariant || ""}`;
 }
 
 export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
@@ -279,6 +279,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
             productId: item.productId,
             quantity: item.quantity,
             selectedColor: item.selectedColor,
+            selectedVariant: item.selectedVariant ?? null,
             fullName: fullName.trim(),
             city: profile.city,
             address: profile.address!.trim(),
@@ -301,7 +302,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
         ? `spiningebi.ge — ${itemsToOrder[0].name} (${itemsToOrder[0].quantity} ც.)`
         : `spiningebi.ge — ${itemsToOrder.length} ნივთი`;
 
-      clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
+      clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor, selectedVariant: i.selectedVariant })));
       setSelected(new Set());
       setFlittPay({ orderId: createdOrderIds[0], orderIds: createdOrderIds, amount: totalAmount, description });
       setPaySubmitting(false);
@@ -328,6 +329,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
             productId: item.productId,
             quantity: item.quantity,
             selectedColor: item.selectedColor,
+            selectedVariant: item.selectedVariant ?? null,
             fullName: fullName.trim(),
             city: profile.city,
             address: profile.address!.trim(),
@@ -340,7 +342,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
         toast({ variant: "destructive", title: "შეცდომა", description: "შეკვეთა ვერ შეიქმნა" });
       } else {
         toast({ title: "შეკვეთა მიღებულია!", description: `${successCount} ნივთი კრედიტით შეძენილია.` });
-        clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor })));
+        clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor, selectedVariant: i.selectedVariant })));
         setSelected(new Set());
         queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -446,11 +448,14 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                             {item.selectedColor && (
                               <p className="text-xs text-muted-foreground">ფერი: {item.selectedColor}</p>
                             )}
+                            {item.selectedVariant && (
+                              <p className="text-xs text-muted-foreground">ვარიანტი: {item.selectedVariant}</p>
+                            )}
                             <p className="text-sm font-bold text-primary mt-0.5">₾{(item.price * item.quantity).toFixed(2)}</p>
 
                             <div className="flex items-center gap-2 mt-1.5">
                               <button
-                                onClick={() => updateQuantity(item.productId, item.selectedColor, item.quantity - 1)}
+                                onClick={() => updateQuantity(item.productId, item.selectedColor, item.quantity - 1, item.selectedVariant)}
                                 disabled={item.quantity <= 1}
                                 className="flex h-7 w-7 items-center justify-center rounded-full border border-muted hover:bg-muted transition-colors disabled:opacity-30"
                                 data-testid={`button-cart-minus-${item.productId}`}
@@ -459,7 +464,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                               </button>
                               <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
                               <button
-                                onClick={() => updateQuantity(item.productId, item.selectedColor, item.quantity + 1)}
+                                onClick={() => updateQuantity(item.productId, item.selectedColor, item.quantity + 1, item.selectedVariant)}
                                 disabled={item.quantity >= item.maxStock || limitReached}
                                 className="flex h-7 w-7 items-center justify-center rounded-full border border-muted hover:bg-muted transition-colors disabled:opacity-30"
                                 data-testid={`button-cart-plus-${item.productId}`}
@@ -478,7 +483,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                           </div>
 
                           <button
-                            onClick={() => { removeItem(item.productId, item.selectedColor); setSelected(prev => { const next = new Set(prev); next.delete(key); return next; }); }}
+                            onClick={() => { removeItem(item.productId, item.selectedColor, item.selectedVariant); setSelected(prev => { const next = new Set(prev); next.delete(key); return next; }); }}
                             className="shrink-0 self-start text-muted-foreground hover:text-red-500 transition-colors"
                             data-testid={`button-cart-remove-${item.productId}`}
                           >
@@ -516,7 +521,7 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
                   <div key={cartKey(item)} className="flex justify-between text-sm">
                     <span className="truncate flex-1 mr-2">
                       {item.name}
-                      {item.selectedColor ? ` (${item.selectedColor})` : ""} × {item.quantity}
+                      {item.selectedColor ? ` (${item.selectedColor})` : ""}{item.selectedVariant ? ` [${item.selectedVariant}]` : ""} × {item.quantity}
                     </span>
                     <span className="font-medium shrink-0">₾{(item.price * item.quantity).toFixed(2)}</span>
                   </div>
