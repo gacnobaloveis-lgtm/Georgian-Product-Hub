@@ -40,6 +40,7 @@ export const orders = pgTable("orders", {
   productPrice: varchar("product_price").notNull(),
   quantity: integer("quantity").notNull().default(1),
   selectedColor: varchar("selected_color"),
+  selectedVariant: varchar("selected_variant"),
   fullName: varchar("full_name").notNull(),
   country: varchar("country").notNull().default("საქართველო"),
   city: varchar("city").notNull(),
