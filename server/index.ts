@@ -280,6 +280,8 @@ async function ensureProductColumns() {
     await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS length text`);
     await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS dimensions text`);
     await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS purchase_limit integer`);
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS variant_label text`);
+    await pool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS variant_options text DEFAULT '[]'`);
     console.log("[migrate] products weight/length/dimensions/purchase_limit columns ensured");
   } catch (err) {
     console.error("[migrate] Error ensuring products columns:", err);
@@ -341,6 +343,7 @@ async function ensureOrderColumns() {
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR NOT NULL DEFAULT 'card'`);
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS stock_deducted BOOLEAN NOT NULL DEFAULT false`);
     await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS chest_applied BOOLEAN NOT NULL DEFAULT false`);
+    await pool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS selected_variant VARCHAR`);
     console.log("[migrate] orders payment_method/stock_deducted columns ensured");
   } catch (err) {
     console.error("[migrate] Error ensuring orders payment_method column:", err);
