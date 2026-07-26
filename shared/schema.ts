@@ -22,6 +22,8 @@ export const products = pgTable("products", {
   length: text("length"),
   dimensions: text("dimensions"),
   purchaseLimit: integer("purchase_limit"),
+  variantLabel: text("variant_label"),
+  variantOptions: text("variant_options").default("[]"),
 });
 
 export const media = pgTable("media", {
