@@ -217,6 +217,7 @@ export default function ProductDetail() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
   const [creditSubmitting, setCreditSubmitting] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const { user, isAuthenticated, isRealUser } = useAuth();
@@ -285,6 +286,7 @@ export default function ProductDetail() {
   useEffect(() => {
     setSelectedImage(0);
     setSelectedColor(null);
+    setSelectedVariant(null);
     setQuantity(1);
     setShowVideo(false);
   }, [productId]);
@@ -353,6 +355,14 @@ export default function ProductDetail() {
   const hasColors = colorNames.length > 0;
   const imageColorMode = hasColors && albumImages.length === colorNames.length;
   const effectiveColor = imageColorMode ? (colorNames[selectedImage] ?? null) : selectedColor;
+
+  let variantOptions: string[] = [];
+  try {
+    const vp = JSON.parse(product.variantOptions || "[]");
+    if (Array.isArray(vp)) variantOptions = vp.filter((v: unknown): v is string => typeof v === "string");
+  } catch {}
+  const hasVariants = variantOptions.length > 0;
+  const variantLabel = product.variantLabel || "ვარიანტი";
   const selectedColorStock = effectiveColor ? (colorStock[effectiveColor] ?? 0) : null;
   const isSelectedColorOutOfStock = selectedColorStock !== null && selectedColorStock <= 0;
   const generalStock = product.stock ?? 0;
@@ -378,6 +388,27 @@ export default function ProductDetail() {
   // holds the full limit" — the latter can still be checked out from the cart.
   const purchasedExhausted = purchaseLimit > 0 && !!allowance && allowance.remaining <= 0;
   const cartFillsLimit = limitExhausted && !purchasedExhausted && productInCartQty > 0;
+
+  const variantSelector = hasVariants ? (
+    <div className="mt-3" data-testid="variant-selector">
+      <label className="text-sm font-medium text-white mb-2 block">{variantLabel}: <span className="text-red-400">*</span></label>
+      <div className="flex flex-wrap gap-2">
+        {variantOptions.map(opt => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => setSelectedVariant(selectedVariant === opt ? null : opt)}
+            className={`rounded-lg border-2 px-3 py-2 text-sm text-white transition-all backdrop-blur ${
+              selectedVariant === opt ? "border-emerald-400 bg-emerald-600/40 shadow-md" : "border-white/30 bg-white/10 hover:border-white/60"
+            }`}
+            data-testid={`button-variant-${opt}`}
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  ) : null;
 
   const limitNotice = purchaseLimit > 0 ? (
     <div
@@ -585,6 +616,8 @@ export default function ProductDetail() {
               </div>
             )}
 
+            <div className="hidden lg:block">{variantSelector}</div>
+
             <div className="hidden lg:flex items-center gap-4 mt-2">
               <label className="text-sm font-medium text-white">რაოდენობა:</label>
               <div className="flex items-center rounded-xl border border-gray-200">
@@ -714,6 +747,8 @@ export default function ProductDetail() {
           </div>
         )}
 
+        <div className="lg:hidden">{variantSelector}</div>
+
         <div className="mt-2 sm:mt-4 flex items-center gap-3 sm:gap-4 lg:hidden">
           <label className="text-sm font-medium text-white">რაოდენობა:</label>
           <div className="flex items-center rounded-xl border border-gray-200">
@@ -762,6 +797,10 @@ export default function ProductDetail() {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                 return;
               }
+              if (hasVariants && !selectedVariant) {
+                toast({ variant: "destructive", title: `შეარჩიეთ ${variantLabel}` });
+                return;
+              }
               if (limitExhausted) {
                 toast({
                   variant: "destructive",
@@ -789,6 +828,7 @@ export default function ProductDetail() {
                 imageUrl: product.imageUrl || "",
                 quantity: qtyToAdd,
                 selectedColor: effectiveColor,
+                selectedVariant,
                 maxStock: rawMaxQuantity,
               });
               setQuantity(1);
@@ -809,6 +849,10 @@ export default function ProductDetail() {
               }
               if (hasColors && !effectiveColor) {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
+                return;
+              }
+              if (hasVariants && !selectedVariant) {
+                toast({ variant: "destructive", title: `შეარჩიეთ ${variantLabel}` });
                 return;
               }
               if (limitExhausted) {
@@ -874,6 +918,7 @@ export default function ProductDetail() {
           productPrice={String(finalPrice)}
           quantity={Math.max(1, Math.min(quantity, maxQuantity || 1))}
           selectedColor={effectiveColor}
+          selectedVariant={selectedVariant}
         />
 
         <OutOfStockDialog
