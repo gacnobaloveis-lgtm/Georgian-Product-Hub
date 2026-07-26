@@ -40,6 +40,7 @@ interface PurchaseDialogProps {
   productPrice: string;
   quantity: number;
   selectedColor: string | null;
+  selectedVariant?: string | null;
 }
 
 interface ProfileData {
@@ -58,7 +59,7 @@ interface EditForm {
   phone: string;
 }
 
-export function PurchaseDialog({ open, onOpenChange, productId, productName, productPrice, quantity, selectedColor }: PurchaseDialogProps) {
+export function PurchaseDialog({ open, onOpenChange, productId, productName, productPrice, quantity, selectedColor, selectedVariant }: PurchaseDialogProps) {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [creditSubmitting, setCreditSubmitting] = useState(false);
@@ -190,6 +191,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
           productId,
           quantity,
           selectedColor,
+          selectedVariant: selectedVariant ?? null,
           fullName: fullName.trim(),
           city: profile.city,
           address: profile.address!.trim(),
@@ -227,6 +229,7 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
           productId,
           quantity,
           selectedColor,
+          selectedVariant: selectedVariant ?? null,
           fullName: fullName.trim(),
           city: profile.city,
           address: profile.address!.trim(),
@@ -289,6 +292,9 @@ export function PurchaseDialog({ open, onOpenChange, productId, productName, pro
           <p className="text-sm font-medium" data-testid="text-order-product">{productName}</p>
           {selectedColor && (
             <p className="text-xs text-muted-foreground" data-testid="text-order-color">ფერი: <span className="font-medium text-foreground">{selectedColor}</span></p>
+          )}
+          {selectedVariant && (
+            <p className="text-xs text-muted-foreground" data-testid="text-order-variant">ვარიანტი: <span className="font-medium text-foreground">{selectedVariant}</span></p>
           )}
 
           <div className="space-y-1 text-sm">
