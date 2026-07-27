@@ -14,6 +14,11 @@ import cookieParser from "cookie-parser";
 import https from "https";
 import { pool } from "./db";
 import webpush from "web-push";
+import {
+  FISH_DATA as guideFish,
+  WATERS as guideWaters,
+  getForecast as getGuideForecast,
+} from "./fishingGuide";
 
 // ── Real-time online visitors tracker (in-memory) ──────────────────────────
 const activeSessions = new Map<string, number>(); // sessionId -> lastSeen ms
@@ -211,6 +216,82 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   app.use(cookieParser());
+
+  // ── მეთევზის გზამკვლევი (fishing guide) ──────────────────────
+  app.get("/api/guide/data", (_req, res) => {
+    const fish = Object.fromEntries(
+      Object.entries(guideFish).map(([k, f]) => [k, f])
+    );
+    res.json({ fish, waters: guideWaters });
+  });
+
+  app.post("/api/guide/forecast", async (req, res) => {
+    try {
+      const { fish, water, days } = req.body || {};
+      if (typeof fish !== "string" || typeof water !== "string") {
+        return res.status(400).json({ error: "არასწორი მოთხოვნა" });
+      }
+      const result = await getGuideForecast(fish, water, Number(days) || 0);
+      if (!result) return res.status(404).json({ error: "თევზი ან წყალი ვერ მოიძებნა" });
+      res.json(result);
+    } catch (err) {
+      console.error("[guide] forecast error:", err);
+      res.status(500).json({ error: "პროგნოზის გამოთვლა ვერ მოხერხდა" });
+    }
+  });
+
+  // Bot prerendering for shared guide forecasts (Facebook share)
+  app.get("/guide", async (req, res, next) => {
+    const ua = req.headers["user-agent"] || "";
+    if (!SOCIAL_BOTS.test(ua)) return next(); // regular browser → SPA
+
+    try {
+      const fishKey = String(req.query.fish || "");
+      const waterName = String(req.query.water || "");
+      const days = Number(req.query.days) || 0;
+      const siteUrl = (process.env.SITE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+
+      let title = "მეთევზის გზამკვლევი | spiningebi.ge";
+      let desc = "თევზის აქტივობის პროგნოზი საქართველოს მდინარეებსა და ტბებზე — ამინდი, წნევა, მთვარის ფაზა და წყლის გამჭვირვალობა.";
+
+      if (fishKey && waterName) {
+        const result = await getGuideForecast(fishKey, waterName, days);
+        if (result) {
+          const dayWord = days === 0 ? "დღეს" : days === 1 ? "ხვალ" : `${result.date}-ს`;
+          title = `როგორი აქტივობა იქნება ${dayWord} 🎣 ${result.fish.name} — ${result.water.name}: ${result.percent}%`;
+          desc = `${result.recommendation} საუკეთესო დრო: ${result.best_time}. სატყუარა: ${result.bait}. — მეთევზის გზამკვლევი, spiningebi.ge`;
+        }
+      }
+
+      const pageUrl = escHtml(`${siteUrl}${req.originalUrl}`);
+      const safeTitle = escHtml(title);
+      const safeDesc = escHtml(desc);
+      const safeImage = escHtml(`${siteUrl}/guide-share.jpg`);
+
+      return res.status(200).set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8"/>
+  <title>${safeTitle}</title>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="spiningebi.ge"/>
+  <meta property="og:title" content="${safeTitle}"/>
+  <meta property="og:description" content="${safeDesc}"/>
+  <meta property="og:image" content="${safeImage}"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:url" content="${pageUrl}"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:image" content="${safeImage}"/>
+  <meta name="twitter:title" content="${safeTitle}"/>
+  <meta name="twitter:description" content="${safeDesc}"/>
+</head>
+<body><a href="${pageUrl}">${safeTitle}</a></body>
+</html>`);
+    } catch (err) {
+      next(err);
+    }
+  });
 
   // Bot prerendering for product detail pages
   app.get("/products/:id", async (req, res, next) => {
