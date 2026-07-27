@@ -17,6 +17,8 @@ import webpush from "web-push";
 import {
   FISH_DATA as guideFish,
   WATERS as guideWaters,
+  resolveWater as resolveGuideWater,
+  checkFishHabitat as checkGuideHabitat,
   getForecast as getGuideForecast,
 } from "./fishingGuide";
 
@@ -231,8 +233,17 @@ export async function registerRoutes(
       if (typeof fish !== "string" || typeof water !== "string") {
         return res.status(400).json({ error: "არასწორი მოთხოვნა" });
       }
+      const waterInfo = resolveGuideWater(water);
+      if (!waterInfo || !guideFish[fish]) {
+        return res.status(404).json({ error: "თევზი ან წყალი ვერ მოიძებნა" });
+      }
+      const habitat = checkGuideHabitat(fish, waterInfo);
+      if (!habitat.ok) {
+        return res.json({ no_fish: true, message: habitat.message, fish: guideFish[fish], water: waterInfo });
+      }
       const result = await getGuideForecast(fish, water, Number(days) || 0);
       if (!result) return res.status(404).json({ error: "თევზი ან წყალი ვერ მოიძებნა" });
+      if (habitat.note) result.explanations = [...result.explanations, habitat.note];
       res.json(result);
     } catch (err) {
       console.error("[guide] forecast error:", err);
@@ -255,11 +266,18 @@ export async function registerRoutes(
       let desc = "თევზის აქტივობის პროგნოზი საქართველოს მდინარეებსა და ტბებზე — ამინდი, წნევა, მთვარის ფაზა და წყლის გამჭვირვალობა.";
 
       if (fishKey && waterName) {
+        const waterInfo = resolveGuideWater(waterName);
+        const habitat = waterInfo && guideFish[fishKey] ? checkGuideHabitat(fishKey, waterInfo) : null;
+        if (habitat && !habitat.ok) {
+          title = `${guideFish[fishKey].name} — ${waterInfo!.name} | მეთევზის გზამკვლევი`;
+          desc = `${habitat.message} — მეთევზის გზამკვლევი, spiningebi.ge`;
+        } else {
         const result = await getGuideForecast(fishKey, waterName, days);
         if (result) {
           const dayWord = days === 0 ? "დღეს" : days === 1 ? "ხვალ" : `${result.date}-ს`;
           title = `როგორი აქტივობა იქნება ${dayWord} 🎣 ${result.fish.name} — ${result.water.name}: ${result.percent}%`;
           desc = `${result.recommendation} საუკეთესო დრო: ${result.best_time}. სატყუარა: ${result.bait}. — მეთევზის გზამკვლევი, spiningebi.ge`;
+        }
         }
       }
 
