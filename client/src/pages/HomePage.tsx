@@ -17,7 +17,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText, Download, Info, Coins, Send } from "lucide-react";
+import { ImageOff, Home, ShoppingBag, Settings, Search, SlidersHorizontal, X, LayoutGrid, ShoppingCart, Share2, UserCircle, BookOpen, ChevronDown, Gift, ArrowLeft, Phone, Mail, MapPin, MessageCircle, ScrollText, Download, Info, Coins, Send, Compass } from "lucide-react";
 import { usePwaInstall } from "@/hooks/use-pwa-install";
 import { LucideIcon } from "@/components/IconPicker";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -152,6 +152,18 @@ function SiteFooter() {
             </li>
             <li>
               <button
+                onClick={() => setLocation("/guide")}
+                className="flex items-center gap-2.5 w-full text-left active:scale-[0.99] transition-transform"
+                data-testid="footer-mobile-fishing-guide"
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                  <Compass className="h-4 w-4 text-white" />
+                </span>
+                <span className="text-sm font-medium text-white">მეთევზის გზამკვლევი</span>
+              </button>
+            </li>
+            <li>
+              <button
                 onClick={() => setLocation("/about")}
                 className="flex items-center gap-2.5 w-full text-left active:scale-[0.99] transition-transform"
                 data-testid="footer-mobile-about"
@@ -269,6 +281,14 @@ function SiteFooter() {
                       <ScrollText className="h-4 w-4 text-white" />
                     </span>
                     <span className="text-sm font-medium text-white">წესები და პირობები</span>
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => setLocation("/guide")} className="flex items-center gap-3 w-full text-left" data-testid="footer-fishing-guide-link2">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 shadow">
+                      <Compass className="h-4 w-4 text-white" />
+                    </span>
+                    <span className="text-sm font-medium text-white">მეთევზის გზამკვლევი</span>
                   </button>
                 </li>
                 <li>
@@ -1252,6 +1272,20 @@ export default function HomePage() {
             <DialogDescription className="sr-only">ინფორმაცია</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 pt-2">
+            <button
+              type="button"
+              onClick={() => { setGuideOpen(false); setLocation("/guide"); }}
+              className="flex w-full items-center gap-3 rounded-xl border border-emerald-400/40 bg-emerald-500/15 backdrop-blur-md p-4 text-left hover:bg-emerald-500/25 transition-colors"
+              data-testid="button-guide-fishing"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/30">
+                <Compass className="h-4.5 w-4.5 text-emerald-300" />
+              </div>
+              <div>
+                <span className="block text-sm font-bold text-white">მეთევზის გზამკვლევი 🎣</span>
+                <span className="block text-xs text-emerald-100/80">თევზის აქტივობის პროგნოზი — სად და როდის წამოეგება</span>
+              </div>
+            </button>
             <div className="rounded-xl border border-white/15 bg-white/5 backdrop-blur-md overflow-hidden">
               <button
                 type="button"
