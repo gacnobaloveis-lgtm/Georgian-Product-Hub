@@ -203,6 +203,27 @@ export const WATER_NAME_ALIASES: Record<string, string> = {
 const SEASONAL_MUDDY_RIVERS = ["მდ. რიონი", "მდ. ცხენისწყალი"];
 const MUDDY_MONTHS = [4, 5, 6, 7, 8, 9, 10]; // აპრილი–ოქტომბერი (ნოემბრამდე)
 
+// ყვირილა: ქვემო წელი (ჭიათურა–ზესტაფონი) მუდმივად მღვრიეა მარგანეცის რეცხვის გამო.
+// სათავის (რაჭის ქედი, საჩხერის ზემოთ) ამინდის მიხედვით ვწერთ, სათავე წმინდაა თუ არა.
+const KVIRILA_HEADWATER = { lat: 42.45, lon: 43.35 };
+
+export async function kvirilaClarity(targetDate: Date): Promise<WaterClarity> {
+  const headPrecip = await getPastPrecipitation(KVIRILA_HEADWATER.lat, KVIRILA_HEADWATER.lon, targetDate);
+  const head = calculateWaterClarity(headPrecip);
+  if (head.status === "მღვრიე") {
+    return {
+      status: "მღვრიე",
+      percent: 20,
+      explanation: "მდ. ყვირილა მთლიანად მღვრიეა — სათავეშიც ნაწვიმია, ქვემოთ კი (ჭიათურისა და ზესტაფონის მხარეს) მარგანეცის რეცხვის გამო მუდმივად მღვრიეა",
+    };
+  }
+  return {
+    status: "მღვრიე",
+    percent: 35,
+    explanation: "მდ. ყვირილა: სათავე წმინდაა (ნაწვიმი არაა), ქვემოთ კი — ჭიათურისა და ზესტაფონის მხარეს — მარგანეცის რეცხვის გამო მღვრიეა",
+  };
+}
+
 export function seasonalMuddyOverride(waterName: string, date: Date): WaterClarity | null {
   if (!SEASONAL_MUDDY_RIVERS.includes(waterName)) return null;
   const month = date.getMonth() + 1;
@@ -580,7 +601,10 @@ export async function getForecast(fishKey: string, waterName: string, daysAhead:
   const weather: WeatherInfo =
     weatherRaw ?? { temp: 18, pressure: 1013, weather_code: 1, temp_max: 22, temp_min: 14, precipitation: 0, rain: 0, showers: 0, wind_max: 0, hourly: [] };
 
-  const waterClarity = seasonalMuddyOverride(water.name, targetDate) ?? calculateWaterClarity(pastPrecip);
+  const waterClarity =
+    water.name === "მდ. ყვირილა"
+      ? await kvirilaClarity(targetDate)
+      : seasonalMuddyOverride(water.name, targetDate) ?? calculateWaterClarity(pastPrecip);
   const moonPhase = getMoonPhase(targetDate);
   const result = calculateActivity(fishKey, weather, moonPhase, targetDate, waterClarity);
 
