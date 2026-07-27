@@ -93,6 +93,7 @@ export default function GuidePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<ForecastResult | null>(null);
+  const [noFishMsg, setNoFishMsg] = useState("");
   const [sharedVisit, setSharedVisit] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const { isRealUser, isLoading: authLoading } = useAuth();
@@ -127,6 +128,7 @@ export default function GuidePage() {
     setError("");
     setLoading(true);
     setResult(null);
+    setNoFishMsg("");
     try {
       const r = await fetch("/api/guide/forecast", {
         method: "POST",
@@ -135,6 +137,10 @@ export default function GuidePage() {
       });
       const json = await r.json();
       if (!r.ok) throw new Error(json?.error || "შეცდომა");
+      if (json?.no_fish) {
+        setNoFishMsg(json.message || "ამ წყალში ეს თევზი არ ბინადრობს.");
+        return;
+      }
       setResult(json);
     } catch (e: any) {
       setError(e?.message || "პროგნოზი ვერ გამოითვალა");
@@ -290,6 +296,19 @@ export default function GuidePage() {
               <UserCircle className="h-4 w-4" />
               ავტორიზაცია
             </Button>
+          </div>
+        )}
+
+        {/* თევზი ამ წყალში არ ბინადრობს */}
+        {noFishMsg && (
+          <div className={`${cardCls} mt-6 text-center`} data-testid="card-guide-no-fish">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/20 ring-1 ring-amber-400/40">
+              <FishIcon className="h-6 w-6 text-amber-300" />
+            </div>
+            <p className="text-base font-bold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">{noFishMsg}</p>
+            <p className="mt-1.5 text-sm text-emerald-100/80 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
+              აირჩიე სხვა ადგილი ან სხვა თევზი და სცადე ხელახლა.
+            </p>
           </div>
         )}
 
