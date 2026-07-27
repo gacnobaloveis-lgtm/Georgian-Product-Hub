@@ -436,3 +436,15 @@
     bottom: 1.5rem;
   }
 }
+
+/* მეთევზის გზამკვლევი — ქვიშის საათის ტრიალი ჩატვირთვისას */
+@keyframes hourglassFlip {
+  0% { transform: rotate(0deg); }
+  35% { transform: rotate(180deg); }
+  50% { transform: rotate(180deg); }
+  85% { transform: rotate(360deg); }
+  100% { transform: rotate(360deg); }
+}
+.animate-hourglass-flip {
+  animation: hourglassFlip 1.6s ease-in-out infinite;
+}
