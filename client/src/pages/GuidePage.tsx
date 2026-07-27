@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { ArrowLeft, Compass, Share2, Loader2, Fish as FishIcon, Clock, Bug, Droplets, Moon, Thermometer, Gauge, Lock, UserCircle } from "lucide-react";
+import { ArrowLeft, Compass, Share2, Hourglass, Fish as FishIcon, Clock, Bug, Droplets, Moon, Thermometer, Gauge, Lock, UserCircle, Wind, CloudRain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
@@ -20,6 +20,7 @@ interface FishInfo {
   best_time: string;
   bait: string;
   color: string;
+  image: string;
 }
 
 interface WaterInfo {
@@ -44,6 +45,8 @@ interface ForecastResult {
     pressure: number;
     temp_max: number;
     temp_min: number;
+    wind_max: number;
+    hourly: { hour: string; wind: number; precip: number }[];
   };
   moon_name: string;
   water_clarity: { status: string; percent: number; explanation: string };
@@ -241,10 +244,18 @@ export default function GuidePage() {
           </div>
 
           {data && fishKey && (
-            <p className="mt-4 text-sm leading-6 text-emerald-50 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
-              <FishIcon className="mr-1.5 inline h-4 w-4 text-emerald-300" />
-              {data.fish[fishKey].desc}
-            </p>
+            <div className="mt-4 flex items-start gap-3">
+              <img
+                src={data.fish[fishKey].image}
+                alt={data.fish[fishKey].name}
+                className="h-20 w-20 shrink-0 rounded-xl border border-white/25 object-cover shadow-lg"
+                data-testid="img-guide-fish"
+              />
+              <p className="text-sm leading-6 text-emerald-50 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
+                <FishIcon className="mr-1.5 inline h-4 w-4 text-emerald-300" />
+                {data.fish[fishKey].desc}
+              </p>
+            </div>
           )}
 
           <Button
@@ -253,8 +264,8 @@ export default function GuidePage() {
             className="mt-5 w-full gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold"
             data-testid="button-guide-forecast"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Compass className="h-4 w-4" />}
-            {loading ? "ითვლება..." : "გამოთვალე პროგნოზი"}
+            {loading ? <Hourglass className="h-4 w-4 animate-hourglass-flip" /> : <Compass className="h-4 w-4" />}
+            {loading ? "ეძებს და იტვირთება..." : "გამოთვალე პროგნოზი"}
           </Button>
           {error && <p className="mt-3 text-sm font-medium text-red-300">{error}</p>}
         </div>
@@ -286,6 +297,12 @@ export default function GuidePage() {
         {result && !(sharedVisit && !isRealUser) && (
           <div className="mt-6 space-y-4">
             <div className={`${cardCls} text-center`}>
+              <img
+                src={result.fish.image}
+                alt={result.fish.name}
+                className="mx-auto mb-3 h-24 w-24 rounded-full border-2 border-emerald-400/50 object-cover shadow-lg"
+                data-testid="img-guide-result-fish"
+              />
               <p className="text-sm text-emerald-100/80 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
                 {result.fish.name} • {result.water.name} • {result.date}
               </p>
@@ -344,6 +361,32 @@ export default function GuidePage() {
                 <p className="text-sm font-bold text-white leading-tight">{result.water_clarity.status}</p>
               </div>
             </div>
+
+            {result.weather.hourly && result.weather.hourly.length > 0 && (
+              <div className={cardCls}>
+                <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
+                  <Wind className="h-4 w-4 text-sky-300" />
+                  ქარი და ნალექი საათების მიხედვით
+                </p>
+                <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
+                  {result.weather.hourly.map((h) => (
+                    <div key={h.hour} className="rounded-lg bg-slate-900/50 px-1 py-2 text-center" data-testid={`hourly-${h.hour}`}>
+                      <p className="text-[11px] font-semibold text-emerald-100/80">{h.hour}</p>
+                      <p className="mt-1 flex items-center justify-center gap-1 text-xs text-white">
+                        <Wind className="h-3 w-3 text-sky-300" />
+                        {h.wind}
+                      </p>
+                      <p className="text-[10px] text-emerald-100/60">კმ/სთ</p>
+                      <p className={`mt-1 flex items-center justify-center gap-1 text-xs ${h.precip > 0 ? "text-cyan-300" : "text-emerald-100/50"}`}>
+                        <CloudRain className="h-3 w-3" />
+                        {h.precip}
+                      </p>
+                      <p className="text-[10px] text-emerald-100/60">მმ</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className={cardCls}>
               <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
