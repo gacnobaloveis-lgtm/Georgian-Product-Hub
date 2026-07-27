@@ -279,7 +279,7 @@ export default function ProductDetail() {
       }
     }
     return () => {
-      document.title = "spiningebi.ge — სათევზაო და სანადირო აქსესუარები | თევზაობის ინვენტარი საქართველოში";
+      document.title = "სპინინგის მაღაზია საქართველოში | Spiningebi.ge";
     };
   }, [product]);
 
