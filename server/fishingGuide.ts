@@ -23,7 +23,7 @@ export interface FishInfo {
 export const FISH_DATA: Record<string, FishInfo> = {
   kashapi: {
     name: "ქაშაპი",
-    latin: "Silurus glanis",
+    latin: "Squalius cephalus",
     desc: "საქართველოს უდიდესი მტაცებელი თევზი. აქტიურია სატყუარებზე წმინდა და სუფთა წყალში, უყვარს თბილი წყალი და ნორმალური წნევა.",
     pressure_optimal: 1015,
     pressure_range: 8,
