@@ -17,13 +17,14 @@ export interface FishInfo {
   bait: string;
   color: string;
   clarity_pref: string;
+  image: string;
 }
 
 export const FISH_DATA: Record<string, FishInfo> = {
   kashapi: {
     name: "ქაშაპი",
     latin: "Silurus glanis",
-    desc: "საქართველოს უდიდესი მტაცებელი თევზი. აქტიურია ღამით, უყვარს თბილი წყალი და ნორმალური წნევა.",
+    desc: "საქართველოს უდიდესი მტაცებელი თევზი. აქტიურია სატყუარებზე წმინდა და სუფთა წყალში, უყვარს თბილი წყალი და ნორმალური წნევა.",
     pressure_optimal: 1015,
     pressure_range: 8,
     temp_optimal: 21,
@@ -33,7 +34,8 @@ export const FISH_DATA: Record<string, FishInfo> = {
     best_time: "ღამე 00:00 – განთიადი",
     bait: "კიბორჩხალა, თევზი, ჭია",
     color: "#00d9a5",
-    clarity_pref: "მღვრიე",
+    clarity_pref: "წმინდა",
+    image: "/guide-fish/kashapi.jpg",
   },
   kalmahi: {
     name: "კალმახი",
@@ -49,6 +51,7 @@ export const FISH_DATA: Record<string, FishInfo> = {
     bait: "ბუგრი, მელის ჭია, ხელოვნური მძივები",
     color: "#38bdf8",
     clarity_pref: "წმინდა",
+    image: "/guide-fish/kalmahi.jpg",
   },
   korchila: {
     name: "ქორჭილა",
@@ -64,6 +67,7 @@ export const FISH_DATA: Record<string, FishInfo> = {
     bait: "ბუგრი, მბრძანებელი, ხელოვნური სატყუარა",
     color: "#f87171",
     clarity_pref: "საშუალო",
+    image: "/guide-fish/korchila.jpg",
   },
   kariklapi: {
     name: "ქარიყლაპია",
@@ -79,6 +83,7 @@ export const FISH_DATA: Record<string, FishInfo> = {
     bait: "თევზი, ბუგრი, ჯიქურა",
     color: "#fbbf24",
     clarity_pref: "საშუალო",
+    image: "/guide-fish/kariklapi.jpg",
   },
   shamaya: {
     name: "შამაია",
@@ -94,6 +99,7 @@ export const FISH_DATA: Record<string, FishInfo> = {
     bait: "ბუგრი, მწერი, მცირე თევზი",
     color: "#a78bfa",
     clarity_pref: "წმინდა",
+    image: "/guide-fish/shamaya.jpg",
   },
 };
 
@@ -106,42 +112,112 @@ export interface WaterInfo {
 
 export const WATERS: { rivers: WaterInfo[]; lakes: WaterInfo[] } = {
   rivers: [
-    { name: "მდ. მტკვარი", region: "თბილისი", lat: 41.7151, lon: 44.8271 },
-    { name: "მდ. რიონი", region: "ქუთაისი", lat: 42.27, lon: 42.71 },
-    { name: "მდ. ალაზანი", region: "თელავი", lat: 41.92, lon: 45.48 },
-    { name: "მდ. ენგური", region: "ზუგდიდი", lat: 42.51, lon: 41.87 },
-    { name: "მდ. ბზიფი", region: "ავადხარა", lat: 43.2, lon: 40.6 },
-    { name: "მდ. ფსოუ", region: "გაგრა", lat: 43.28, lon: 40.27 },
-    { name: "მდ. თერგი", region: "სტეფანწმინდა", lat: 42.66, lon: 44.64 },
-    { name: "მდ. არაგვი", region: "მცხეთა", lat: 42.07, lon: 44.72 },
-    { name: "მდ. ქსანი", region: "გორი", lat: 42.25, lon: 44.11 },
-    { name: "მდ. პარავანი", region: "ფარავნის ტბა", lat: 41.45, lon: 43.88 },
-    { name: "მდ. მეჯუდა", region: "მესტია", lat: 43.05, lon: 42.73 },
-    { name: "მდ. ლოპოტა", region: "ლაგოდეხი", lat: 42.1, lon: 45.12 },
-    { name: "მდ. ცხენისწყალი", region: "საჩხერე", lat: 42.31, lon: 43.3 },
-    { name: "მდ. ყვარელი", region: "ყვარელი", lat: 41.95, lon: 45.8 },
-    { name: "მდ. იორი", region: "საგარეჯო", lat: 41.82, lon: 45.33 },
-    { name: "მდ. ხრამი", region: "ბორჯომი", lat: 41.84, lon: 43.38 },
-    { name: "მდ. ჭოროხი", region: "ბათუმი", lat: 41.65, lon: 41.64 },
-    { name: "მდ. საფსაი", region: "ოზურგეთი", lat: 41.92, lon: 42.0 },
-    { name: "მდ. ნატანები", region: "ფოთი", lat: 42.15, lon: 41.67 },
-    { name: "მდ. კოდორი", region: "სოხუმი", lat: 43.1, lon: 41.1 },
+    { name: "მდ. მტკვარი", region: "თბილისი / ქართლი", lat: 41.7151, lon: 44.8271 },
+    { name: "მდ. ალაზანი", region: "კახეთი (თელავი)", lat: 41.92, lon: 45.48 },
+    { name: "მდ. იორი", region: "კახეთი (საგარეჯო)", lat: 41.73, lon: 45.33 },
+    { name: "მდ. არაგვი (თეთრი, შავი, ფშავის, ხევსურეთის)", region: "მცხეთა-მთიანეთი", lat: 42.13, lon: 44.77 },
+    { name: "მდ. დიდი ლიახვი", region: "შიდა ქართლი (გორი)", lat: 42.1, lon: 43.97 },
+    { name: "მდ. პატარა ლიახვი", region: "შიდა ქართლი", lat: 42.12, lon: 44.05 },
+    { name: "მდ. ქსანი", region: "შიდა ქართლი (მუხრანი)", lat: 42.0, lon: 44.42 },
+    { name: "მდ. ხრამი", region: "ქვემო ქართლი (წალკა)", lat: 41.45, lon: 44.35 },
+    { name: "მდ. დებედა", region: "ქვემო ქართლი (მარნეული)", lat: 41.44, lon: 44.85 },
+    { name: "მდ. ალგეთი", region: "ქვემო ქართლი (თეთრიწყარო)", lat: 41.62, lon: 44.55 },
+    { name: "მდ. ფარავანი", region: "ჯავახეთი", lat: 41.4, lon: 43.7 },
+    { name: "მდ. ძამა", region: "შიდა ქართლი (ქარელი)", lat: 42.0, lon: 43.85 },
+    { name: "მდ. ტანა", region: "შიდა ქართლი (გორი)", lat: 41.95, lon: 44.05 },
+    { name: "მდ. თეძამი", region: "შიდა ქართლი (კასპი)", lat: 41.95, lon: 44.35 },
+    { name: "მდ. რიონი", region: "იმერეთი (ქუთაისი)", lat: 42.27, lon: 42.71 },
+    { name: "მდ. ცხენისწყალი", region: "ლეჩხუმი (ცაგერი)", lat: 42.65, lon: 42.77 },
+    { name: "მდ. ყვირილა", region: "იმერეთი (ზესტაფონი)", lat: 42.11, lon: 43.05 },
+    { name: "მდ. ხანისწყალი", region: "იმერეთი (ბაღდათი)", lat: 42.05, lon: 42.83 },
+    { name: "მდ. ჯეჯორა", region: "რაჭა (ონი)", lat: 42.58, lon: 43.45 },
+    { name: "მდ. ჩხერიმელა", region: "იმერეთი (ხარაგაული)", lat: 42.02, lon: 43.2 },
+    { name: "მდ. ენგური", region: "სამეგრელო (ზუგდიდი)", lat: 42.51, lon: 41.87 },
+    { name: "მდ. ჭოროხი", region: "აჭარა (ბათუმი)", lat: 41.6, lon: 41.65 },
+    { name: "მდ. აჭარისწყალი", region: "აჭარა (ქედა)", lat: 41.6, lon: 41.94 },
+    { name: "მდ. კოდორი", region: "აფხაზეთი", lat: 42.85, lon: 41.15 },
+    { name: "მდ. ბზიფი", region: "აფხაზეთი", lat: 43.2, lon: 40.6 },
+    { name: "მდ. ხობისწყალი", region: "სამეგრელო (ხობი)", lat: 42.32, lon: 41.9 },
+    { name: "მდ. ტეხური", region: "სამეგრელო (სენაკი)", lat: 42.4, lon: 42.07 },
+    { name: "მდ. აბაშა", region: "სამეგრელო (მარტვილი)", lat: 42.4, lon: 42.38 },
+    { name: "მდ. სუფსა", region: "გურია (ოზურგეთი)", lat: 41.95, lon: 42.0 },
+    { name: "მდ. ნატანები", region: "გურია (ურეკი)", lat: 41.95, lon: 41.8 },
+    { name: "მდ. კინტრიში", region: "აჭარა (ქობულეთი)", lat: 41.8, lon: 41.95 },
+    { name: "მდ. ჩაქვისწყალი", region: "აჭარა (ჩაქვი)", lat: 41.72, lon: 41.73 },
+    { name: "მდ. ფსოუ", region: "აფხაზეთი (გაგრა)", lat: 43.28, lon: 40.27 },
+    { name: "მდ. თერგი", region: "მცხეთა-მთიანეთი (ყაზბეგი)", lat: 42.66, lon: 44.64 },
+    { name: "მდ. არღუნი", region: "ხევსურეთი (შატილი)", lat: 42.66, lon: 45.15 },
   ],
   lakes: [
-    { name: "ფარავნის ტბა", region: "ახალციხის მხარე", lat: 41.45, lon: 43.88 },
-    { name: "ბაზალეთის ტბა", region: "დუშეთი", lat: 41.76, lon: 44.67 },
-    { name: "კუს ტბა", region: "თბილისი", lat: 41.65, lon: 44.78 },
-    { name: "თბილისის ზღვა", region: "თბილისი", lat: 41.85, lon: 44.88 },
-    { name: "ჯანდარის ტბა", region: "მარნეული", lat: 41.18, lon: 46.38 },
-    { name: "ლოპოტის ტბა", region: "ლაგოდეხი", lat: 42.1, lon: 45.12 },
-    { name: "ბათაბუნის ტბა", region: "ბათაბუნი", lat: 41.75, lon: 43.45 },
-    { name: "თობავარჩხილის ტბა", region: "თიანეთი", lat: 42.1, lon: 44.95 },
-    { name: "მადათაფის ტბა", region: "მადათაფა", lat: 42.35, lon: 42.2 },
-    { name: "ქელეთბარის ტბა", region: "ქელეთბარი", lat: 42.2, lon: 42.4 },
+    { name: "ფარავნის ტბა", region: "ჯავახეთი (ნინოწმინდა)", lat: 41.45, lon: 43.8 },
+    { name: "ტაბაწყური", region: "სამცხე-ჯავახეთი", lat: 41.65, lon: 43.63 },
+    { name: "რიწის ტბა", region: "აფხაზეთი", lat: 43.48, lon: 40.54 },
+    { name: "ლისის ტბა", region: "თბილისი", lat: 41.74, lon: 44.73 },
+    { name: "კუს ტბა", region: "თბილისი", lat: 41.7, lon: 44.75 },
+    { name: "ბაზალეთის ტბა", region: "მცხეთა-მთიანეთი (დუშეთი)", lat: 42.03, lon: 44.68 },
+    { name: "პალიასტომი", region: "სამეგრელო (ფოთი)", lat: 42.12, lon: 41.73 },
+    { name: "ჯანდარის ტბა", region: "ქვემო ქართლი (გარდაბანი)", lat: 41.4, lon: 45.1 },
+    { name: "ხანჩალის ტბა", region: "ჯავახეთი (ნინოწმინდა)", lat: 41.26, lon: 43.58 },
+    { name: "ბუღდაშენის ტბა", region: "ჯავახეთი (ნინოწმინდა)", lat: 41.2, lon: 43.65 },
+    { name: "მადათაფა", region: "ჯავახეთი", lat: 41.18, lon: 43.78 },
+    { name: "საღამოს ტბა", region: "ჯავახეთი", lat: 41.3, lon: 43.78 },
+    { name: "მწვანე ტბა", region: "აჭარა (ხულო)", lat: 41.65, lon: 42.32 },
+    { name: "შავი კლდეების ტბა", region: "კახეთი (ლაგოდეხი)", lat: 41.92, lon: 46.32 },
+    { name: "აბუდელაურის ტბები (თეთრი, ლურჯი, მწვანე)", region: "ხევსურეთი", lat: 42.52, lon: 44.87 },
+    { name: "ორეთის ტბა", region: "რაჭა-ლეჩხუმი", lat: 42.55, lon: 43.0 },
+    { name: "ტობავარჩხილი", region: "სამეგრელოს მთიანეთი", lat: 42.83, lon: 42.35 },
+    { name: "კელის ტბა", region: "მთიანეთი (ყელის ზეგანი)", lat: 42.54, lon: 44.28 },
+    { name: "პატარა რიწა", region: "აფხაზეთი", lat: 43.47, lon: 40.5 },
+    { name: "ამტყელის ტბა", region: "აფხაზეთი", lat: 43.07, lon: 41.28 },
+    { name: "ეწერის ტბა", region: "სამეგრელო", lat: 42.6, lon: 42.05 },
+    { name: "ყარაღაჯის ტბა", region: "კახეთი (დედოფლისწყარო)", lat: 41.35, lon: 46.05 },
+    { name: "თბილისის ზღვა (წყალსაცავი)", region: "თბილისი", lat: 41.77, lon: 44.87 },
+    { name: "ჟინვალის წყალსაცავი", region: "მცხეთა-მთიანეთი", lat: 42.13, lon: 44.77 },
+    { name: "ენგურის წყალსაცავი", region: "სამეგრელო (ჯვარი)", lat: 42.75, lon: 42.05 },
+    { name: "ფალდოს (სიონის) წყალსაცავი", region: "მცხეთა-მთიანეთი (თიანეთი)", lat: 41.99, lon: 45.02 },
+    { name: "შაორის წყალსაცავი", region: "რაჭა (ამბროლაური)", lat: 42.42, lon: 43.05 },
+    { name: "ტყიბულის წყალსაცავი", region: "იმერეთი (ტყიბული)", lat: 42.37, lon: 42.98 },
+    { name: "ვალეს წყალსაცავი", region: "სამცხე (ახალციხე)", lat: 41.6, lon: 42.85 },
+    { name: "ალგეთის წყალსაცავი", region: "ქვემო ქართლი", lat: 41.5, lon: 44.6 },
+    { name: "წალკის წყალსაცავი", region: "ქვემო ქართლი (წალკა)", lat: 41.6, lon: 44.05 },
+    { name: "ნადარბაზევის ტბა (წყალსაცავი)", region: "შიდა ქართლი (გორი)", lat: 41.9, lon: 44.2 },
+    { name: "სამგორის წყალსაცავი", region: "თბილისის ზღვასთან", lat: 41.75, lon: 45.0 },
+    { name: "ვარციხის წყალსაცავი", region: "იმერეთი (ბაღდათი)", lat: 42.15, lon: 42.72 },
+    { name: "გალის წყალსაცავი", region: "აფხაზეთი (გალი)", lat: 42.65, lon: 41.75 },
   ],
 };
 
 export const ALL_WATERS: WaterInfo[] = [...WATERS.rivers, ...WATERS.lakes];
+
+// ძველი (გაზიარებულ ბმულებში დარჩენილი) სახელების ალიასები → ახალი კანონიკური სახელი
+export const WATER_NAME_ALIASES: Record<string, string> = {
+  "თბილისის ზღვა": "თბილისის ზღვა (წყალსაცავი)",
+  "მადათაფის ტბა": "მადათაფა",
+  "თობავარჩხილის ტბა": "ტობავარჩხილი",
+  "მდ. პარავანი": "მდ. ფარავანი",
+  "მდ. საფსაი": "მდ. სუფსა",
+};
+
+// მდინარეები, რომლებიც სეზონურად (გაზაფხულიდან ნოემბრამდე) თითქმის მუდმივად მღვრიეა
+// მყინვარული/სეზონური ნატანის გამო — ამინდის მიუხედავად
+const SEASONAL_MUDDY_RIVERS = ["მდ. რიონი", "მდ. ცხენისწყალი"];
+const MUDDY_MONTHS = [4, 5, 6, 7, 8, 9, 10]; // აპრილი–ოქტომბერი (ნოემბრამდე)
+
+export function seasonalMuddyOverride(waterName: string, date: Date): WaterClarity | null {
+  if (!SEASONAL_MUDDY_RIVERS.includes(waterName)) return null;
+  const month = date.getMonth() + 1;
+  if (!MUDDY_MONTHS.includes(month)) return null;
+  return {
+    status: "მღვრიე",
+    percent: 25,
+    explanation: `${waterName} ამ სეზონზე (ნოემბრამდე) თითქმის მუდმივად მღვრიეა სეზონური ნატანის გამო`,
+  };
+}
+
+export function resolveWater(waterName: string): WaterInfo | undefined {
+  const canonical = WATER_NAME_ALIASES[waterName] || waterName;
+  return ALL_WATERS.find((w) => w.name === canonical);
+}
 
 // ── მთვარის ფაზა ─────────────────────────────────────────────
 export function getMoonPhase(date: Date): number {
@@ -168,6 +244,12 @@ function fmtDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+export interface HourlySlot {
+  hour: string; // "06:00"
+  wind: number; // კმ/სთ
+  precip: number; // მმ (3-საათიანი ჯამი)
+}
+
 export interface WeatherInfo {
   temp: number;
   pressure: number;
@@ -177,6 +259,8 @@ export interface WeatherInfo {
   precipitation: number;
   rain: number;
   showers: number;
+  wind_max: number;
+  hourly: HourlySlot[];
 }
 
 export async function getWeather(lat: number, lon: number, targetDate: Date): Promise<WeatherInfo | null> {
@@ -184,13 +268,39 @@ export async function getWeather(lat: number, lon: number, targetDate: Date): Pr
     const d = fmtDate(targetDate);
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&daily=temperature_2m_max,temperature_2m_min,pressure_msl_mean,weathercode,precipitation_sum,rain_sum,showers_sum` +
+      `&daily=temperature_2m_max,temperature_2m_min,pressure_msl_mean,weathercode,precipitation_sum,rain_sum,showers_sum,wind_speed_10m_max` +
+      `&hourly=wind_speed_10m,precipitation` +
       `&timezone=Asia/Tbilisi&start_date=${d}&end_date=${d}`;
     const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
     const data: any = await r.json();
     const daily = data?.daily;
     if (!daily?.time?.length) return null;
     const temp = (daily.temperature_2m_max[0] + daily.temperature_2m_min[0]) / 2;
+
+    // საათობრივი მონაცემები → 3-საათიანი ჭრილები (00:00, 03:00 ... 21:00)
+    const hourly: HourlySlot[] = [];
+    const hTimes: string[] = data?.hourly?.time || [];
+    const hWind: number[] = data?.hourly?.wind_speed_10m || [];
+    const hPrecip: number[] = data?.hourly?.precipitation || [];
+    for (let slot = 0; slot < 24; slot += 3) {
+      let windMax = 0;
+      let precipSum = 0;
+      let found = false;
+      for (let h = slot; h < slot + 3; h++) {
+        const idx = hTimes.findIndex((t) => t === `${d}T${String(h).padStart(2, "0")}:00`);
+        if (idx === -1) continue;
+        found = true;
+        windMax = Math.max(windMax, hWind[idx] ?? 0);
+        precipSum += hPrecip[idx] ?? 0;
+      }
+      if (found) {
+        hourly.push({
+          hour: `${String(slot).padStart(2, "0")}:00`,
+          wind: Math.round(windMax),
+          precip: Math.round(precipSum * 10) / 10,
+        });
+      }
+    }
     return {
       temp: Math.round(temp * 10) / 10,
       pressure: Math.round(daily.pressure_msl_mean[0] * 10) / 10,
@@ -200,6 +310,8 @@ export async function getWeather(lat: number, lon: number, targetDate: Date): Pr
       precipitation: Math.round((daily.precipitation_sum?.[0] || 0) * 10) / 10,
       rain: Math.round((daily.rain_sum?.[0] || 0) * 10) / 10,
       showers: Math.round((daily.showers_sum?.[0] || 0) * 10) / 10,
+      wind_max: Math.round(daily.wind_speed_10m_max?.[0] || 0),
+      hourly,
     };
   } catch (e) {
     console.error("[guide] weather error:", e);
@@ -451,7 +563,7 @@ const FORECAST_CACHE_TTL = 10 * 60 * 1000;
 
 export async function getForecast(fishKey: string, waterName: string, daysAhead: number): Promise<ForecastResult | null> {
   if (!FISH_DATA[fishKey]) return null;
-  const water = ALL_WATERS.find((w) => w.name === waterName);
+  const water = resolveWater(waterName);
   if (!water) return null;
 
   const cacheKey = `${fishKey}|${water.name}|${Math.min(7, Math.max(0, Math.floor(daysAhead) || 0))}|${new Date().toISOString().slice(0, 10)}`;
@@ -466,9 +578,9 @@ export async function getForecast(fishKey: string, waterName: string, daysAhead:
     getPastPrecipitation(water.lat, water.lon, targetDate),
   ]);
   const weather: WeatherInfo =
-    weatherRaw ?? { temp: 18, pressure: 1013, weather_code: 1, temp_max: 22, temp_min: 14, precipitation: 0, rain: 0, showers: 0 };
+    weatherRaw ?? { temp: 18, pressure: 1013, weather_code: 1, temp_max: 22, temp_min: 14, precipitation: 0, rain: 0, showers: 0, wind_max: 0, hourly: [] };
 
-  const waterClarity = calculateWaterClarity(pastPrecip);
+  const waterClarity = seasonalMuddyOverride(water.name, targetDate) ?? calculateWaterClarity(pastPrecip);
   const moonPhase = getMoonPhase(targetDate);
   const result = calculateActivity(fishKey, weather, moonPhase, targetDate, waterClarity);
 
