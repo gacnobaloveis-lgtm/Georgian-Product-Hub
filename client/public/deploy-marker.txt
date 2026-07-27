@@ -1,1 +1,1 @@
-deploy v34 - fishing guide (მეთევზის გზამკვლევი) + FB share - 2026-07-27
+deploy v35 - guide: full waters list, fish photos, hourly wind/precip, hourglass loader - 2026-07-27
