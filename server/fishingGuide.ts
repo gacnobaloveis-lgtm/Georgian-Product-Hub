@@ -103,87 +103,90 @@ export const FISH_DATA: Record<string, FishInfo> = {
   },
 };
 
+export type WaterHabitat = "cold" | "warm" | "mixed";
+
 export interface WaterInfo {
   name: string;
   region: string;
   lat: number;
   lon: number;
+  habitat: WaterHabitat; // cold = ცივი/სწრაფი მთის წყალი, warm = თბილი/მდორე, mixed = ცივი სათავე + თბილი ქვემო წელი
 }
 
 export const WATERS: { rivers: WaterInfo[]; lakes: WaterInfo[] } = {
   rivers: [
-    { name: "მდ. მტკვარი", region: "თბილისი / ქართლი", lat: 41.7151, lon: 44.8271 },
-    { name: "მდ. ალაზანი", region: "კახეთი (თელავი)", lat: 41.92, lon: 45.48 },
-    { name: "მდ. იორი", region: "კახეთი (საგარეჯო)", lat: 41.73, lon: 45.33 },
-    { name: "მდ. არაგვი (თეთრი, შავი, ფშავის, ხევსურეთის)", region: "მცხეთა-მთიანეთი", lat: 42.13, lon: 44.77 },
-    { name: "მდ. დიდი ლიახვი", region: "შიდა ქართლი (გორი)", lat: 42.1, lon: 43.97 },
-    { name: "მდ. პატარა ლიახვი", region: "შიდა ქართლი", lat: 42.12, lon: 44.05 },
-    { name: "მდ. ქსანი", region: "შიდა ქართლი (მუხრანი)", lat: 42.0, lon: 44.42 },
-    { name: "მდ. ხრამი", region: "ქვემო ქართლი (წალკა)", lat: 41.45, lon: 44.35 },
-    { name: "მდ. დებედა", region: "ქვემო ქართლი (მარნეული)", lat: 41.44, lon: 44.85 },
-    { name: "მდ. ალგეთი", region: "ქვემო ქართლი (თეთრიწყარო)", lat: 41.62, lon: 44.55 },
-    { name: "მდ. ფარავანი", region: "ჯავახეთი", lat: 41.4, lon: 43.7 },
-    { name: "მდ. ძამა", region: "შიდა ქართლი (ქარელი)", lat: 42.0, lon: 43.85 },
-    { name: "მდ. ტანა", region: "შიდა ქართლი (გორი)", lat: 41.95, lon: 44.05 },
-    { name: "მდ. თეძამი", region: "შიდა ქართლი (კასპი)", lat: 41.95, lon: 44.35 },
-    { name: "მდ. რიონი", region: "იმერეთი (ქუთაისი)", lat: 42.27, lon: 42.71 },
-    { name: "მდ. ცხენისწყალი", region: "ლეჩხუმი (ცაგერი)", lat: 42.65, lon: 42.77 },
-    { name: "მდ. ყვირილა", region: "იმერეთი (ზესტაფონი)", lat: 42.11, lon: 43.05 },
-    { name: "მდ. ხანისწყალი", region: "იმერეთი (ბაღდათი)", lat: 42.05, lon: 42.83 },
-    { name: "მდ. ჯეჯორა", region: "რაჭა (ონი)", lat: 42.58, lon: 43.45 },
-    { name: "მდ. ჩხერიმელა", region: "იმერეთი (ხარაგაული)", lat: 42.02, lon: 43.2 },
-    { name: "მდ. ენგური", region: "სამეგრელო (ზუგდიდი)", lat: 42.51, lon: 41.87 },
-    { name: "მდ. ჭოროხი", region: "აჭარა (ბათუმი)", lat: 41.6, lon: 41.65 },
-    { name: "მდ. აჭარისწყალი", region: "აჭარა (ქედა)", lat: 41.6, lon: 41.94 },
-    { name: "მდ. კოდორი", region: "აფხაზეთი", lat: 42.85, lon: 41.15 },
-    { name: "მდ. ბზიფი", region: "აფხაზეთი", lat: 43.2, lon: 40.6 },
-    { name: "მდ. ხობისწყალი", region: "სამეგრელო (ხობი)", lat: 42.32, lon: 41.9 },
-    { name: "მდ. ტეხური", region: "სამეგრელო (სენაკი)", lat: 42.4, lon: 42.07 },
-    { name: "მდ. აბაშა", region: "სამეგრელო (მარტვილი)", lat: 42.4, lon: 42.38 },
-    { name: "მდ. სუფსა", region: "გურია (ოზურგეთი)", lat: 41.95, lon: 42.0 },
-    { name: "მდ. ნატანები", region: "გურია (ურეკი)", lat: 41.95, lon: 41.8 },
-    { name: "მდ. კინტრიში", region: "აჭარა (ქობულეთი)", lat: 41.8, lon: 41.95 },
-    { name: "მდ. ჩაქვისწყალი", region: "აჭარა (ჩაქვი)", lat: 41.72, lon: 41.73 },
-    { name: "მდ. ფსოუ", region: "აფხაზეთი (გაგრა)", lat: 43.28, lon: 40.27 },
-    { name: "მდ. თერგი", region: "მცხეთა-მთიანეთი (ყაზბეგი)", lat: 42.66, lon: 44.64 },
-    { name: "მდ. არღუნი", region: "ხევსურეთი (შატილი)", lat: 42.66, lon: 45.15 },
+    { name: "მდ. მტკვარი", region: "თბილისი / ქართლი", lat: 41.7151, lon: 44.8271 , habitat: "mixed" },
+    { name: "მდ. ალაზანი", region: "კახეთი (თელავი)", lat: 41.92, lon: 45.48 , habitat: "mixed" },
+    { name: "მდ. იორი", region: "კახეთი (საგარეჯო)", lat: 41.73, lon: 45.33 , habitat: "mixed" },
+    { name: "მდ. არაგვი (თეთრი, შავი, ფშავის, ხევსურეთის)", region: "მცხეთა-მთიანეთი", lat: 42.13, lon: 44.77 , habitat: "cold" },
+    { name: "მდ. დიდი ლიახვი", region: "შიდა ქართლი (გორი)", lat: 42.1, lon: 43.97 , habitat: "cold" },
+    { name: "მდ. პატარა ლიახვი", region: "შიდა ქართლი", lat: 42.12, lon: 44.05 , habitat: "cold" },
+    { name: "მდ. ქსანი", region: "შიდა ქართლი (მუხრანი)", lat: 42.0, lon: 44.42 , habitat: "cold" },
+    { name: "მდ. ხრამი", region: "ქვემო ქართლი (წალკა)", lat: 41.45, lon: 44.35 , habitat: "mixed" },
+    { name: "მდ. დებედა", region: "ქვემო ქართლი (მარნეული)", lat: 41.44, lon: 44.85 , habitat: "warm" },
+    { name: "მდ. ალგეთი", region: "ქვემო ქართლი (თეთრიწყარო)", lat: 41.62, lon: 44.55 , habitat: "mixed" },
+    { name: "მდ. ფარავანი", region: "ჯავახეთი", lat: 41.4, lon: 43.7 , habitat: "cold" },
+    { name: "მდ. ძამა", region: "შიდა ქართლი (ქარელი)", lat: 42.0, lon: 43.85 , habitat: "cold" },
+    { name: "მდ. ტანა", region: "შიდა ქართლი (გორი)", lat: 41.95, lon: 44.05 , habitat: "cold" },
+    { name: "მდ. თეძამი", region: "შიდა ქართლი (კასპი)", lat: 41.95, lon: 44.35 , habitat: "cold" },
+    { name: "მდ. რიონი", region: "იმერეთი (ქუთაისი)", lat: 42.27, lon: 42.71 , habitat: "mixed" },
+    { name: "მდ. ცხენისწყალი", region: "ლეჩხუმი (ცაგერი)", lat: 42.65, lon: 42.77 , habitat: "cold" },
+    { name: "მდ. ყვირილა", region: "იმერეთი (ზესტაფონი)", lat: 42.11, lon: 43.05 , habitat: "mixed" },
+    { name: "მდ. ხანისწყალი", region: "იმერეთი (ბაღდათი)", lat: 42.05, lon: 42.83 , habitat: "cold" },
+    { name: "მდ. ჯეჯორა", region: "რაჭა (ონი)", lat: 42.58, lon: 43.45 , habitat: "cold" },
+    { name: "მდ. ჩხერიმელა", region: "იმერეთი (ხარაგაული)", lat: 42.02, lon: 43.2 , habitat: "cold" },
+    { name: "მდ. ენგური", region: "სამეგრელო (ზუგდიდი)", lat: 42.51, lon: 41.87 , habitat: "cold" },
+    { name: "მდ. ჭოროხი", region: "აჭარა (ბათუმი)", lat: 41.6, lon: 41.65 , habitat: "mixed" },
+    { name: "მდ. აჭარისწყალი", region: "აჭარა (ქედა)", lat: 41.6, lon: 41.94 , habitat: "cold" },
+    { name: "მდ. კოდორი", region: "აფხაზეთი", lat: 42.85, lon: 41.15 , habitat: "cold" },
+    { name: "მდ. ბზიფი", region: "აფხაზეთი", lat: 43.2, lon: 40.6 , habitat: "cold" },
+    { name: "მდ. ხობისწყალი", region: "სამეგრელო (ხობი)", lat: 42.32, lon: 41.9 , habitat: "cold" },
+    { name: "მდ. ტეხური", region: "სამეგრელო (სენაკი)", lat: 42.4, lon: 42.07 , habitat: "cold" },
+    { name: "მდ. აბაშა", region: "სამეგრელო (მარტვილი)", lat: 42.4, lon: 42.38 , habitat: "mixed" },
+    { name: "მდ. სუფსა", region: "გურია (ოზურგეთი)", lat: 41.95, lon: 42.0 , habitat: "mixed" },
+    { name: "მდ. ნატანები", region: "გურია (ურეკი)", lat: 41.95, lon: 41.8 , habitat: "mixed" },
+    { name: "მდ. კინტრიში", region: "აჭარა (ქობულეთი)", lat: 41.8, lon: 41.95 , habitat: "cold" },
+    { name: "მდ. ჩაქვისწყალი", region: "აჭარა (ჩაქვი)", lat: 41.72, lon: 41.73 , habitat: "cold" },
+    { name: "მდ. ფსოუ", region: "აფხაზეთი (გაგრა)", lat: 43.28, lon: 40.27 , habitat: "cold" },
+    { name: "მდ. თერგი", region: "მცხეთა-მთიანეთი (ყაზბეგი)", lat: 42.66, lon: 44.64 , habitat: "cold" },
+    { name: "მდ. არღუნი", region: "ხევსურეთი (შატილი)", lat: 42.66, lon: 45.15 , habitat: "cold" },
   ],
   lakes: [
-    { name: "ფარავნის ტბა", region: "ჯავახეთი (ნინოწმინდა)", lat: 41.45, lon: 43.8 },
-    { name: "ტაბაწყური", region: "სამცხე-ჯავახეთი", lat: 41.65, lon: 43.63 },
-    { name: "რიწის ტბა", region: "აფხაზეთი", lat: 43.48, lon: 40.54 },
-    { name: "ლისის ტბა", region: "თბილისი", lat: 41.74, lon: 44.73 },
-    { name: "კუს ტბა", region: "თბილისი", lat: 41.7, lon: 44.75 },
-    { name: "ბაზალეთის ტბა", region: "მცხეთა-მთიანეთი (დუშეთი)", lat: 42.03, lon: 44.68 },
-    { name: "პალიასტომი", region: "სამეგრელო (ფოთი)", lat: 42.12, lon: 41.73 },
-    { name: "ჯანდარის ტბა", region: "ქვემო ქართლი (გარდაბანი)", lat: 41.4, lon: 45.1 },
-    { name: "ხანჩალის ტბა", region: "ჯავახეთი (ნინოწმინდა)", lat: 41.26, lon: 43.58 },
-    { name: "ბუღდაშენის ტბა", region: "ჯავახეთი (ნინოწმინდა)", lat: 41.2, lon: 43.65 },
-    { name: "მადათაფა", region: "ჯავახეთი", lat: 41.18, lon: 43.78 },
-    { name: "საღამოს ტბა", region: "ჯავახეთი", lat: 41.3, lon: 43.78 },
-    { name: "მწვანე ტბა", region: "აჭარა (ხულო)", lat: 41.65, lon: 42.32 },
-    { name: "შავი კლდეების ტბა", region: "კახეთი (ლაგოდეხი)", lat: 41.92, lon: 46.32 },
-    { name: "აბუდელაურის ტბები (თეთრი, ლურჯი, მწვანე)", region: "ხევსურეთი", lat: 42.52, lon: 44.87 },
-    { name: "ორეთის ტბა", region: "რაჭა-ლეჩხუმი", lat: 42.55, lon: 43.0 },
-    { name: "ტობავარჩხილი", region: "სამეგრელოს მთიანეთი", lat: 42.83, lon: 42.35 },
-    { name: "კელის ტბა", region: "მთიანეთი (ყელის ზეგანი)", lat: 42.54, lon: 44.28 },
-    { name: "პატარა რიწა", region: "აფხაზეთი", lat: 43.47, lon: 40.5 },
-    { name: "ამტყელის ტბა", region: "აფხაზეთი", lat: 43.07, lon: 41.28 },
-    { name: "ეწერის ტბა", region: "სამეგრელო", lat: 42.6, lon: 42.05 },
-    { name: "ყარაღაჯის ტბა", region: "კახეთი (დედოფლისწყარო)", lat: 41.35, lon: 46.05 },
-    { name: "თბილისის ზღვა (წყალსაცავი)", region: "თბილისი", lat: 41.77, lon: 44.87 },
-    { name: "ჟინვალის წყალსაცავი", region: "მცხეთა-მთიანეთი", lat: 42.13, lon: 44.77 },
-    { name: "ენგურის წყალსაცავი", region: "სამეგრელო (ჯვარი)", lat: 42.75, lon: 42.05 },
-    { name: "ფალდოს (სიონის) წყალსაცავი", region: "მცხეთა-მთიანეთი (თიანეთი)", lat: 41.99, lon: 45.02 },
-    { name: "შაორის წყალსაცავი", region: "რაჭა (ამბროლაური)", lat: 42.42, lon: 43.05 },
-    { name: "ტყიბულის წყალსაცავი", region: "იმერეთი (ტყიბული)", lat: 42.37, lon: 42.98 },
-    { name: "ვალეს წყალსაცავი", region: "სამცხე (ახალციხე)", lat: 41.6, lon: 42.85 },
-    { name: "ალგეთის წყალსაცავი", region: "ქვემო ქართლი", lat: 41.5, lon: 44.6 },
-    { name: "წალკის წყალსაცავი", region: "ქვემო ქართლი (წალკა)", lat: 41.6, lon: 44.05 },
-    { name: "ნადარბაზევის ტბა (წყალსაცავი)", region: "შიდა ქართლი (გორი)", lat: 41.9, lon: 44.2 },
-    { name: "სამგორის წყალსაცავი", region: "თბილისის ზღვასთან", lat: 41.75, lon: 45.0 },
-    { name: "ვარციხის წყალსაცავი", region: "იმერეთი (ბაღდათი)", lat: 42.15, lon: 42.72 },
-    { name: "გალის წყალსაცავი", region: "აფხაზეთი (გალი)", lat: 42.65, lon: 41.75 },
+    { name: "ფარავნის ტბა", region: "ჯავახეთი (ნინოწმინდა)", lat: 41.45, lon: 43.8 , habitat: "cold" },
+    { name: "ტაბაწყური", region: "სამცხე-ჯავახეთი", lat: 41.65, lon: 43.63 , habitat: "cold" },
+    { name: "რიწის ტბა", region: "აფხაზეთი", lat: 43.48, lon: 40.54 , habitat: "cold" },
+    { name: "ლისის ტბა", region: "თბილისი", lat: 41.74, lon: 44.73 , habitat: "warm" },
+    { name: "კუს ტბა", region: "თბილისი", lat: 41.7, lon: 44.75 , habitat: "warm" },
+    { name: "ბაზალეთის ტბა", region: "მცხეთა-მთიანეთი (დუშეთი)", lat: 42.03, lon: 44.68 , habitat: "warm" },
+    { name: "პალიასტომი", region: "სამეგრელო (ფოთი)", lat: 42.12, lon: 41.73 , habitat: "warm" },
+    { name: "ჯანდარის ტბა", region: "ქვემო ქართლი (გარდაბანი)", lat: 41.4, lon: 45.1 , habitat: "warm" },
+    { name: "ხანჩალის ტბა", region: "ჯავახეთი (ნინოწმინდა)", lat: 41.26, lon: 43.58 , habitat: "cold" },
+    { name: "ბუღდაშენის ტბა", region: "ჯავახეთი (ნინოწმინდა)", lat: 41.2, lon: 43.65 , habitat: "cold" },
+    { name: "მადათაფა", region: "ჯავახეთი", lat: 41.18, lon: 43.78 , habitat: "cold" },
+    { name: "საღამოს ტბა", region: "ჯავახეთი", lat: 41.3, lon: 43.78 , habitat: "cold" },
+    { name: "მწვანე ტბა", region: "აჭარა (ხულო)", lat: 41.65, lon: 42.32 , habitat: "cold" },
+    { name: "შავი კლდეების ტბა", region: "კახეთი (ლაგოდეხი)", lat: 41.92, lon: 46.32 , habitat: "cold" },
+    { name: "აბუდელაურის ტბები (თეთრი, ლურჯი, მწვანე)", region: "ხევსურეთი", lat: 42.52, lon: 44.87 , habitat: "cold" },
+    { name: "ორეთის ტბა", region: "რაჭა-ლეჩხუმი", lat: 42.55, lon: 43.0 , habitat: "cold" },
+    { name: "ტობავარჩხილი", region: "სამეგრელოს მთიანეთი", lat: 42.83, lon: 42.35 , habitat: "cold" },
+    { name: "კელის ტბა", region: "მთიანეთი (ყელის ზეგანი)", lat: 42.54, lon: 44.28 , habitat: "cold" },
+    { name: "პატარა რიწა", region: "აფხაზეთი", lat: 43.47, lon: 40.5 , habitat: "cold" },
+    { name: "ამტყელის ტბა", region: "აფხაზეთი", lat: 43.07, lon: 41.28 , habitat: "cold" },
+    { name: "ეწერის ტბა", region: "სამეგრელო", lat: 42.6, lon: 42.05 , habitat: "warm" },
+    { name: "ყარაღაჯის ტბა", region: "კახეთი (დედოფლისწყარო)", lat: 41.35, lon: 46.05 , habitat: "warm" },
+    { name: "თბილისის ზღვა (წყალსაცავი)", region: "თბილისი", lat: 41.77, lon: 44.87 , habitat: "warm" },
+    { name: "ჟინვალის წყალსაცავი", region: "მცხეთა-მთიანეთი", lat: 42.13, lon: 44.77 , habitat: "warm" },
+    { name: "ენგურის წყალსაცავი", region: "სამეგრელო (ჯვარი)", lat: 42.75, lon: 42.05 , habitat: "cold" },
+    { name: "ფალდოს (სიონის) წყალსაცავი", region: "მცხეთა-მთიანეთი (თიანეთი)", lat: 41.99, lon: 45.02 , habitat: "warm" },
+    { name: "შაორის წყალსაცავი", region: "რაჭა (ამბროლაური)", lat: 42.42, lon: 43.05 , habitat: "cold" },
+    { name: "ტყიბულის წყალსაცავი", region: "იმერეთი (ტყიბული)", lat: 42.37, lon: 42.98 , habitat: "warm" },
+    { name: "ვალეს წყალსაცავი", region: "სამცხე (ახალციხე)", lat: 41.6, lon: 42.85 , habitat: "warm" },
+    { name: "ალგეთის წყალსაცავი", region: "ქვემო ქართლი", lat: 41.5, lon: 44.6 , habitat: "warm" },
+    { name: "წალკის წყალსაცავი", region: "ქვემო ქართლი (წალკა)", lat: 41.6, lon: 44.05 , habitat: "warm" },
+    { name: "ნადარბაზევის ტბა (წყალსაცავი)", region: "შიდა ქართლი (გორი)", lat: 41.9, lon: 44.2 , habitat: "warm" },
+    { name: "სამგორის წყალსაცავი", region: "თბილისის ზღვასთან", lat: 41.75, lon: 45.0 , habitat: "warm" },
+    { name: "ვარციხის წყალსაცავი", region: "იმერეთი (ბაღდათი)", lat: 42.15, lon: 42.72 , habitat: "warm" },
+    { name: "გალის წყალსაცავი", region: "აფხაზეთი (გალი)", lat: 42.65, lon: 41.75 , habitat: "warm" },
   ],
 };
 
@@ -233,6 +236,72 @@ export function seasonalMuddyOverride(waterName: string, date: Date): WaterClari
     percent: 25,
     explanation: `${waterName} ამ სეზონზე (ნოემბრამდე) თითქმის მუდმივად მღვრიეა სეზონური ნატანის გამო`,
   };
+}
+
+// ── სად რომელი თევზი ბინადრობს ───────────────────────────────
+// kalmahi = ცივი წყლის თევზი; დანარჩენები თბილი/მდორე წყლისა.
+// korchila (ქორჭილა) განსაკუთრებით შეზღუდულია — მხოლოდ ნელი, მდორე წყლები.
+const KORCHILA_EXTRA_ABSENT = ["მდ. ყვირილა", "მდ. სუფსა", "მდ. ნატანები", "მდ. აბაშა", "მდ. ჭოროხი"];
+
+export interface HabitatCheck {
+  ok: boolean;
+  message?: string; // როცა თევზი საერთოდ არ ბინადრობს
+  note?: string; // როცა მხოლოდ გარკვეულ წელში გვხვდება
+}
+
+export function checkFishHabitat(fishKey: string, water: WaterInfo): HabitatCheck {
+  const fish = FISH_DATA[fishKey];
+  if (!fish) return { ok: false, message: "უცნობი თევზი" };
+  const fishName = fish.name;
+  const isRiver = water.name.startsWith("მდ.");
+
+  if (fishKey === "kalmahi") {
+    // კალმახი — ცივი, ჟანგბადიანი წყალი
+    if (water.habitat === "warm") {
+      return {
+        ok: false,
+        message: `ვწუხვართ — ${fishName} აქ არ ბინადრობს: წყალი ზედმეტად თბილი და ნაკლებჟანგბადიანია მისთვის.`,
+      };
+    }
+    if (water.habitat === "mixed") {
+      return {
+        ok: true,
+        note: `ℹ️ ${fishName} ამ მდინარეში მხოლოდ სათავესა და ზემო წელში გვხვდება, სადაც წყალი ცივი და ჟანგბადიანია — შუა და ქვემო წელში ვერ შეხვდები.`,
+      };
+    }
+    return { ok: true };
+  }
+
+  if (fishKey === "korchila") {
+    if (water.habitat === "cold" || KORCHILA_EXTRA_ABSENT.includes(water.name)) {
+      return {
+        ok: false,
+        message: `ვწუხვართ — ${fishName} აქ არ ბინადრობს. ის მხოლოდ ნელ, მდორე მდინარეებში, ტბებსა და წყალსაცავებშია გავრცელებული (მაგ. პალიასტომი, ჯანდარა, თბილისის ზღვა, კუს ტბა, ლისი).`,
+      };
+    }
+    if (water.habitat === "mixed" && isRiver) {
+      return {
+        ok: true,
+        note: `ℹ️ ${fishName} ამ მდინარეში მხოლოდ ქვემო, ნელ და მდორე წელში გვხვდება — სწრაფ და ცივ მონაკვეთებში არ ბინადრობს.`,
+      };
+    }
+    return { ok: true };
+  }
+
+  // თბილი წყლის თევზები: ქაშაპი, ქარიყლაპია, შამაია
+  if (water.habitat === "cold") {
+    return {
+      ok: false,
+      message: `ვწუხვართ — ${fishName} აქ არ ბინადრობს ცივი წყლისა და არახელსაყრელი პირობების გამო.`,
+    };
+  }
+  if (water.habitat === "mixed" && isRiver) {
+    return {
+      ok: true,
+      note: `ℹ️ ${fishName} ამ მდინარეში ძირითადად შუა და ქვემო (მდორე, თბილ) წელში გვხვდება — ცივ სათავესთან არ ბინადრობს.`,
+    };
+  }
+  return { ok: true };
 }
 
 export function resolveWater(waterName: string): WaterInfo | undefined {
