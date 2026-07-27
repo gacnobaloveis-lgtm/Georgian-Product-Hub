@@ -1,1 +1,1 @@
-deploy v37 - guide: fish habitat checks per water - 2026-07-27
+deploy v38 - guide: real fish photos + kashapi latin fix - 2026-07-27
