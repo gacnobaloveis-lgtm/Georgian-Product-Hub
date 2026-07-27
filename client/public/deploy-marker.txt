@@ -1,1 +1,1 @@
-deploy v35 - guide: full waters list, fish photos, hourly wind/precip, hourglass loader - 2026-07-27
+deploy v36 - guide: kvirila headwater clarity logic - 2026-07-27
