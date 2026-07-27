@@ -975,6 +975,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 pb-20 md:pb-0">
+      <h1 className="sr-only">Spiningebi.ge — სპინინგით თევზაობის სრული აღჭურვილობა საქართველოში</h1>
       <div
         className="relative z-10 mx-auto aspect-[1744/720] sm:aspect-[1908/332] w-full max-w-[1908px] overflow-hidden rounded-none bg-slate-950"
       >
@@ -983,7 +984,7 @@ export default function HomePage() {
             <source media="(max-width: 639px)" srcSet={slide.mobile} />
             <img
               src={slide.desktop}
-              alt="spiningebi.ge"
+              alt="Spiningebi.ge — სპინინგით თევზაობის აღჭურვილობა საქართველოში"
               className={`absolute inset-0 block h-full w-full object-contain sm:object-cover transition-opacity duration-1000 ease-in-out ${idx === heroSlide ? "opacity-100" : "opacity-0"}`}
               data-testid={idx === 0 ? "img-hero" : `img-hero-${idx}`}
             />
