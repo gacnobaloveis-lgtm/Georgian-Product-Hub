@@ -1,1 +1,1 @@
-deploy v53 - guide: fish photos object-contain (no crop) - 2026-07-28
+deploy v54 - guide: kashapi present in Tekhuri - 2026-07-28
