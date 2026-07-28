@@ -303,7 +303,46 @@ export async function registerRoutes(
           // გეოკოდერი მიუწვდომელია — მხოლოდ ლოკალური შედეგები
         }
       }
-      res.json({ results: [...local, ...geo].slice(0, 8) });
+      // OSM/Nominatim — პატარა მდინარეები, რომლებსაც Open-Meteo ვერ პოულობს
+      let osm: any[] = [];
+      if (local.length + geo.length < 3) {
+        try {
+          const r = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&countrycodes=ge&format=jsonv2&accept-language=ka&limit=8`,
+            {
+              headers: { "User-Agent": "spiningebi.ge fishing guide (contact: info@spiningebi.ge)" },
+              signal: AbortSignal.timeout(6000),
+            }
+          );
+          const data: any = await r.json();
+          const items = Array.isArray(data) ? data : [];
+          const waterItems = items.filter((g: any) =>
+            g.class === "waterway" || g.class === "water" || (g.class === "natural" && g.type === "water")
+          );
+          const pick = waterItems.length ? waterItems : items;
+          const seen = new Set<string>();
+          osm = pick
+            .map((g: any) => {
+              const parts = String(g.display_name || "").split(",").map((s: string) => s.trim());
+              const name = parts[0] || g.name || q;
+              const region = parts.slice(1, 3).filter((p: string) => p && p !== "საქართველო").join(", ");
+              return { name, region, lat: Number(g.lat), lon: Number(g.lon), known: false };
+            })
+            .filter((g: any) => {
+              const key = `${g.name}|${g.region}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return (
+                !local.some((l) => l.name === g.name) &&
+                !geo.some((o: any) => Math.abs(o.lat - g.lat) < 0.05 && Math.abs(o.lon - g.lon) < 0.05)
+              );
+            })
+            .slice(0, 5);
+        } catch {
+          // OSM მიუწვდომელია
+        }
+      }
+      res.json({ results: [...local, ...geo, ...osm].slice(0, 8) });
     } catch (err) {
       console.error("[guide] water-search error:", err);
       res.status(500).json({ error: "ძებნა ვერ მოხერხდა" });
