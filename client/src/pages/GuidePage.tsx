@@ -390,10 +390,12 @@ export default function GuidePage() {
               <Lock className="h-6 w-6 text-emerald-300" />
             </div>
             <p className="text-base font-bold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
-              სანახავად აუცილებელია საიტზე ავტორიზაცია
+              {fishKey && data?.fish[fishKey] && waterName
+                ? `გსურთ გაიგოთ, როგორ იაქტიურებს ${days === 0 ? "დღეს" : days === 1 ? "ხვალ" : days === 2 ? "ზეგ" : `${days} დღეში`} ${waterName}-ზე ${data.fish[fishKey].name}?`
+                : "სანახავად აუცილებელია საიტზე ავტორიზაცია"}
             </p>
             <p className="mt-1.5 text-sm text-emerald-100/80 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
-              გაიარე ავტორიზაცია და ნახავ, როგორი აქტივობა იქნება — პროგნოზი დეტალური ახსნებით.
+              გაიარეთ ავტორიზაცია და მაშინვე ნახავთ დეტალურ პროგნოზს — აქტივობის პროცენტი, საუკეთესო დრო და ახსნები.
             </p>
             <Button
               onClick={() => setLoginOpen(true)}
