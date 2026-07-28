@@ -1,1 +1,1 @@
-deploy v46 - guide: OSM river search fallback - 2026-07-28
+deploy v47 - guide: 7-day weather cards replace hourly wind/precip - 2026-07-28
