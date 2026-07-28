@@ -1,1 +1,1 @@
-deploy v43 - guide: FB share uses fish photo as og:image - 2026-07-27
+deploy v44 - guide: free-text water search + no latin names - 2026-07-28
