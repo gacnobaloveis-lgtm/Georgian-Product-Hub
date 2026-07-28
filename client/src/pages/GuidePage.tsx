@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation, useSearch } from "wouter";
 import { ArrowLeft, Compass, Share2, Hourglass, Fish as FishIcon, Clock, Bug, Droplets, Moon, Thermometer, Gauge, Lock, UserCircle, Wind, CloudRain } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -135,6 +136,10 @@ export default function GuidePage() {
   const [sharedVisit, setSharedVisit] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const { isRealUser, isLoading: authLoading } = useAuth();
+  const { data: fbConfig } = useQuery<{ appId: string }>({
+    queryKey: ["/api/facebook/app-id"],
+    staleTime: Infinity,
+  });
 
   useEffect(() => {
     fetch("/api/guide/data")
@@ -230,18 +235,31 @@ export default function GuidePage() {
     }
   }
 
-  function shareOnFacebook() {
+  async function shareOnFacebook() {
     if (!result || !fishKey || !waterName) return;
     const custom =
       selectedWater && !selectedWater.known
         ? `&lat=${selectedWater.lat}&lon=${selectedWater.lon}&region=${encodeURIComponent(selectedWater.region)}`
         : "";
     const url = `${window.location.origin}/guide?fish=${encodeURIComponent(fishKey)}&water=${encodeURIComponent(waterName)}&days=${days}${custom}`;
-    window.open(
-      `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-      "_blank",
-      "width=626,height=436"
-    );
+
+    // მობილურზე — სისტემური გაზიარების ფანჯარა (ჯგუფებშიც უშვებს)
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: "მეთევზის გზამკვლევი | spiningebi.ge", url });
+      } catch {
+        // მომხმარებელმა გააუქმა
+      }
+      return;
+    }
+
+    // დესკტოპზე — FB share dialog (app_id-ით ჯგუფებში გაზიარებაც შესაძლებელია)
+    const appId = fbConfig?.appId;
+    const fbUrl = appId
+      ? `https://www.facebook.com/dialog/share?app_id=${appId}&display=popup&href=${encodeURIComponent(url)}&redirect_uri=${encodeURIComponent(url)}`
+      : `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    const popup = window.open(fbUrl, "_blank", "width=626,height=600,noopener=no");
+    if (!popup) window.location.href = fbUrl;
   }
 
   const cardCls = "rounded-2xl border border-white/20 bg-white/25 p-5 shadow-xl backdrop-blur-md";
