@@ -343,11 +343,11 @@ export async function registerRoutes(
       const pageUrl = escHtml(`${siteUrl}${req.originalUrl}`);
       const safeTitle = escHtml(title);
       const safeDesc = escHtml(desc);
-      const fishImage = fishKey && guideFish[fishKey]?.image ? `${siteUrl}${guideFish[fishKey].image}` : null;
+      const fishImage = fishKey && guideFish[fishKey]?.image
+        ? `${siteUrl}${guideFish[fishKey].image.replace(/\.jpg$/, "-share.jpg")}`
+        : null;
       const safeImage = escHtml(fishImage || `${siteUrl}/guide-share.jpg`);
-      const imageSizeMeta = fishImage
-        ? ""
-        : `\n  <meta property="og:image:width" content="1200"/>\n  <meta property="og:image:height" content="630"/>`;
+      const imageSizeMeta = `\n  <meta property="og:image:width" content="1200"/>\n  <meta property="og:image:height" content="630"/>`;
 
       return res.status(200).set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
 <html lang="ka">
