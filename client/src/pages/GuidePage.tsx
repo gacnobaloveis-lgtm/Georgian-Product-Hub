@@ -493,8 +493,11 @@ export default function GuidePage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className={`${cardCls} !p-4 text-center`}>
                 <Thermometer className="mx-auto mb-1.5 h-5 w-5 text-sky-300" />
-                <p className="text-xs text-emerald-100/80">ტემპერატურა</p>
+                <p className="text-xs text-emerald-100/80">ტემპერატურა (საშ.)</p>
                 <p className="font-bold text-white">{result.weather.temp}°C</p>
+                <p className="text-[11px] text-emerald-100/70">
+                  {Math.round(result.weather.temp_max)}° / {Math.round(result.weather.temp_min)}°
+                </p>
               </div>
               <div className={`${cardCls} !p-4 text-center`}>
                 <Gauge className="mx-auto mb-1.5 h-5 w-5 text-amber-300" />
