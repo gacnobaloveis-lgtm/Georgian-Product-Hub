@@ -1,1 +1,1 @@
-deploy v49 - guide: explicit per-species presence DB from user list - 2026-07-28
+deploy v50 - guide: FB share caption for hand-typed (geocoded) waters - 2026-07-28
