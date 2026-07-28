@@ -1,1 +1,1 @@
-deploy v55 - guide: personalized auth prompt for shared visitors - 2026-07-28
+deploy v56 - guide: FB share via native sheet / dialog-share (group sharing) - 2026-07-28
