@@ -15,6 +15,7 @@ export interface FishInfo {
   active_months: number[];
   best_time: string;
   bait: string;
+  lure: string;
   color: string;
   clarity_pref: string;
   image: string;
@@ -33,6 +34,7 @@ export const FISH_DATA: Record<string, FishInfo> = {
     active_months: [4, 5, 6, 7, 8, 9, 10],
     best_time: "ღამე 00:00 – განთიადი",
     bait: "კიბორჩხალა, თევზი, ჭია",
+    lure: "ვობლერი, ყანყალა, ტრიალა",
     color: "#00d9a5",
     clarity_pref: "წმინდა",
     image: "/guide-fish/kashapi.jpg",
@@ -49,6 +51,7 @@ export const FISH_DATA: Record<string, FishInfo> = {
     active_months: [3, 4, 5, 6, 7, 8, 9, 10, 11],
     best_time: "განთიადი და დამალება",
     bait: "ბუგრი, მელის ჭია, ხელოვნური მძივები",
+    lure: "ტრიალა, ყანყალა და ვობლერი — სპეციალურად ძლიერი დინებისთვის დამზადებული",
     color: "#38bdf8",
     clarity_pref: "წმინდა",
     image: "/guide-fish/kalmahi.jpg",
@@ -65,6 +68,7 @@ export const FISH_DATA: Record<string, FishInfo> = {
     active_months: [3, 4, 5, 6, 7, 8, 9, 10, 11],
     best_time: "დილა 5:00–9:00 და საღამო 18:00–21:00",
     bait: "ბუგრი, მბრძანებელი, ხელოვნური სატყუარა",
+    lure: "ტრიალა, სილიკონის სატყუარა",
     color: "#f87171",
     clarity_pref: "საშუალო",
     image: "/guide-fish/korchila.jpg",
@@ -81,6 +85,7 @@ export const FISH_DATA: Record<string, FishInfo> = {
     active_months: [4, 5, 6, 7, 8, 9, 10],
     best_time: "ღამე 22:00–03:00",
     bait: "თევზი, ბუგრი, ჯიქურა",
+    lure: "ვობლერი, დიდი ზომის ყანყალა და დიდი გრამაჟის ტრიალა",
     color: "#fbbf24",
     clarity_pref: "საშუალო",
     image: "/guide-fish/kariklapi.jpg",
@@ -97,6 +102,7 @@ export const FISH_DATA: Record<string, FishInfo> = {
     active_months: [4, 5, 6, 7, 8, 9],
     best_time: "დილა 6:00–11:00 და საღამო 16:00–19:00",
     bait: "ბუგრი, მწერი, მცირე თევზი",
+    lure: "ყანყალა, ტრიალა და სილიკონი",
     color: "#a78bfa",
     clarity_pref: "წმინდა",
     image: "/guide-fish/shamaya.jpg",
@@ -501,6 +507,7 @@ export interface ActivityResult {
   recommendation: string;
   best_time: string;
   bait: string;
+  lure: string;
   fish: FishInfo;
   weather: WeatherInfo;
   moon_phase: number;
