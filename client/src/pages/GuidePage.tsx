@@ -19,6 +19,7 @@ interface FishInfo {
   desc: string;
   best_time: string;
   bait: string;
+  lure: string;
   color: string;
   image: string;
 }
@@ -257,10 +258,17 @@ export default function GuidePage() {
                 className="h-20 w-20 shrink-0 rounded-xl border border-white/25 object-cover shadow-lg"
                 data-testid="img-guide-fish"
               />
-              <p className="text-sm leading-6 text-emerald-50 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
-                <FishIcon className="mr-1.5 inline h-4 w-4 text-emerald-300" />
-                {data.fish[fishKey].desc}
-              </p>
+              <div>
+                <p className="text-sm leading-6 text-emerald-50 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
+                  <FishIcon className="mr-1.5 inline h-4 w-4 text-emerald-300" />
+                  {data.fish[fishKey].desc}
+                </p>
+                {data.fish[fishKey].lure && (
+                  <p className="mt-1.5 text-sm leading-6 text-amber-200 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]" data-testid="text-guide-lure">
+                    🎣 სატყუარა: {data.fish[fishKey].lure}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 
@@ -325,6 +333,11 @@ export default function GuidePage() {
               <p className="text-sm text-emerald-100/80 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
                 {result.fish.name} • {result.water.name} • {result.date}
               </p>
+              {result.fish.lure && (
+                <p className="mt-1 text-sm text-amber-200 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]" data-testid="text-guide-result-lure">
+                  🎣 სატყუარა: {result.fish.lure}
+                </p>
+              )}
               <div className="relative mx-auto my-4 h-36 w-36">
                 <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
                   <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="10" />
