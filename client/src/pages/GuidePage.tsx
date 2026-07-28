@@ -195,10 +195,10 @@ export default function GuidePage() {
             <div>
               <label className={labelCls}>თევზი</label>
               <select value={fishKey} onChange={(e) => setFishKey(e.target.value)} className={selectCls} data-testid="select-guide-fish">
-                <option value="">— აირჩიე თევზი —</option>
+                <option className="bg-slate-800 text-white" value="">— აირჩიე თევზი —</option>
                 {data &&
                   Object.entries(data.fish).map(([k, f]) => (
-                    <option key={k} value={k}>
+                    <option className="bg-slate-800 text-white" key={k} value={k}>
                       {f.name} ({f.latin})
                     </option>
                   ))}
@@ -207,19 +207,19 @@ export default function GuidePage() {
             <div>
               <label className={labelCls}>მდინარე / ტბა</label>
               <select value={waterName} onChange={(e) => setWaterName(e.target.value)} className={selectCls} data-testid="select-guide-water">
-                <option value="">— აირჩიე ადგილი —</option>
+                <option className="bg-slate-800 text-white" value="">— აირჩიე ადგილი —</option>
                 {data && (
                   <>
-                    <optgroup label="მდინარეები">
+                    <optgroup className="bg-slate-800 text-white" label="მდინარეები">
                       {data.waters.rivers.map((w) => (
-                        <option key={w.name} value={w.name}>
+                        <option className="bg-slate-800 text-white" key={w.name} value={w.name}>
                           {w.name} ({w.region})
                         </option>
                       ))}
                     </optgroup>
-                    <optgroup label="ტბები">
+                    <optgroup className="bg-slate-800 text-white" label="ტბები">
                       {data.waters.lakes.map((w) => (
-                        <option key={w.name} value={w.name}>
+                        <option className="bg-slate-800 text-white" key={w.name} value={w.name}>
                           {w.name} ({w.region})
                         </option>
                       ))}
