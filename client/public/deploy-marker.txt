@@ -1,1 +1,1 @@
-deploy v57 - guide: kalmahi absent on unknown lowland waters (custom habitat check) - 2026-07-28
+deploy v58 - guide: temp card shows avg label + max/min - 2026-07-28
