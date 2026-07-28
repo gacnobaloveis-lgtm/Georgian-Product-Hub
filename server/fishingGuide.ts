@@ -417,6 +417,55 @@ export async function getWeather(lat: number, lon: number, targetDate: Date): Pr
   }
 }
 
+export interface WeekDay {
+  date: string; // YYYY-MM-DD
+  day: string; // ქართული შემოკლებული დღე
+  weather_code: number;
+  temp_max: number;
+  temp_min: number;
+  wind_max: number;
+  precip_prob: number; // %
+}
+
+const KA_DAYS = ["კვი", "ორშ", "სამ", "ოთხ", "ხუთ", "პარ", "შაბ"];
+const KA_MONTHS = ["იან", "თებ", "მარ", "აპრ", "მაი", "ივნ", "ივლ", "აგვ", "სექ", "ოქტ", "ნოე", "დეკ"];
+
+const weekCache = new Map<string, { ts: number; week: WeekDay[] }>();
+
+export async function getWeekForecast(lat: number, lon: number): Promise<WeekDay[]> {
+  const key = `${lat}|${lon}`;
+  const cached = weekCache.get(key);
+  if (cached && Date.now() - cached.ts < 10 * 60 * 1000) return cached.week;
+  try {
+    const url =
+      `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      `&daily=temperature_2m_max,temperature_2m_min,weathercode,wind_speed_10m_max,precipitation_probability_max` +
+      `&timezone=Asia/Tbilisi&forecast_days=7`;
+    const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
+    const data: any = await r.json();
+    const daily = data?.daily;
+    if (!daily?.time?.length) return [];
+    const week: WeekDay[] = daily.time.map((t: string, i: number) => {
+      const d = new Date(t + "T00:00:00");
+      return {
+        date: t,
+        day: `${KA_DAYS[d.getDay()]}, ${d.getDate()} ${KA_MONTHS[d.getMonth()]}`,
+        weather_code: daily.weathercode?.[i] ?? 0,
+        temp_max: Math.round(daily.temperature_2m_max?.[i] ?? 0),
+        temp_min: Math.round(daily.temperature_2m_min?.[i] ?? 0),
+        wind_max: Math.round(daily.wind_speed_10m_max?.[i] ?? 0),
+        precip_prob: Math.round(daily.precipitation_probability_max?.[i] ?? 0),
+      };
+    });
+    if (weekCache.size > 300) weekCache.clear();
+    weekCache.set(key, { ts: Date.now(), week });
+    return week;
+  } catch (e) {
+    console.error("[guide] week forecast error:", e);
+    return [];
+  }
+}
+
 export interface PastPrecip {
   date: string;
   days_ago: number;
@@ -659,6 +708,7 @@ export interface ForecastResult extends ActivityResult {
   date: string;
   water: WaterInfo;
   past_precipitation: PastPrecip[];
+  week: WeekDay[];
 }
 
 // short-lived cache: same fish/water/day combo → one Open-Meteo fetch per 10 min
@@ -682,9 +732,10 @@ export async function getForecastForWater(fishKey: string, water: WaterInfo, day
   const days = Math.min(7, Math.max(0, Math.floor(daysAhead) || 0));
   const targetDate = new Date(Date.now() + days * 86400000);
 
-  const [weatherRaw, pastPrecip] = await Promise.all([
+  const [weatherRaw, pastPrecip, week] = await Promise.all([
     getWeather(water.lat, water.lon, targetDate),
     getPastPrecipitation(water.lat, water.lon, targetDate),
+    getWeekForecast(water.lat, water.lon),
   ]);
   const weather: WeatherInfo =
     weatherRaw ?? { temp: 18, pressure: 1013, weather_code: 1, temp_max: 22, temp_min: 14, precipitation: 0, rain: 0, showers: 0, wind_max: 0, hourly: [] };
@@ -701,6 +752,7 @@ export async function getForecastForWater(fishKey: string, water: WaterInfo, day
     date: targetDate.toISOString().slice(0, 10),
     water,
     past_precipitation: pastPrecip,
+    week,
   };
   if (forecastCache.size > 500) forecastCache.clear();
   forecastCache.set(cacheKey, { ts: Date.now(), result: forecast });
