@@ -541,10 +541,6 @@ export default function GuidePage() {
                   <Clock className="h-4 w-4 shrink-0 text-emerald-300" />
                   <span><strong>საუკეთესო დრო:</strong> {result.best_time}</span>
                 </p>
-                <p className="flex items-center gap-2 text-sm text-emerald-50 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
-                  <Bug className="h-4 w-4 shrink-0 text-amber-300" />
-                  <span><strong>სატყუარა:</strong> {result.bait}</span>
-                </p>
               </div>
               <hr className="my-3 border-white/20" />
               <ul className="space-y-2">
