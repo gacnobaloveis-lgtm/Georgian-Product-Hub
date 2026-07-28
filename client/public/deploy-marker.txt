@@ -1,1 +1,1 @@
-deploy v47 - guide: 7-day weather cards replace hourly wind/precip - 2026-07-28
+deploy v48 - guide: kariklapi Black Sea basin only (absent in Kura/Mtkvari) - 2026-07-28
