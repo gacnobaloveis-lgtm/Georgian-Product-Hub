@@ -37,6 +37,30 @@ interface WaterSuggestion {
   known: boolean;
 }
 
+interface WeekDay {
+  date: string;
+  day: string;
+  weather_code: number;
+  temp_max: number;
+  temp_min: number;
+  wind_max: number;
+  precip_prob: number;
+}
+
+function weatherEmoji(code: number): string {
+  if (code === 0) return "☀️";
+  if (code === 1) return "🌤️";
+  if (code === 2) return "⛅";
+  if (code === 3) return "☁️";
+  if (code === 45 || code === 48) return "🌫️";
+  if (code >= 51 && code <= 57) return "🌦️";
+  if (code >= 61 && code <= 67) return "🌧️";
+  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "🌨️";
+  if (code >= 80 && code <= 82) return "🌧️";
+  if (code >= 95) return "⛈️";
+  return "🌤️";
+}
+
 interface GuideData {
   fish: Record<string, FishInfo>;
   waters: { rivers: WaterInfo[]; lakes: WaterInfo[] };
@@ -57,6 +81,7 @@ interface ForecastResult {
     wind_max: number;
     hourly: { hour: string; wind: number; precip: number }[];
   };
+  week?: WeekDay[];
   moon_name: string;
   water_clarity: { status: string; percent: number; explanation: string };
   date: string;
@@ -468,28 +493,44 @@ export default function GuidePage() {
               </div>
             </div>
 
-            {result.weather.hourly && result.weather.hourly.length > 0 && (
+            {result.week && result.week.length > 0 && (
               <div className={cardCls}>
                 <p className="mb-3 flex items-center gap-2 text-sm font-semibold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
-                  <Wind className="h-4 w-4 text-sky-300" />
-                  ქარი და ნალექი საათების მიხედვით
+                  <CloudRain className="h-4 w-4 text-sky-300" />
+                  ამინდი კვირის განმავლობაში
                 </p>
-                <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">
-                  {result.weather.hourly.map((h) => (
-                    <div key={h.hour} className="rounded-lg bg-slate-900/50 px-1 py-2 text-center" data-testid={`hourly-${h.hour}`}>
-                      <p className="text-[11px] font-semibold text-emerald-100/80">{h.hour}</p>
-                      <p className="mt-1 flex items-center justify-center gap-1 text-xs text-white">
-                        <Wind className="h-3 w-3 text-sky-300" />
-                        {h.wind}
-                      </p>
-                      <p className="text-[10px] text-emerald-100/60">კმ/სთ</p>
-                      <p className={`mt-1 flex items-center justify-center gap-1 text-xs ${h.precip > 0 ? "text-cyan-300" : "text-emerald-100/50"}`}>
-                        <CloudRain className="h-3 w-3" />
-                        {h.precip}
-                      </p>
-                      <p className="text-[10px] text-emerald-100/60">მმ</p>
-                    </div>
-                  ))}
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {result.week.map((w) => {
+                    const active = w.date === result.date;
+                    const [dayName, ...dateParts] = w.day.split(", ");
+                    return (
+                      <div
+                        key={w.date}
+                        className={`flex min-w-[88px] flex-1 flex-col items-center rounded-2xl px-2 py-3 text-center ${
+                          active
+                            ? "border border-cyan-400/80 bg-slate-900/90 shadow-[0_0_12px_rgba(34,211,238,0.35)]"
+                            : "border border-white/5 bg-slate-900/70"
+                        }`}
+                        data-testid={`week-${w.date}`}
+                      >
+                        <p className={`text-[13px] font-extrabold uppercase tracking-wide ${active ? "text-cyan-300" : "text-slate-200"}`}>
+                          {dayName}
+                        </p>
+                        <p className="text-[10px] text-slate-400">{dateParts.join(", ")}</p>
+                        <p className="my-1.5 text-3xl leading-none">{weatherEmoji(w.weather_code)}</p>
+                        <p className="text-xl font-extrabold text-white leading-tight">{w.temp_max}°</p>
+                        <p className="text-sm font-bold text-cyan-300/90 leading-tight">{w.temp_min}°</p>
+                        <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-300">
+                          <Wind className="h-3 w-3 text-sky-300" />
+                          {w.wind_max} <span className="text-slate-400">კმ/სთ</span>
+                        </p>
+                        <p className={`mt-1 flex items-center gap-1 text-[11px] ${w.precip_prob > 0 ? "text-cyan-300" : "text-slate-400"}`}>
+                          <Droplets className="h-3 w-3" />
+                          {w.precip_prob}%
+                        </p>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
