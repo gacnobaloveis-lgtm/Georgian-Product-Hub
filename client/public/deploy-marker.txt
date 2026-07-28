@@ -1,1 +1,1 @@
-deploy v54 - guide: kashapi present in Tekhuri - 2026-07-28
+deploy v55 - guide: personalized auth prompt for shared visitors - 2026-07-28
