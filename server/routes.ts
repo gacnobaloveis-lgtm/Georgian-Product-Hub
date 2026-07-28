@@ -389,7 +389,7 @@ export async function registerRoutes(
           if (result) {
             const dayWord = days === 0 ? "დღეს" : days === 1 ? "ხვალ" : `${result.date}-ს`;
             title = `როგორი აქტივობა იქნება ${dayWord} 🎣 ${result.fish.name} — ${result.water.name}: ${result.percent}%`;
-            desc = `${result.recommendation} საუკეთესო დრო: ${result.best_time}. სატყუარა: ${result.bait}. — მეთევზის გზამკვლევი, spiningebi.ge`;
+            desc = `${result.recommendation} საუკეთესო დრო: ${result.best_time}. — მეთევზის გზამკვლევი, spiningebi.ge`;
           }
         }
       }
