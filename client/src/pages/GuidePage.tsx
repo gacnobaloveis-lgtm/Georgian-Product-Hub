@@ -354,7 +354,7 @@ export default function GuidePage() {
               <img
                 src={data.fish[fishKey].image}
                 alt={data.fish[fishKey].name}
-                className="h-20 w-20 shrink-0 rounded-xl border border-white/25 object-cover shadow-lg"
+                className="h-20 w-20 shrink-0 rounded-xl border border-white/25 bg-slate-900/60 object-contain p-1 shadow-lg"
                 data-testid="img-guide-fish"
               />
               <div>
@@ -426,7 +426,7 @@ export default function GuidePage() {
               <img
                 src={result.fish.image}
                 alt={result.fish.name}
-                className="mx-auto mb-3 h-24 w-24 rounded-full border-2 border-emerald-400/50 object-cover shadow-lg"
+                className="mx-auto mb-3 h-24 w-24 rounded-full border-2 border-emerald-400/50 bg-slate-900/60 object-contain p-1 shadow-lg"
                 data-testid="img-guide-result-fish"
               />
               <p className="text-sm text-emerald-100/80 [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
