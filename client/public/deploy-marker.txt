@@ -1,1 +1,1 @@
-deploy v48 - guide: kariklapi Black Sea basin only (absent in Kura/Mtkvari) - 2026-07-28
+deploy v49 - guide: explicit per-species presence DB from user list - 2026-07-28
