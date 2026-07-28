@@ -321,6 +321,30 @@ export function checkFishHabitat(fishKey: string, water: WaterInfo): HabitatChec
   return { ok: true };
 }
 
+// კალმახის ცნობილი წყლების სახელები (მომხმარებლის სია) — ხელით ჩაწერილი/გეოკოდირებული წყლებისთვის
+const KALMAHI_NAME_HINTS = [
+  "მტკვ", "არაგვ", "ხრამ", "ლიახვ", "ბორჯომულ", "ფოცხოვ", "ახალქალაქისწყ", "ალაზ",
+  "ჭოროხ", "ენგურ", "კოდორ", "ბზიფ", "გუმისთ", "სუფს", "რიონ", "ხობ",
+  "ლუხუნ", "კრიხულ", "დოლრ", "ნაკრ", "მესტიაჭალ", "აჭარისწყ", "მაჭახელ",
+  "კინტრიშ", "სტორ", "ლოპოტ",
+];
+
+// ხელით ჩაწერილი (ბაზაში უცნობი) წყლისთვის — სახელით ვამოწმებთ, ბინადრობს თუ არა თევზი
+export function checkCustomFishHabitat(fishKey: string, waterName: string): HabitatCheck {
+  if (fishKey !== "kalmahi") return { ok: true };
+  const n = waterName.trim().toLowerCase();
+  if (KALMAHI_NAME_HINTS.some((h) => n.includes(h))) {
+    return {
+      ok: true,
+      note: `ℹ️ კალმახი ამ მდინარეში მხოლოდ სათავესა და ზემო წელში გვხვდება, სადაც წყალი ცივი და ჟანგბადიანია — შუა და ქვემო წელში ვერ შეხვდები.`,
+    };
+  }
+  return {
+    ok: false,
+    message: `ვწუხვართ — კალმახი აქ არ ბინადრობს. ის ცივ, მთის წყლებშია გავრცელებული — მაგ. არაგვები, ბორჯომულა, რიონის/ენგურის ზემო დინება, აჭარისწყალი, მაჭახელა.`,
+  };
+}
+
 export function resolveWater(waterName: string): WaterInfo | undefined {
   const canonical = WATER_NAME_ALIASES[waterName] || waterName;
   return ALL_WATERS.find((w) => w.name === canonical);
