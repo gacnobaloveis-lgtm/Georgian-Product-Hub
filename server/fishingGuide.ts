@@ -49,7 +49,7 @@ export const FISH_DATA: Record<string, FishInfo> = {
     temp_range: 6,
     moon_preferred: [0.25, 0.75],
     active_months: [3, 4, 5, 6, 7, 8, 9, 10, 11],
-    best_time: "განთიადი და დამალება",
+    best_time: "დილა ადრიან და საღამო",
     bait: "ბუგრი, მელის ჭია, ხელოვნური მძივები",
     lure: "ტრიალა, ყანყალა და ვობლერი — სპეციალურად ძლიერი დინებისთვის დამზადებული",
     color: "#38bdf8",
