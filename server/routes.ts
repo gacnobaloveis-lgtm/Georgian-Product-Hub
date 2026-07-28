@@ -20,6 +20,7 @@ import {
   resolveWater as resolveGuideWater,
   checkFishHabitat as checkGuideHabitat,
   getForecast as getGuideForecast,
+  getForecastForWater as getGuideForecastForWater,
 } from "./fishingGuide";
 
 // ── Real-time online visitors tracker (in-memory) ──────────────────────────
@@ -229,25 +230,83 @@ export async function registerRoutes(
 
   app.post("/api/guide/forecast", async (req, res) => {
     try {
-      const { fish, water, days } = req.body || {};
+      const { fish, water, days, lat, lon, region } = req.body || {};
       if (typeof fish !== "string" || typeof water !== "string") {
         return res.status(400).json({ error: "არასწორი მოთხოვნა" });
       }
+      if (!guideFish[fish]) {
+        return res.status(404).json({ error: "თევზი ვერ მოიძებნა" });
+      }
       const waterInfo = resolveGuideWater(water);
-      if (!waterInfo || !guideFish[fish]) {
-        return res.status(404).json({ error: "თევზი ან წყალი ვერ მოიძებნა" });
+      if (waterInfo) {
+        const habitat = checkGuideHabitat(fish, waterInfo);
+        if (!habitat.ok) {
+          return res.json({ no_fish: true, message: habitat.message, fish: guideFish[fish], water: waterInfo });
+        }
+        const result = await getGuideForecast(fish, water, Number(days) || 0);
+        if (!result) return res.status(404).json({ error: "წყალი ვერ მოიძებნა" });
+        if (habitat.note) result.explanations = [...result.explanations, habitat.note];
+        return res.json(result);
       }
-      const habitat = checkGuideHabitat(fish, waterInfo);
-      if (!habitat.ok) {
-        return res.json({ no_fish: true, message: habitat.message, fish: guideFish[fish], water: waterInfo });
+      // უცნობი (გეოკოდირებული) ადგილი — lat/lon-ით
+      const nLat = Number(lat);
+      const nLon = Number(lon);
+      if (!isFinite(nLat) || !isFinite(nLon) || nLat < 40 || nLat > 44.7 || nLon < 39 || nLon > 47.5) {
+        return res.status(404).json({ error: "წყალი ვერ მოიძებნა" });
       }
-      const result = await getGuideForecast(fish, water, Number(days) || 0);
-      if (!result) return res.status(404).json({ error: "თევზი ან წყალი ვერ მოიძებნა" });
-      if (habitat.note) result.explanations = [...result.explanations, habitat.note];
+      const customWater = {
+        name: water.slice(0, 80),
+        region: typeof region === "string" ? region.slice(0, 60) : "",
+        lat: nLat,
+        lon: nLon,
+        habitat: "mixed" as const,
+      };
+      const result = await getGuideForecastForWater(fish, customWater, Number(days) || 0);
+      if (!result) return res.status(404).json({ error: "პროგნოზი ვერ გამოითვალა" });
       res.json(result);
     } catch (err) {
       console.error("[guide] forecast error:", err);
       res.status(500).json({ error: "პროგნოზის გამოთვლა ვერ მოხერხდა" });
+    }
+  });
+
+  // ადგილის ძებნა: ჯერ ჩვენი ბაზა, შემდეგ Open-Meteo გეოკოდირება
+  app.get("/api/guide/water-search", async (req, res) => {
+    try {
+      const q = String(req.query.q || "").trim();
+      if (q.length < 2) return res.json({ results: [] });
+      const qNorm = q.toLowerCase().replace(/^მდ\.?\s*/, "");
+      const local = [...guideWaters.rivers, ...guideWaters.lakes]
+        .filter((w) => w.name.toLowerCase().includes(qNorm) || w.name.toLowerCase().includes(q.toLowerCase()))
+        .slice(0, 6)
+        .map((w) => ({ name: w.name, region: w.region, lat: w.lat, lon: w.lon, known: true }));
+      let geo: any[] = [];
+      if (local.length < 5) {
+        try {
+          const r = await fetch(
+            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=8&language=ka&format=json`,
+            { signal: AbortSignal.timeout(6000) }
+          );
+          const data: any = await r.json();
+          geo = (data?.results || [])
+            .filter((g: any) => g.country_code === "GE")
+            .slice(0, 5)
+            .map((g: any) => ({
+              name: g.name,
+              region: [g.admin1, g.admin2].filter(Boolean).join(", "),
+              lat: g.latitude,
+              lon: g.longitude,
+              known: false,
+            }))
+            .filter((g: any) => !local.some((l) => l.name === g.name && l.region === g.region));
+        } catch {
+          // გეოკოდერი მიუწვდომელია — მხოლოდ ლოკალური შედეგები
+        }
+      }
+      res.json({ results: [...local, ...geo].slice(0, 8) });
+    } catch (err) {
+      console.error("[guide] water-search error:", err);
+      res.status(500).json({ error: "ძებნა ვერ მოხერხდა" });
     }
   });
 
