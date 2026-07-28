@@ -669,8 +669,13 @@ export async function getForecast(fishKey: string, waterName: string, daysAhead:
   if (!FISH_DATA[fishKey]) return null;
   const water = resolveWater(waterName);
   if (!water) return null;
+  return getForecastForWater(fishKey, water, daysAhead);
+}
 
-  const cacheKey = `${fishKey}|${water.name}|${Math.min(7, Math.max(0, Math.floor(daysAhead) || 0))}|${new Date().toISOString().slice(0, 10)}`;
+export async function getForecastForWater(fishKey: string, water: WaterInfo, daysAhead: number): Promise<ForecastResult | null> {
+  if (!FISH_DATA[fishKey]) return null;
+
+  const cacheKey = `${fishKey}|${water.name}|${water.lat}|${water.lon}|${Math.min(7, Math.max(0, Math.floor(daysAhead) || 0))}|${new Date().toISOString().slice(0, 10)}`;
   const cached = forecastCache.get(cacheKey);
   if (cached && Date.now() - cached.ts < FORECAST_CACHE_TTL) return cached.result;
 
