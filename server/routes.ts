@@ -19,6 +19,7 @@ import {
   WATERS as guideWaters,
   resolveWater as resolveGuideWater,
   checkFishHabitat as checkGuideHabitat,
+  checkCustomFishHabitat as checkGuideCustomHabitat,
   getForecast as getGuideForecast,
   getForecastForWater as getGuideForecastForWater,
 } from "./fishingGuide";
@@ -261,8 +262,13 @@ export async function registerRoutes(
         lon: nLon,
         habitat: "mixed" as const,
       };
+      const customHabitat = checkGuideCustomHabitat(fish, customWater.name);
+      if (!customHabitat.ok) {
+        return res.json({ no_fish: true, message: customHabitat.message, fish: guideFish[fish], water: customWater });
+      }
       const result = await getGuideForecastForWater(fish, customWater, Number(days) || 0);
       if (!result) return res.status(404).json({ error: "პროგნოზი ვერ გამოითვალა" });
+      if (customHabitat.note) result.explanations = [...result.explanations, customHabitat.note];
       res.json(result);
     } catch (err) {
       console.error("[guide] forecast error:", err);
@@ -378,7 +384,11 @@ export async function registerRoutes(
             const nLat = Number(req.query.lat);
             const nLon = Number(req.query.lon);
             const region = String(req.query.region || "");
-            if (isFinite(nLat) && isFinite(nLon) && nLat >= 40 && nLat <= 44.7 && nLon >= 39 && nLon <= 47.5) {
+            const customHabitat = checkGuideCustomHabitat(fishKey, waterName);
+            if (!customHabitat.ok) {
+              title = `${guideFish[fishKey].name} — ${waterName.slice(0, 80)} | მეთევზის გზამკვლევი`;
+              desc = `${customHabitat.message} — მეთევზის გზამკვლევი, spiningebi.ge`;
+            } else if (isFinite(nLat) && isFinite(nLon) && nLat >= 40 && nLat <= 44.7 && nLon >= 39 && nLon <= 47.5) {
               result = await getGuideForecastForWater(
                 fishKey,
                 { name: waterName.slice(0, 80), region: region.slice(0, 60), lat: nLat, lon: nLon, habitat: "mixed" as const },
