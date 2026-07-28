@@ -1,1 +1,1 @@
-deploy v40 - guide: lures per fish - 2026-07-27
+deploy v41 - guide: weather codes 56-86 mapped (no more unknown weather) - 2026-07-27
