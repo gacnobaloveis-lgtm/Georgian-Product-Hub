@@ -1,1 +1,1 @@
-deploy v45 - guide: 1200x630 FB share fish images - 2026-07-28
+deploy v46 - guide: OSM river search fallback - 2026-07-28
