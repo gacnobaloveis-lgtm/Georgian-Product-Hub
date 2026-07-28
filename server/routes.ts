@@ -284,7 +284,11 @@ export async function registerRoutes(
       const pageUrl = escHtml(`${siteUrl}${req.originalUrl}`);
       const safeTitle = escHtml(title);
       const safeDesc = escHtml(desc);
-      const safeImage = escHtml(`${siteUrl}/guide-share.jpg`);
+      const fishImage = fishKey && guideFish[fishKey]?.image ? `${siteUrl}${guideFish[fishKey].image}` : null;
+      const safeImage = escHtml(fishImage || `${siteUrl}/guide-share.jpg`);
+      const imageSizeMeta = fishImage
+        ? ""
+        : `\n  <meta property="og:image:width" content="1200"/>\n  <meta property="og:image:height" content="630"/>`;
 
       return res.status(200).set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
 <html lang="ka">
@@ -295,9 +299,7 @@ export async function registerRoutes(
   <meta property="og:site_name" content="spiningebi.ge"/>
   <meta property="og:title" content="${safeTitle}"/>
   <meta property="og:description" content="${safeDesc}"/>
-  <meta property="og:image" content="${safeImage}"/>
-  <meta property="og:image:width" content="1200"/>
-  <meta property="og:image:height" content="630"/>
+  <meta property="og:image" content="${safeImage}"/>${imageSizeMeta}
   <meta property="og:url" content="${pageUrl}"/>
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:image" content="${safeImage}"/>
