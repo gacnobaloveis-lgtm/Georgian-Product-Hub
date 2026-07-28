@@ -363,19 +363,34 @@ export async function registerRoutes(
       let title = "მეთევზის გზამკვლევი | spiningebi.ge";
       let desc = "თევზის აქტივობის პროგნოზი საქართველოს მდინარეებსა და ტბებზე — ამინდი, წნევა, მთვარის ფაზა და წყლის გამჭვირვალობა.";
 
-      if (fishKey && waterName) {
+      if (fishKey && waterName && guideFish[fishKey]) {
         const waterInfo = resolveGuideWater(waterName);
-        const habitat = waterInfo && guideFish[fishKey] ? checkGuideHabitat(fishKey, waterInfo) : null;
+        const habitat = waterInfo ? checkGuideHabitat(fishKey, waterInfo) : null;
         if (habitat && !habitat.ok) {
           title = `${guideFish[fishKey].name} — ${waterInfo!.name} | მეთევზის გზამკვლევი`;
           desc = `${habitat.message} — მეთევზის გზამკვლევი, spiningebi.ge`;
         } else {
-        const result = await getGuideForecast(fishKey, waterName, days);
-        if (result) {
-          const dayWord = days === 0 ? "დღეს" : days === 1 ? "ხვალ" : `${result.date}-ს`;
-          title = `როგორი აქტივობა იქნება ${dayWord} 🎣 ${result.fish.name} — ${result.water.name}: ${result.percent}%`;
-          desc = `${result.recommendation} საუკეთესო დრო: ${result.best_time}. სატყუარა: ${result.bait}. — მეთევზის გზამკვლევი, spiningebi.ge`;
-        }
+          let result = null;
+          if (waterInfo) {
+            result = await getGuideForecast(fishKey, waterName, days);
+          } else {
+            // ხელით ჩაწერილი (გეოკოდირებული) წყალი — lat/lon ბმულის პარამეტრებიდან
+            const nLat = Number(req.query.lat);
+            const nLon = Number(req.query.lon);
+            const region = String(req.query.region || "");
+            if (isFinite(nLat) && isFinite(nLon) && nLat >= 40 && nLat <= 44.7 && nLon >= 39 && nLon <= 47.5) {
+              result = await getGuideForecastForWater(
+                fishKey,
+                { name: waterName.slice(0, 80), region: region.slice(0, 60), lat: nLat, lon: nLon, habitat: "mixed" as const },
+                days
+              );
+            }
+          }
+          if (result) {
+            const dayWord = days === 0 ? "დღეს" : days === 1 ? "ხვალ" : `${result.date}-ს`;
+            title = `როგორი აქტივობა იქნება ${dayWord} 🎣 ${result.fish.name} — ${result.water.name}: ${result.percent}%`;
+            desc = `${result.recommendation} საუკეთესო დრო: ${result.best_time}. სატყუარა: ${result.bait}. — მეთევზის გზამკვლევი, spiningebi.ge`;
+          }
         }
       }
 
