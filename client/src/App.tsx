@@ -27,9 +27,13 @@ import { useEffect } from "react";
 
 function useOnlinePing() {
   useEffect(() => {
-    let sid = sessionStorage.getItem("_sid");
+    let sid = localStorage.getItem("_sid") || sessionStorage.getItem("_sid");
     if (!sid) {
       sid = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+    }
+    try {
+      localStorage.setItem("_sid", sid);
+    } catch {
       sessionStorage.setItem("_sid", sid);
     }
     let ref = sessionStorage.getItem("_ref");
