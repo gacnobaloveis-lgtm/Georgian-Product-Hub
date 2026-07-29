@@ -61,12 +61,10 @@ interface EditFormState {
   albumImages: string[];
   newImageFiles: File[];
   newImagePreviews: string[];
-  weight: string;
-  length: string;
+  lengths: string[];
+  weights: string[];
   dimensions: string;
   purchaseLimit: string;
-  variantLabel: string;
-  variantOptions: string;
 }
 
 function ProductRow({ product }: { product: Product }) {
@@ -107,17 +105,24 @@ function ProductRow({ product }: { product: Product }) {
     albumImages: parseAlbum(),
     newImageFiles: [],
     newImagePreviews: [],
-    weight: (product as any).weight || "",
-    length: (product as any).length || "",
+    lengths: (() => {
+      try {
+        const arr = JSON.parse((product as any).lengthOptions || "[]");
+        const list = Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === "string") : [];
+        while (list.length < 4) list.push("");
+        return list;
+      } catch { return ["", "", "", ""]; }
+    })(),
+    weights: (() => {
+      try {
+        const arr = JSON.parse((product as any).weightOptions || "[]");
+        const list = Array.isArray(arr) ? arr.filter((s: unknown) => typeof s === "string") : [];
+        while (list.length < 4) list.push("");
+        return list;
+      } catch { return ["", "", "", ""]; }
+    })(),
     dimensions: (product as any).dimensions || "",
     purchaseLimit: product.purchaseLimit ? String(product.purchaseLimit) : "",
-    variantLabel: (product as any).variantLabel || "",
-    variantOptions: (() => {
-      try {
-        const arr = JSON.parse((product as any).variantOptions || "[]");
-        return Array.isArray(arr) ? arr.join(", ") : "";
-      } catch { return ""; }
-    })(),
   });
 
   const [editForm, setEditForm] = useState<EditFormState>(defaultEditState());
@@ -232,13 +237,10 @@ function ProductRow({ product }: { product: Product }) {
     formData.append("colorStock", JSON.stringify(colorStockObj));
     formData.append("youtubeUrl", editForm.youtubeUrl.trim());
     formData.append("albumImages", JSON.stringify(finalAlbum));
-    formData.append("weight", editForm.weight.trim());
-    formData.append("length", editForm.length.trim());
     formData.append("dimensions", editForm.dimensions.trim());
     formData.append("purchaseLimit", editForm.purchaseLimit.trim());
-    const variantOpts = editForm.variantOptions.split(",").map(v => v.trim()).filter(Boolean);
-    formData.append("variantLabel", variantOpts.length > 0 ? (editForm.variantLabel.trim() || "ვარიანტი") : "");
-    formData.append("variantOptions", JSON.stringify(variantOpts));
+    formData.append("lengthOptions", JSON.stringify(editForm.lengths.map(v => v.trim()).filter(Boolean)));
+    formData.append("weightOptions", JSON.stringify(editForm.weights.map(v => v.trim()).filter(Boolean)));
 
     try {
       await updateMutation.mutateAsync({ id: product.id, formData });
@@ -338,41 +340,51 @@ function ProductRow({ product }: { product: Product }) {
                 data-testid={`input-edit-purchase-limit-${product.id}`}
               />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">ვარიანტის დასახელება (მაგ: ზომა)</label>
-              <Input
-                value={editForm.variantLabel}
-                onChange={(e) => setEditForm((p) => ({ ...p, variantLabel: e.target.value }))}
-                placeholder="მაგ: ზომა / წონა / სიგრძე"
-                data-testid={`input-edit-variant-label-${product.id}`}
-              />
+            <div className="space-y-2 sm:col-span-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground">სიგრძეები (მყიდველი აირჩევს ერთ-ერთს)</label>
+                <Button type="button" variant="outline" size="sm" onClick={() => setEditForm(p => ({ ...p, lengths: [...p.lengths, ""] }))} data-testid={`button-add-length-${product.id}`}>
+                  <Plus className="mr-1 h-3.5 w-3.5" /> დამატება
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {editForm.lengths.map((val, idx) => (
+                  <Input
+                    key={idx}
+                    value={val}
+                    onChange={(e) => {
+                      const updated = [...editForm.lengths];
+                      updated[idx] = e.target.value;
+                      setEditForm(p => ({ ...p, lengths: updated }));
+                    }}
+                    placeholder={`მაგ: 2.${idx + 1} მ`}
+                    data-testid={`input-edit-length-${product.id}-${idx}`}
+                  />
+                ))}
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-muted-foreground">ვარიანტები (მძიმით გამოყოფილი)</label>
-              <Input
-                value={editForm.variantOptions}
-                onChange={(e) => setEditForm((p) => ({ ...p, variantOptions: e.target.value }))}
-                placeholder="მაგ: 5გრ, 10გრ, 15გრ"
-                data-testid={`input-edit-variant-options-${product.id}`}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">წონა (გრამი)</label>
-              <Input
-                value={editForm.weight}
-                onChange={(e) => setEditForm((p) => ({ ...p, weight: e.target.value }))}
-                placeholder="მაგ: 250 გრ"
-                data-testid={`input-edit-weight-${product.id}`}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-muted-foreground">სიგრძე</label>
-              <Input
-                value={editForm.length}
-                onChange={(e) => setEditForm((p) => ({ ...p, length: e.target.value }))}
-                placeholder="მაგ: 2.4 მ"
-                data-testid={`input-edit-length-${product.id}`}
-              />
+            <div className="space-y-2 sm:col-span-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-muted-foreground">წონები — გრამობა (მყიდველი აირჩევს ერთ-ერთს)</label>
+                <Button type="button" variant="outline" size="sm" onClick={() => setEditForm(p => ({ ...p, weights: [...p.weights, ""] }))} data-testid={`button-add-weight-${product.id}`}>
+                  <Plus className="mr-1 h-3.5 w-3.5" /> დამატება
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {editForm.weights.map((val, idx) => (
+                  <Input
+                    key={idx}
+                    value={val}
+                    onChange={(e) => {
+                      const updated = [...editForm.weights];
+                      updated[idx] = e.target.value;
+                      setEditForm(p => ({ ...p, weights: updated }));
+                    }}
+                    placeholder={`მაგ: ${(idx + 1) * 5} გრ`}
+                    data-testid={`input-edit-weight-${product.id}-${idx}`}
+                  />
+                ))}
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground">ზომა</label>
