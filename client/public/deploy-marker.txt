@@ -1,1 +1,1 @@
-deploy v62 - dedupe online visitors per browser (localStorage sid) - 2026-07-29
+deploy v63 - new product variants: length/weight/color option windows - 2026-07-29
