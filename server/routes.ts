@@ -85,20 +85,23 @@ function sanitizeVariantOptions(raw: unknown): string {
   } catch {}
   const clean = (Array.isArray(arr) ? arr : [])
     .filter((v): v is string => typeof v === "string")
-    .map(v => sanitizeString(v.trim()).slice(0, 100))
+    .map(v => sanitizeString(v.replace(/•/g, "").trim()).slice(0, 100))
     .filter(v => v.length > 0)
     .slice(0, 50);
   return JSON.stringify(clean);
 }
 
-// If a product defines variant options, an order MUST carry one of them.
-// Returns the sanitized variant or an error message.
-function validateOrderVariant(prod: { variantOptions?: string | null; variantLabel?: string | null }, selectedVariant: unknown): { ok: true; variant: string | null } | { ok: false; message: string } {
-  let options: string[] = [];
-  try {
-    const parsed = JSON.parse(prod.variantOptions || "[]");
-    if (Array.isArray(parsed)) options = parsed.filter((v): v is string => typeof v === "string");
-  } catch {}
+// Variant validation: a product may define length options and/or weight
+// options. The client sends the buyer's choice as a combined string
+// ("2.4მ • 10გრ") in `selectedVariant`. Each defined group MUST be matched by
+// one of the parts; the canonical combined string is returned for storage.
+function validateOrderVariant(prod: { lengthOptions?: string | null; weightOptions?: string | null }, selectedVariant: unknown): { ok: true; variant: string | null } | { ok: false; message: string } {
+  const parseOpts = (raw?: string | null): string[] => {
+    try {
+      const parsed = JSON.parse(raw || "[]");
+      return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === "string") : [];
+    } catch { return []; }
+  };
   // Canonicalize both sides identically: decode any stored HTML entities back
   // to plain text, then sanitize once — so a client sending either the raw or
   // the entity-encoded form of an option always matches.
@@ -109,15 +112,26 @@ function validateOrderVariant(prod: { variantOptions?: string | null; variantLab
     .replace(/&lt;/g, "<")
     .replace(/&amp;/g, "&");
   const canon = (v: string) => sanitizeString(decode(v.trim()));
-  const canonOptions = options.map(canon);
-  const chosen = typeof selectedVariant === "string" && selectedVariant.trim() ? canon(selectedVariant) : null;
-  if (options.length > 0) {
-    if (!chosen || !canonOptions.includes(chosen)) {
-      return { ok: false, message: `გთხოვთ აირჩიოთ ${prod.variantLabel || "ვარიანტი"}` };
+  const parts = typeof selectedVariant === "string"
+    ? selectedVariant.split("•").map(canon).filter(Boolean)
+    : [];
+  const groups: { label: string; options: string[] }[] = [
+    { label: "სიგრძე", options: parseOpts(prod.lengthOptions) },
+    { label: "წონა", options: parseOpts(prod.weightOptions) },
+  ];
+  const chosenParts: string[] = [];
+  const remaining = [...parts];
+  for (const g of groups) {
+    if (g.options.length === 0) continue;
+    const canonOptions = g.options.map(canon);
+    const matchIdx = remaining.findIndex(p => canonOptions.includes(p));
+    if (matchIdx === -1) {
+      return { ok: false, message: `გთხოვთ აირჩიოთ ${g.label}` };
     }
-    return { ok: true, variant: chosen };
+    // Consume the matched part so one token can't satisfy two groups.
+    chosenParts.push(remaining.splice(matchIdx, 1)[0]);
   }
-  return { ok: true, variant: null };
+  return { ok: true, variant: chosenParts.length > 0 ? chosenParts.join(" • ") : null };
 }
 
 // Strip tags + collapse whitespace/&nbsp; — used to detect "empty" rich text
@@ -671,6 +685,8 @@ export async function registerRoutes(
         purchaseLimit: input.purchaseLimit ?? null,
         variantLabel: input.variantLabel ? sanitizeString(String(input.variantLabel)) : null,
         variantOptions: sanitizeVariantOptions(input.variantOptions),
+        lengthOptions: sanitizeVariantOptions(input.lengthOptions),
+        weightOptions: sanitizeVariantOptions(input.weightOptions),
       });
       res.status(201).json(product);
 
@@ -819,6 +835,8 @@ export async function registerRoutes(
       }
       if (req.body.variantLabel !== undefined) updates.variantLabel = req.body.variantLabel ? sanitizeString(String(req.body.variantLabel)) : null;
       if (req.body.variantOptions !== undefined) updates.variantOptions = sanitizeVariantOptions(req.body.variantOptions);
+      if (req.body.lengthOptions !== undefined) updates.lengthOptions = sanitizeVariantOptions(req.body.lengthOptions);
+      if (req.body.weightOptions !== undefined) updates.weightOptions = sanitizeVariantOptions(req.body.weightOptions);
       if (req.body.soldCount !== undefined) updates.soldCount = Number(req.body.soldCount) || 0;
       if (req.body.viewCount !== undefined) updates.viewCount = Number(req.body.viewCount) || 0;
       if (req.body.albumImages !== undefined) {
