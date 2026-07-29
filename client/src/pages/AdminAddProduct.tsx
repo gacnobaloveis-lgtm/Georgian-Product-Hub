@@ -29,12 +29,10 @@ interface FormState {
   stock: string;
   youtubeUrl: string;
   colors: ColorEntry[];
-  weight: string;
-  length: string;
+  lengths: string[];
+  weights: string[];
   dimensions: string;
   purchaseLimit: string;
-  variantLabel: string;
-  variantOptions: string;
 }
 
 const emptyForm: FormState = {
@@ -44,13 +42,11 @@ const emptyForm: FormState = {
   discountPrice: "",
   stock: "",
   youtubeUrl: "",
-  colors: [],
-  weight: "",
-  length: "",
+  colors: [{ color: "", stock: "" }, { color: "", stock: "" }, { color: "", stock: "" }, { color: "", stock: "" }],
+  lengths: ["", "", "", ""],
+  weights: ["", "", "", ""],
   dimensions: "",
   purchaseLimit: "",
-  variantLabel: "",
-  variantOptions: "",
 };
 
 export default function AdminAddProduct() {
@@ -140,17 +136,14 @@ export default function AdminAddProduct() {
       if (selectedCategoryId) {
         formData.append("categoryId", selectedCategoryId);
       }
-      if (form.weight.trim()) formData.append("weight", form.weight.trim());
-      if (form.length.trim()) formData.append("length", form.length.trim());
       if (form.dimensions.trim()) formData.append("dimensions", form.dimensions.trim());
       if (form.purchaseLimit.trim() && parseInt(form.purchaseLimit) > 0) {
         formData.append("purchaseLimit", String(parseInt(form.purchaseLimit)));
       }
-      const variantOpts = form.variantOptions.split(",").map(v => v.trim()).filter(Boolean);
-      if (variantOpts.length > 0) {
-        formData.append("variantLabel", form.variantLabel.trim() || "ვარიანტი");
-        formData.append("variantOptions", JSON.stringify(variantOpts));
-      }
+      const lengths = form.lengths.map(v => v.trim()).filter(Boolean);
+      const weights = form.weights.map(v => v.trim()).filter(Boolean);
+      formData.append("lengthOptions", JSON.stringify(lengths));
+      formData.append("weightOptions", JSON.stringify(weights));
 
       const created = await createMutation.mutateAsync(formData);
       toast({ title: "წარმატება", description: `პროდუქტი "${created.name}" დაემატა.` });
@@ -211,18 +204,56 @@ export default function AdminAddProduct() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
-                  <label htmlFor="weight" className="text-sm font-medium">წონა (გრამი) <span className="text-muted-foreground text-xs">(არჩევითი)</span></label>
-                  <Input id="weight" value={form.weight} onChange={(e) => setField("weight", e.target.value)} placeholder="მაგ: 250 გრ" data-testid="input-weight" />
+              <div className="space-y-2">
+                <label htmlFor="dimensions" className="text-sm font-medium">ზომა <span className="text-muted-foreground text-xs">(არჩევითი)</span></label>
+                <Input id="dimensions" value={form.dimensions} onChange={(e) => setField("dimensions", e.target.value)} placeholder="მაგ: M / 40×30 სმ" data-testid="input-dimensions" />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">სიგრძეები <span className="text-muted-foreground text-xs">(არჩევითი — მყიდველი აირჩევს ერთ-ერთს)</span></label>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setForm(p => ({ ...p, lengths: [...p.lengths, ""] }))} data-testid="button-add-length">
+                    <Plus className="mr-1 h-3.5 w-3.5" /> დამატება
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="length" className="text-sm font-medium">სიგრძე <span className="text-muted-foreground text-xs">(არჩევითი)</span></label>
-                  <Input id="length" value={form.length} onChange={(e) => setField("length", e.target.value)} placeholder="მაგ: 2.4 მ" data-testid="input-length" />
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {form.lengths.map((val, idx) => (
+                    <Input
+                      key={idx}
+                      value={val}
+                      onChange={e => {
+                        const updated = [...form.lengths];
+                        updated[idx] = e.target.value;
+                        setForm(p => ({ ...p, lengths: updated }));
+                      }}
+                      placeholder={`მაგ: 2.${idx + 1} მ`}
+                      data-testid={`input-length-${idx}`}
+                    />
+                  ))}
                 </div>
-                <div className="space-y-2">
-                  <label htmlFor="dimensions" className="text-sm font-medium">ზომა <span className="text-muted-foreground text-xs">(არჩევითი)</span></label>
-                  <Input id="dimensions" value={form.dimensions} onChange={(e) => setField("dimensions", e.target.value)} placeholder="მაგ: M / 40×30 სმ" data-testid="input-dimensions" />
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">წონები (გრამობა) <span className="text-muted-foreground text-xs">(არჩევითი — მყიდველი აირჩევს ერთ-ერთს)</span></label>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setForm(p => ({ ...p, weights: [...p.weights, ""] }))} data-testid="button-add-weight">
+                    <Plus className="mr-1 h-3.5 w-3.5" /> დამატება
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {form.weights.map((val, idx) => (
+                    <Input
+                      key={idx}
+                      value={val}
+                      onChange={e => {
+                        const updated = [...form.weights];
+                        updated[idx] = e.target.value;
+                        setForm(p => ({ ...p, weights: updated }));
+                      }}
+                      placeholder={`მაგ: ${(idx + 1) * 5} გრ`}
+                      data-testid={`input-weight-${idx}`}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -230,13 +261,6 @@ export default function AdminAddProduct() {
                 <label htmlFor="purchaseLimit" className="text-sm font-medium">შესყიდვის ლიმიტი ერთ მომხმარებელზე <span className="text-muted-foreground text-xs">(არჩევითი — ცარიელი = შეუზღუდავი)</span></label>
                 <Input id="purchaseLimit" type="number" min="1" value={form.purchaseLimit} onChange={(e) => setField("purchaseLimit", e.target.value)} placeholder="მაგ: 2" data-testid="input-purchase-limit" />
                 <p className="text-xs text-muted-foreground">თუ მიუთითებთ მაგ. 2-ს, ერთი მომხმარებელი (ანგარიშით ან ტელეფონის ნომრით) ჯამში მაქსიმუმ 2 ცალს შეიძენს.</p>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium">ვარიანტები <span className="text-muted-foreground text-xs">(არჩევითი — მაგ: ზომა, წონა, სიგრძე)</span></label>
-                <Input value={form.variantLabel} onChange={(e) => setField("variantLabel", e.target.value)} placeholder="დასახელება — მაგ: ზომა" data-testid="input-variant-label" />
-                <Input value={form.variantOptions} onChange={(e) => setField("variantOptions", e.target.value)} placeholder="ვარიანტები მძიმით — მაგ: 5გრ, 10გრ, 15გრ" data-testid="input-variant-options" />
-                <p className="text-xs text-muted-foreground">თუ ვარიანტებს მიუთითებთ, მყიდველი ვალდებული იქნება აირჩიოს ერთ-ერთი ყიდვამდე.</p>
               </div>
 
               <div className="space-y-3">
