@@ -25,14 +25,31 @@ import {
 } from "./fishingGuide";
 
 // ── Real-time online visitors tracker (in-memory) ──────────────────────────
-const activeSessions = new Map<string, number>(); // sessionId -> lastSeen ms
+interface OnlineSession { ts: number; userId?: string; ref?: string }
+const activeSessions = new Map<string, OnlineSession>(); // sessionId -> info
 const SESSION_TTL_MS = 90_000; // 90 seconds
 
 function pruneOldSessions() {
   const cutoff = Date.now() - SESSION_TTL_MS;
-  for (const [id, ts] of activeSessions) {
-    if (ts < cutoff) activeSessions.delete(id);
+  for (const [id, s] of activeSessions) {
+    if (s.ts < cutoff) activeSessions.delete(id);
   }
+}
+
+// referrer დომენი → ქართული წყაროს სახელი
+function refSourceLabel(ref?: string): string {
+  const r = (ref || "").toLowerCase();
+  if (!r || r === "direct") return "პირდაპირი ვიზიტი";
+  if (r.includes("google")) return "Google";
+  if (r.includes("facebook") || r.includes("fb.")) return "Facebook";
+  if (r.includes("instagram")) return "Instagram";
+  if (r.includes("tiktok")) return "TikTok";
+  if (r.includes("youtube") || r.includes("youtu.be")) return "YouTube";
+  if (r.includes("t.me") || r.includes("telegram")) return "Telegram";
+  if (r.includes("bing")) return "Bing";
+  if (r.includes("yandex")) return "Yandex";
+  if (r.includes("spiningebi")) return "პირდაპირი ვიზიტი";
+  return r.replace(/^www\./, "").slice(0, 40);
 }
 
 // Initialize web-push with VAPID keys
@@ -1888,10 +1905,42 @@ export async function registerRoutes(
   app.post("/api/ping", (req, res) => {
     const sid = (req.query.sid as string) || "";
     if (sid && sid.length < 64) {
-      activeSessions.set(sid, Date.now());
+      const ref = typeof req.query.ref === "string" ? req.query.ref.slice(0, 80) : undefined;
+      const userId = (req.session as any)?.userId as string | undefined;
+      const prev = activeSessions.get(sid);
+      activeSessions.set(sid, { ts: Date.now(), userId: userId || prev?.userId, ref: ref || prev?.ref });
       pruneOldSessions();
     }
     res.json({ ok: true });
+  });
+
+  // Public: who is online — registered users by name, guests by referrer source
+  app.get("/api/online-visitors", async (_req, res) => {
+    try {
+      pruneOldSessions();
+      const sessions = Array.from(activeSessions.values());
+      const visitors: { name: string; registered: boolean }[] = [];
+      const seenUsers = new Set<string>();
+      for (const s of sessions) {
+        if (s.userId) {
+          if (seenUsers.has(s.userId)) continue;
+          seenUsers.add(s.userId);
+          try {
+            const u = await storage.getUser(s.userId);
+            const name = [u?.firstName, u?.lastName].filter(Boolean).join(" ").trim();
+            visitors.push({ name: name || "რეგისტრირებული მომხმარებელი", registered: true });
+            continue;
+          } catch {
+            // fall through to guest label
+          }
+        }
+        visitors.push({ name: refSourceLabel(s.ref), registered: false });
+      }
+      visitors.sort((a, b) => Number(b.registered) - Number(a.registered));
+      res.json({ visitors });
+    } catch {
+      res.json({ visitors: [] });
+    }
   });
 
   // Admin: current online count
