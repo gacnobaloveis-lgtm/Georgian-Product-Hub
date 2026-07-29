@@ -1,1 +1,1 @@
-deploy v60 - online visitors dialog (names for registered, source for guests) - 2026-07-28
+deploy v61 - visitors dialog glass blur style - 2026-07-29
