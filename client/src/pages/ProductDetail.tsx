@@ -217,7 +217,8 @@ export default function ProductDetail() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-  const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+  const [selectedLength, setSelectedLength] = useState<string | null>(null);
+  const [selectedWeight, setSelectedWeight] = useState<string | null>(null);
   const [creditSubmitting, setCreditSubmitting] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const { user, isAuthenticated, isRealUser } = useAuth();
@@ -286,7 +287,8 @@ export default function ProductDetail() {
   useEffect(() => {
     setSelectedImage(0);
     setSelectedColor(null);
-    setSelectedVariant(null);
+    setSelectedLength(null);
+    setSelectedWeight(null);
     setQuantity(1);
     setShowVideo(false);
   }, [productId]);
@@ -356,13 +358,17 @@ export default function ProductDetail() {
   const imageColorMode = hasColors && albumImages.length === colorNames.length;
   const effectiveColor = imageColorMode ? (colorNames[selectedImage] ?? null) : selectedColor;
 
-  let variantOptions: string[] = [];
-  try {
-    const vp = JSON.parse(product.variantOptions || "[]");
-    if (Array.isArray(vp)) variantOptions = vp.filter((v: unknown): v is string => typeof v === "string");
-  } catch {}
-  const hasVariants = variantOptions.length > 0;
-  const variantLabel = product.variantLabel || "ვარიანტი";
+  const parseOpts = (raw?: string | null): string[] => {
+    try {
+      const parsed = JSON.parse(raw || "[]");
+      return Array.isArray(parsed) ? parsed.filter((v: unknown): v is string => typeof v === "string") : [];
+    } catch { return []; }
+  };
+  const lengthOptions = parseOpts((product as any).lengthOptions);
+  const weightOptions = parseOpts((product as any).weightOptions);
+  const hasLengths = lengthOptions.length > 0;
+  const hasWeights = weightOptions.length > 0;
+  const selectedVariant = [selectedLength, selectedWeight].filter(Boolean).join(" • ") || null;
   const selectedColorStock = effectiveColor ? (colorStock[effectiveColor] ?? 0) : null;
   const isSelectedColorOutOfStock = selectedColorStock !== null && selectedColorStock <= 0;
   const generalStock = product.stock ?? 0;
@@ -389,24 +395,31 @@ export default function ProductDetail() {
   const purchasedExhausted = purchaseLimit > 0 && !!allowance && allowance.remaining <= 0;
   const cartFillsLimit = limitExhausted && !purchasedExhausted && productInCartQty > 0;
 
-  const variantSelector = hasVariants ? (
-    <div className="mt-3" data-testid="variant-selector">
-      <label className="text-sm font-medium text-white mb-2 block">{variantLabel}: <span className="text-red-400">*</span></label>
+  const renderOptionGroup = (label: string, options: string[], selected: string | null, setSelected: (v: string | null) => void, testPrefix: string) => (
+    <div className="mt-3" data-testid={`${testPrefix}-selector`}>
+      <label className="text-sm font-medium text-white mb-2 block">{label}: <span className="text-red-400">*</span></label>
       <div className="flex flex-wrap gap-2">
-        {variantOptions.map(opt => (
+        {options.map(opt => (
           <button
             key={opt}
             type="button"
-            onClick={() => setSelectedVariant(selectedVariant === opt ? null : opt)}
+            onClick={() => setSelected(selected === opt ? null : opt)}
             className={`rounded-lg border-2 px-3 py-2 text-sm text-white transition-all backdrop-blur ${
-              selectedVariant === opt ? "border-emerald-400 bg-emerald-600/40 shadow-md" : "border-white/30 bg-white/10 hover:border-white/60"
+              selected === opt ? "border-emerald-400 bg-emerald-600/40 shadow-md" : "border-white/30 bg-white/10 hover:border-white/60"
             }`}
-            data-testid={`button-variant-${opt}`}
+            data-testid={`button-${testPrefix}-${opt}`}
           >
             {opt}
           </button>
         ))}
       </div>
+    </div>
+  );
+
+  const variantSelector = (hasLengths || hasWeights) ? (
+    <div data-testid="variant-selector">
+      {hasLengths && renderOptionGroup("სიგრძე", lengthOptions, selectedLength, setSelectedLength, "length")}
+      {hasWeights && renderOptionGroup("წონა", weightOptions, selectedWeight, setSelectedWeight, "weight")}
     </div>
   ) : null;
 
@@ -797,8 +810,12 @@ export default function ProductDetail() {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                 return;
               }
-              if (hasVariants && !selectedVariant) {
-                toast({ variant: "destructive", title: `შეარჩიეთ ${variantLabel}` });
+              if (hasLengths && !selectedLength) {
+                toast({ variant: "destructive", title: "შეარჩიეთ სიგრძე" });
+                return;
+              }
+              if (hasWeights && !selectedWeight) {
+                toast({ variant: "destructive", title: "შეარჩიეთ წონა" });
                 return;
               }
               if (limitExhausted) {
@@ -851,8 +868,12 @@ export default function ProductDetail() {
                 toast({ variant: "destructive", title: "შეარჩიეთ ფერი" });
                 return;
               }
-              if (hasVariants && !selectedVariant) {
-                toast({ variant: "destructive", title: `შეარჩიეთ ${variantLabel}` });
+              if (hasLengths && !selectedLength) {
+                toast({ variant: "destructive", title: "შეარჩიეთ სიგრძე" });
+                return;
+              }
+              if (hasWeights && !selectedWeight) {
+                toast({ variant: "destructive", title: "შეარჩიეთ წონა" });
                 return;
               }
               if (limitExhausted) {
