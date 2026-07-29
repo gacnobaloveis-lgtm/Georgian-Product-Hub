@@ -1405,27 +1405,27 @@ export default function HomePage() {
       </Dialog>
 
       <Dialog open={visitorsOpen} onOpenChange={setVisitorsOpen}>
-        <DialogContent className="max-w-sm w-[92vw] rounded-2xl">
+        <DialogContent className="max-w-sm w-[92vw] rounded-2xl border border-emerald-400/30 bg-slate-950/60 text-emerald-50 shadow-2xl backdrop-blur-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
+            <DialogTitle className="flex items-center gap-2 text-base text-white">
               <span className="relative flex h-2.5 w-2.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
               </span>
               ვინ არის ახლა საიტზე
             </DialogTitle>
-            <DialogDescription className="text-xs">
+            <DialogDescription className="text-xs text-emerald-100/60">
               რეგისტრირებულები — სახელით, სტუმრები — საიდანაც შემოვიდნენ
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-72 space-y-1.5 overflow-y-auto" data-testid="list-online-visitors">
             {!visitorsData ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">იტვირთება...</p>
+              <p className="py-4 text-center text-sm text-emerald-100/60">იტვირთება...</p>
             ) : visitorsData.visitors.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">ამ წუთას ვიზიტორები არ ჩანან</p>
+              <p className="py-4 text-center text-sm text-emerald-100/60">ამ წუთას ვიზიტორები არ ჩანან</p>
             ) : (
               visitorsData.visitors.map((v, i) => (
-                <div key={i} className="flex items-center gap-2.5 rounded-lg border bg-muted/40 px-3 py-2">
+                <div key={i} className="flex items-center gap-2.5 rounded-lg border border-emerald-400/20 bg-white/5 px-3 py-2">
                   {v.registered ? (
                     <UserCircle className="h-4 w-4 shrink-0 text-emerald-500" />
                   ) : (
