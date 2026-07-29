@@ -32,7 +32,17 @@ function useOnlinePing() {
       sid = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
       sessionStorage.setItem("_sid", sid);
     }
-    const ping = () => fetch(`/api/ping?sid=${sid}`, { method: "POST" }).catch(() => {});
+    let ref = sessionStorage.getItem("_ref");
+    if (ref === null) {
+      try {
+        ref = document.referrer ? new URL(document.referrer).hostname : "direct";
+      } catch {
+        ref = "direct";
+      }
+      sessionStorage.setItem("_ref", ref);
+    }
+    const ping = () =>
+      fetch(`/api/ping?sid=${sid}&ref=${encodeURIComponent(ref || "direct")}`, { method: "POST" }).catch(() => {});
     ping();
     const iv = setInterval(ping, 30_000);
     return () => clearInterval(iv);
