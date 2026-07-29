@@ -821,6 +821,13 @@ export default function HomePage() {
 
   const displayOnline = onlineData ? onlineData.count : null;
 
+  const [visitorsOpen, setVisitorsOpen] = useState(false);
+  const { data: visitorsData } = useQuery<{ visitors: { name: string; registered: boolean }[] }>({
+    queryKey: ["/api/online-visitors"],
+    enabled: visitorsOpen,
+    refetchInterval: visitorsOpen ? 15_000 : false,
+  });
+
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
 
@@ -1038,13 +1045,13 @@ export default function HomePage() {
       {/* Mobile-only online counter */}
       {displayOnline !== null && (
         <div className="relative md:hidden flex justify-center py-1" data-testid="badge-online-count-mobile">
-          <div className="flex items-center gap-1.5 rounded-full border border-red-300/50 bg-red-500/20 backdrop-blur-sm px-3 py-1.5">
+          <button onClick={() => setVisitorsOpen(true)} className="flex items-center gap-1.5 rounded-full border border-red-300/50 bg-red-500/20 backdrop-blur-sm px-3 py-1.5">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
             </span>
             <span className="text-xs font-semibold text-red-100">ახლა საიტზეა {displayOnline} ვიზიტორი</span>
-          </div>
+          </button>
         </div>
       )}
 
@@ -1082,13 +1089,13 @@ export default function HomePage() {
 
           {/* Online visitor counter */}
           {displayOnline !== null && (
-            <div className="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 shrink-0 mx-2" data-testid="badge-online-count">
+            <button onClick={() => setVisitorsOpen(true)} className="flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2.5 py-1 shrink-0 mx-2" data-testid="badge-online-count">
               <span className="relative flex h-1.5 w-1.5 shrink-0">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
               </span>
               <span className="text-[12px] font-semibold text-red-700 whitespace-nowrap">საიტზეა {displayOnline}</span>
-            </div>
+            </button>
           )}
 
           <div className="flex items-center gap-0.5 shrink-0">
@@ -1393,6 +1400,46 @@ export default function HomePage() {
                 </div>
               )}
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={visitorsOpen} onOpenChange={setVisitorsOpen}>
+        <DialogContent className="max-w-sm w-[92vw] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+              </span>
+              ვინ არის ახლა საიტზე
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              რეგისტრირებულები — სახელით, სტუმრები — საიდანაც შემოვიდნენ
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-72 space-y-1.5 overflow-y-auto" data-testid="list-online-visitors">
+            {!visitorsData ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">იტვირთება...</p>
+            ) : visitorsData.visitors.length === 0 ? (
+              <p className="py-4 text-center text-sm text-muted-foreground">ამ წუთას ვიზიტორები არ ჩანან</p>
+            ) : (
+              visitorsData.visitors.map((v, i) => (
+                <div key={i} className="flex items-center gap-2.5 rounded-lg border bg-muted/40 px-3 py-2">
+                  {v.registered ? (
+                    <UserCircle className="h-4 w-4 shrink-0 text-emerald-500" />
+                  ) : (
+                    <Search className="h-4 w-4 shrink-0 text-sky-500" />
+                  )}
+                  <span className="text-sm font-medium">{v.name}</span>
+                  {v.registered && (
+                    <span className="ml-auto rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
+                      რეგისტრირებული
+                    </span>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </DialogContent>
       </Dialog>
