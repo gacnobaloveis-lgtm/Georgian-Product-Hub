@@ -1906,7 +1906,7 @@ export async function registerRoutes(
     const sid = (req.query.sid as string) || "";
     if (sid && sid.length < 64) {
       const ref = typeof req.query.ref === "string" ? req.query.ref.slice(0, 80) : undefined;
-      const userId = (req.session as any)?.userId as string | undefined;
+      const userId = (req as any).user?.claims?.sub as string | undefined;
       const prev = activeSessions.get(sid);
       activeSessions.set(sid, { ts: Date.now(), userId: userId || prev?.userId, ref: ref || prev?.ref });
       pruneOldSessions();
