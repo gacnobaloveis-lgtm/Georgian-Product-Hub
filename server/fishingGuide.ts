@@ -476,6 +476,8 @@ export interface WeekDay {
   temp_min: number;
   wind_max: number;
   precip_prob: number; // %
+  pressure_mean?: number; // hPa (საშუალო დღიური)
+  activity?: number; // თევზის აქტიურობა % (ივსება forecast-ში, თევზზეა დამოკიდებული)
 }
 
 const KA_DAYS = ["კვი", "ორშ", "სამ", "ოთხ", "ხუთ", "პარ", "შაბ"];
@@ -490,7 +492,7 @@ export async function getWeekForecast(lat: number, lon: number): Promise<WeekDay
   try {
     const url =
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&daily=temperature_2m_max,temperature_2m_min,weathercode,wind_speed_10m_max,precipitation_probability_max` +
+      `&daily=temperature_2m_max,temperature_2m_min,weathercode,wind_speed_10m_max,precipitation_probability_max,pressure_msl_mean` +
       `&timezone=Asia/Tbilisi&forecast_days=7`;
     const r = await fetch(url, { signal: AbortSignal.timeout(10000) });
     const data: any = await r.json();
@@ -506,6 +508,7 @@ export async function getWeekForecast(lat: number, lon: number): Promise<WeekDay
         temp_min: Math.round(daily.temperature_2m_min?.[i] ?? 0),
         wind_max: Math.round(daily.wind_speed_10m_max?.[i] ?? 0),
         precip_prob: Math.round(daily.precipitation_probability_max?.[i] ?? 0),
+        pressure_mean: Math.round(daily.pressure_msl_mean?.[i] ?? 1013),
       };
     });
     if (weekCache.size > 300) weekCache.clear();
@@ -798,12 +801,32 @@ export async function getForecastForWater(fishKey: string, water: WaterInfo, day
   const moonPhase = getMoonPhase(targetDate);
   const result = calculateActivity(fishKey, weather, moonPhase, targetDate, waterClarity);
 
+  // კვირის თითო დღეზე თევზის აქტიურობის % — გრაფიკისთვის.
+  // week ქეშირებული და გაზიარებულია (lat/lon-ზე), ამიტომ ვაკოპირებთ და არ ვცვლით ორიგინალს.
+  const weekWithActivity: WeekDay[] = week.map((w) => {
+    const dayDate = new Date(w.date + "T12:00:00");
+    const dayWeather: WeatherInfo = {
+      temp: Math.round((w.temp_max + w.temp_min) / 2),
+      pressure: w.pressure_mean ?? 1013,
+      weather_code: w.weather_code,
+      temp_max: w.temp_max,
+      temp_min: w.temp_min,
+      precipitation: 0,
+      rain: 0,
+      showers: 0,
+      wind_max: w.wind_max,
+      hourly: [],
+    };
+    const act = calculateActivity(fishKey, dayWeather, getMoonPhase(dayDate), dayDate, waterClarity);
+    return { ...w, activity: act.percent };
+  });
+
   const forecast: ForecastResult = {
     ...result,
     date: targetDate.toISOString().slice(0, 10),
     water,
     past_precipitation: pastPrecip,
-    week,
+    week: weekWithActivity,
   };
   if (forecastCache.size > 500) forecastCache.clear();
   forecastCache.set(cacheKey, { ts: Date.now(), result: forecast });
