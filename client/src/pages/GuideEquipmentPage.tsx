@@ -44,6 +44,14 @@ export default function GuideEquipmentPage() {
   const fishEntries = guideData ? Object.entries(guideData.fish) : [];
 
   // გაზიარებული ბმულით მოსვლა: /guide/equipment?fish=kashapi
+  // პროდუქტის გვერდიდან დაბრუნება — კალათა გაიხსნას
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("cart")) {
+      setCartOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (!guideData) return;
     const param = new URLSearchParams(search).get("fish");
