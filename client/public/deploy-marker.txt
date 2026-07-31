@@ -1,1 +1,1 @@
-deploy v76 - per-lure-type weight fields (admin) + display next to each type - 2026-07-31
+deploy v77 - equipment room top button: მთავარზე გასვლა -> home - 2026-07-31
