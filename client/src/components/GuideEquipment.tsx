@@ -128,28 +128,39 @@ function CardProducts({
     .filter((p): p is Product => Boolean(p));
   if (linked.length === 0) return null;
 
-  // ფერის/ვარიანტის არჩევა სჭირდება? → პროდუქტის გვერდზე გადავიდეს
-  function needsOptions(p: Product): boolean {
+  function parseList(raw?: string | null): string[] {
+    try {
+      const v = JSON.parse(raw || "[]");
+      return Array.isArray(v) ? v.filter((s) => typeof s === "string" && s.trim()) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  // პირდაპირ კალათაში — ფერიან/ვარიანტიან პროდუქტზე ის, რომელიც ფოტოზეა (პირველი ვარიანტი)
+  function handleAdd(p: Product) {
+    const price = Number(p.discountPrice ?? p.originalPrice);
+
     let colorStock: Record<string, number> = {};
     try {
       colorStock = JSON.parse(p.colorStock || "{}");
     } catch {}
-    if (Object.keys(colorStock).length > 0) return true;
-    try {
-      if ((JSON.parse(p.lengthOptions || "[]") as string[]).length > 0) return true;
-    } catch {}
-    try {
-      if ((JSON.parse(p.weightOptions || "[]") as string[]).length > 0) return true;
-    } catch {}
-    try {
-      if ((JSON.parse(p.variantOptions || "[]") as string[]).length > 0) return true;
-    } catch {}
-    return false;
-  }
+    const colors = Object.keys(colorStock);
+    let selectedColor: string | null = null;
+    let stock = p.stock ?? 0;
+    if (colors.length > 0) {
+      // მარაგიანი პირველი ფერი (ფოტოზეც პირველი ჩანს)
+      const withStock = colors.find((c) => (Number(colorStock[c]) || 0) > 0) || colors[0];
+      selectedColor = withStock;
+      stock = Number(colorStock[withStock]) || 0;
+    }
 
-  function handleAdd(p: Product) {
-    const price = Number(p.discountPrice ?? p.originalPrice);
-    const stock = p.stock ?? 0;
+    const lengths = parseList(p.lengthOptions);
+    const weights = parseList(p.weightOptions);
+    const legacyVariants = parseList(p.variantOptions);
+    const selectedVariant =
+      [lengths[0], weights[0]].filter(Boolean).join(" • ") || legacyVariants[0] || null;
+
     // შესყიდვის ლიმიტიც გავითვალისწინოთ, როგორც პროდუქტის გვერდზეა
     const cap = p.purchaseLimit && p.purchaseLimit > 0 ? Math.min(stock, p.purchaseLimit) : stock;
     addItem({
@@ -158,10 +169,17 @@ function CardProducts({
       price,
       imageUrl: p.imageUrl || "",
       quantity: 1,
-      selectedColor: null,
+      selectedColor,
+      selectedVariant,
       maxStock: cap,
     });
-    toast({ title: "კალათაში დაემატა ✓", description: p.name });
+    toast({
+      title: "კალათაში დაემატა ✓",
+      description:
+        p.name +
+        (selectedColor ? ` — ${selectedColor}` : "") +
+        (selectedVariant ? ` (${selectedVariant})` : ""),
+    });
   }
   return (
     <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
@@ -210,8 +228,8 @@ function CardProducts({
         const tileCls = `flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-slate-800/60 p-2 transition-colors ${
           soldOut ? "opacity-60 hover:border-white/20" : "hover:border-emerald-400/40 hover:bg-slate-800"
         }`;
-        // ამოწურული ან ფერის/ზომის ასარჩევი → პროდუქტის გვერდზე; სხვები → პირდაპირ კალათაში
-        if (soldOut || needsOptions(p)) {
+        // მხოლოდ ამოწურული → პროდუქტის გვერდზე; დანარჩენი → პირდაპირ კალათაში
+        if (soldOut) {
           const back = encodeURIComponent(window.location.pathname + window.location.search);
           return (
             <Link key={p.id} href={`/product/${p.id}?back=${back}`} className={tileCls} data-testid={`${testId}-product-${p.id}`}>
