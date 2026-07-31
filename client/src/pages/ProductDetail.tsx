@@ -850,6 +850,13 @@ export default function ProductDetail() {
               });
               setQuantity(1);
               toast({ title: "კალათაში დაემატა", description: `"${product.name}" (${qtyToAdd} ც.)` });
+              // გზამკვლევის კომპლექტიდან მოსული — უკან კალათაში დავაბრუნოთ
+              const backParam = new URLSearchParams(window.location.search).get("back");
+              if (backParam && backParam.startsWith("/guide")) {
+                setTimeout(() => {
+                  window.location.href = backParam + (backParam.includes("?") ? "&" : "?") + "cart=1";
+                }, 600);
+              }
             }}
             className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/15 backdrop-blur-md text-sm font-semibold text-white transition-colors hover:bg-white/25 sm:text-base"
             data-testid="button-add-cart"
