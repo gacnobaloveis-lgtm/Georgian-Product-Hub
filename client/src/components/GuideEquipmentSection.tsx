@@ -7,28 +7,33 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, X } from "lucide-react";
 import type { FishEquipment, GuideEquipmentMap } from "@/components/GuideEquipment";
-import GuideEquipment, { guideEquipmentHasData } from "@/components/GuideEquipment";
+import GuideEquipment, { guideEquipmentHasData, isProductOutOfStock } from "@/components/GuideEquipment";
+import type { Product } from "@shared/schema";
 
 interface GuideData {
   fish: Record<string, { name: string; image?: string }>;
 }
 
 const emptyEq: FishEquipment = {
-  rod: { lengths: [], action: "", power: "", casting: "" },
-  reel: { sizes: [], gearRatio: "", brake: "" },
-  line: { min: "", best: "", max: "" },
-  lure: { types: [], weight: "" },
-  fluoro: { min: "", best: "", max: "" },
+  rod: { lengths: [], action: "", power: "", casting: "", productIds: [] },
+  reel: { sizes: [], gearRatio: "", brake: "", productIds: [] },
+  line: { min: "", best: "", max: "", productIds: [] },
+  lure: { types: [], weight: "", productIds: [] },
+  fluoro: { min: "", best: "", max: "", productIds: [] },
   recs: [],
 };
 
+function cleanIds(ids?: number[]): number[] {
+  return (ids || []).filter((n) => Number.isInteger(n) && n > 0);
+}
+
 function normalize(eq?: FishEquipment): FishEquipment {
   return {
-    rod: { lengths: eq?.rod?.lengths || [], action: eq?.rod?.action || "", power: eq?.rod?.power || "", casting: eq?.rod?.casting || "" },
-    reel: { sizes: eq?.reel?.sizes || [], gearRatio: eq?.reel?.gearRatio || "", brake: eq?.reel?.brake || "" },
-    line: { min: eq?.line?.min || "", best: eq?.line?.best || "", max: eq?.line?.max || "" },
-    lure: { types: eq?.lure?.types || [], weight: eq?.lure?.weight || "" },
-    fluoro: { min: eq?.fluoro?.min || "", best: eq?.fluoro?.best || "", max: eq?.fluoro?.max || "" },
+    rod: { lengths: eq?.rod?.lengths || [], action: eq?.rod?.action || "", power: eq?.rod?.power || "", casting: eq?.rod?.casting || "", productIds: cleanIds(eq?.rod?.productIds) },
+    reel: { sizes: eq?.reel?.sizes || [], gearRatio: eq?.reel?.gearRatio || "", brake: eq?.reel?.brake || "", productIds: cleanIds(eq?.reel?.productIds) },
+    line: { min: eq?.line?.min || "", best: eq?.line?.best || "", max: eq?.line?.max || "", productIds: cleanIds(eq?.line?.productIds) },
+    lure: { types: eq?.lure?.types || [], weight: eq?.lure?.weight || "", productIds: cleanIds(eq?.lure?.productIds) },
+    fluoro: { min: eq?.fluoro?.min || "", best: eq?.fluoro?.best || "", max: eq?.fluoro?.max || "", productIds: cleanIds(eq?.fluoro?.productIds) },
     recs: eq?.recs || [],
   };
 }
@@ -41,20 +46,22 @@ function compact(eq: FishEquipment): FishEquipment | undefined {
     action: eq.rod?.action?.trim() || "",
     power: eq.rod?.power?.trim() || "",
     casting: eq.rod?.casting?.trim() || "",
+    productIds: cleanIds(eq.rod?.productIds),
   };
-  if (rod.lengths.length || rod.action || rod.power || rod.casting) out.rod = rod;
+  if (rod.lengths.length || rod.action || rod.power || rod.casting || rod.productIds.length) out.rod = rod;
   const reel = {
     sizes: (eq.reel?.sizes || []).map((s) => s.trim()).filter(Boolean),
     gearRatio: eq.reel?.gearRatio?.trim() || "",
     brake: eq.reel?.brake?.trim() || "",
+    productIds: cleanIds(eq.reel?.productIds),
   };
-  if (reel.sizes.length || reel.gearRatio || reel.brake) out.reel = reel;
-  const line = { min: eq.line?.min?.trim() || "", best: eq.line?.best?.trim() || "", max: eq.line?.max?.trim() || "" };
-  if (line.min || line.best || line.max) out.line = line;
-  const lure = { types: (eq.lure?.types || []).map((s) => s.trim()).filter(Boolean), weight: eq.lure?.weight?.trim() || "" };
-  if (lure.types.length || lure.weight) out.lure = lure;
-  const fluoro = { min: eq.fluoro?.min?.trim() || "", best: eq.fluoro?.best?.trim() || "", max: eq.fluoro?.max?.trim() || "" };
-  if (fluoro.min || fluoro.best || fluoro.max) out.fluoro = fluoro;
+  if (reel.sizes.length || reel.gearRatio || reel.brake || reel.productIds.length) out.reel = reel;
+  const line = { min: eq.line?.min?.trim() || "", best: eq.line?.best?.trim() || "", max: eq.line?.max?.trim() || "", productIds: cleanIds(eq.line?.productIds) };
+  if (line.min || line.best || line.max || line.productIds.length) out.line = line;
+  const lure = { types: (eq.lure?.types || []).map((s) => s.trim()).filter(Boolean), weight: eq.lure?.weight?.trim() || "", productIds: cleanIds(eq.lure?.productIds) };
+  if (lure.types.length || lure.weight || lure.productIds.length) out.lure = lure;
+  const fluoro = { min: eq.fluoro?.min?.trim() || "", best: eq.fluoro?.best?.trim() || "", max: eq.fluoro?.max?.trim() || "", productIds: cleanIds(eq.fluoro?.productIds) };
+  if (fluoro.min || fluoro.best || fluoro.max || fluoro.productIds.length) out.fluoro = fluoro;
   const recs = (eq.recs || []).map((s) => s.trim()).filter(Boolean);
   if (recs.length) out.recs = recs;
   return Object.keys(out).length ? out : undefined;
@@ -98,12 +105,78 @@ function ListEditor({
   );
 }
 
+function ProductPicker({
+  ids,
+  onChange,
+  products,
+  testId,
+}: {
+  ids: number[];
+  onChange: (v: number[]) => void;
+  products?: Product[];
+  testId: string;
+}) {
+  const attached = ids
+    .map((id) => products?.find((p) => p.id === id))
+    .filter((p): p is Product => Boolean(p));
+  const available = (products || []).filter((p) => !ids.includes(p.id));
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-medium">მაღაზიის პროდუქტები („ყიდვის“ ღილაკი)</label>
+      <div className="space-y-2">
+        {attached.map((p) => (
+          <div key={p.id} className="flex items-center gap-2 rounded-md border p-2">
+            {p.imageUrl && (
+              <img src={p.imageUrl} alt={p.name} className="h-9 w-9 rounded bg-white object-contain" />
+            )}
+            <span className="min-w-0 flex-1 truncate text-sm">{p.name}</span>
+            <span className="text-sm font-semibold text-emerald-600">
+              ₾{Number(p.discountPrice ?? p.originalPrice).toFixed(2)}
+            </span>
+            {isProductOutOfStock(p) && (
+              <span className="flex-shrink-0 rounded bg-red-500/15 px-1.5 py-0.5 text-xs font-semibold text-red-600">
+                ამოწურულია
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onChange(ids.filter((id) => id !== p.id))}
+              data-testid={`button-remove-${testId}-product-${p.id}`}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+        <select
+          value=""
+          onChange={(e) => {
+            const id = Number(e.target.value);
+            if (id) onChange([...ids, id]);
+          }}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          data-testid={`select-${testId}-product`}
+        >
+          <option value="">+ პროდუქტის მიბმა...</option>
+          {available.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name} — ₾{Number(p.discountPrice ?? p.originalPrice).toFixed(2)}
+              {isProductOutOfStock(p) ? " ⛔ ამოწურულია" : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
 export function GuideEquipmentSection() {
   const { toast } = useToast();
   const [fishKey, setFishKey] = useState("");
   const [eq, setEq] = useState<FishEquipment>(normalize());
 
   const { data: guideData } = useQuery<GuideData>({ queryKey: ["/api/guide/data"] });
+  const { data: products } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const { data: map, isSuccess: mapLoaded } = useQuery<GuideEquipmentMap>({ queryKey: ["/api/guide/equipment"] });
 
   useEffect(() => {
@@ -176,6 +249,7 @@ export function GuideEquipmentSection() {
                 <Input value={eq.rod?.casting || ""} placeholder="2–7 გ" onChange={(e) => setEq({ ...eq, rod: { ...eq.rod, casting: e.target.value } })} data-testid="input-rod-casting" />
               </div>
             </div>
+            <ProductPicker ids={eq.rod?.productIds || []} onChange={(v) => setEq({ ...eq, rod: { ...eq.rod, productIds: v } })} products={products} testId="rod" />
           </div>
 
           {/* კოჭა */}
@@ -192,6 +266,7 @@ export function GuideEquipmentSection() {
                 <Input value={eq.reel?.brake || ""} placeholder="5–8 კგ" onChange={(e) => setEq({ ...eq, reel: { ...eq.reel, brake: e.target.value } })} data-testid="input-reel-brake" />
               </div>
             </div>
+            <ProductPicker ids={eq.reel?.productIds || []} onChange={(v) => setEq({ ...eq, reel: { ...eq.reel, productIds: v } })} products={products} testId="reel" />
           </div>
 
           {/* წნული */}
@@ -211,6 +286,7 @@ export function GuideEquipmentSection() {
                 <Input value={eq.line?.max || ""} placeholder="PE 0.5" onChange={(e) => setEq({ ...eq, line: { ...eq.line, max: e.target.value } })} data-testid="input-line-max" />
               </div>
             </div>
+            <ProductPicker ids={eq.line?.productIds || []} onChange={(v) => setEq({ ...eq, line: { ...eq.line, productIds: v } })} products={products} testId="line" />
           </div>
 
           {/* სატყუარა */}
@@ -221,6 +297,7 @@ export function GuideEquipmentSection() {
               <label className="mb-1 block text-sm font-medium">წონა</label>
               <Input value={eq.lure?.weight || ""} placeholder="2 – 4.5 გ" onChange={(e) => setEq({ ...eq, lure: { ...eq.lure, weight: e.target.value } })} data-testid="input-lure-weight" />
             </div>
+            <ProductPicker ids={eq.lure?.productIds || []} onChange={(v) => setEq({ ...eq, lure: { ...eq.lure, productIds: v } })} products={products} testId="lure" />
           </div>
 
           {/* ფლუორო */}
@@ -240,6 +317,7 @@ export function GuideEquipmentSection() {
                 <Input value={eq.fluoro?.max || ""} placeholder="0.16 მმ" onChange={(e) => setEq({ ...eq, fluoro: { ...eq.fluoro, max: e.target.value } })} data-testid="input-fluoro-max" />
               </div>
             </div>
+            <ProductPicker ids={eq.fluoro?.productIds || []} onChange={(v) => setEq({ ...eq, fluoro: { ...eq.fluoro, productIds: v } })} products={products} testId="fluoro" />
           </div>
 
           {/* რეკომენდაცია */}
