@@ -2053,6 +2053,53 @@ export async function registerRoutes(
     }
   });
 
+  // გზამკვლევის აღჭურვილობის კომპლექტები (თითო თევზზე) — ინახება site_settings-ში JSON-ად
+  app.get("/api/guide/equipment", async (_req, res) => {
+    try {
+      const data = await storage.getSetting("guide_equipment");
+      if (!data) return res.json({});
+      try {
+        res.json(JSON.parse(data));
+      } catch {
+        res.json({});
+      }
+    } catch (err) {
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  // ერთი თევზის კომპლექტის შენახვა — სერვერზე ერწყმის არსებულს (პარალელური რედაქტირება არ შლის სხვა თევზებს)
+  app.put("/api/admin/guide-equipment", requireAdminOnly, async (req, res) => {
+    try {
+      const { fishKey, equipment } = req.body || {};
+      if (typeof fishKey !== "string" || !fishKey || !guideFish[fishKey]) {
+        return res.status(400).json({ message: "არასწორი თევზი" });
+      }
+      if (equipment !== null && (typeof equipment !== "object" || Array.isArray(equipment))) {
+        return res.status(400).json({ message: "არასწორი მონაცემები" });
+      }
+      let map: Record<string, unknown> = {};
+      const existing = await storage.getSetting("guide_equipment");
+      if (existing) {
+        try { map = JSON.parse(existing) || {}; } catch { map = {}; }
+      }
+      if (equipment === null || Object.keys(equipment).length === 0) {
+        delete map[fishKey];
+      } else {
+        map[fishKey] = equipment;
+      }
+      const json = JSON.stringify(map);
+      if (json.length > 100_000) {
+        return res.status(400).json({ message: "მონაცემები ზედმეტად დიდია" });
+      }
+      await storage.setSetting("guide_equipment", json);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Guide equipment save error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   app.get("/api/admin/visual-settings", requireAdmin, async (_req, res) => {
     try {
       const data = await storage.getSetting("visual_settings");
