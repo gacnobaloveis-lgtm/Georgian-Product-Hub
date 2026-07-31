@@ -1,1 +1,1 @@
-deploy v74 - guide buy tiles add to cart + floating cart with total on equipment room - 2026-07-31
+deploy v75 - inline white length/size values + return to cart after color pick - 2026-07-31
