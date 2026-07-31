@@ -5,7 +5,6 @@ import { ArrowLeft, Compass, Share2, Hourglass, Fish as FishIcon, Clock, Bug, Dr
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
-import GuideEquipment, { guideEquipmentHasData, type GuideEquipmentMap } from "@/components/GuideEquipment";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const PAGE_BG_STYLE: React.CSSProperties = {
@@ -141,10 +140,6 @@ export default function GuidePage() {
   const { data: fbConfig } = useQuery<{ appId: string }>({
     queryKey: ["/api/facebook/app-id"],
     staleTime: Infinity,
-  });
-  const { data: equipmentMap } = useQuery<GuideEquipmentMap>({
-    queryKey: ["/api/guide/equipment"],
-    staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -297,6 +292,18 @@ export default function GuidePage() {
           </div>
         </div>
 
+        {/* ცალკე ოთახი: სპინინგის კომპლექტის შერჩევა */}
+        <button
+          onClick={() => setLocation("/guide/equipment")}
+          className="mb-6 flex w-full items-center justify-between rounded-2xl border border-emerald-400/40 bg-emerald-500/20 px-5 py-4 text-left shadow-xl backdrop-blur-md transition hover:bg-emerald-500/30"
+          data-testid="button-open-equipment-room"
+        >
+          <span className="text-sm font-semibold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
+            🎣 როგორ შევარჩიო სპინინგის კომპლექტი
+          </span>
+          <span className="text-emerald-200">→</span>
+        </button>
+
         {/* ფორმა */}
         <div className={cardCls}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -406,13 +413,6 @@ export default function GuidePage() {
           </Button>
           {error && <p className="mt-3 text-sm font-medium text-red-300">{error}</p>}
         </div>
-
-        {/* არჩეული თევზის სპინინგის კომპლექტი (ადმინის შევსებული) */}
-        {fishKey && equipmentMap && guideEquipmentHasData(equipmentMap[fishKey]) && (
-          <div className="mt-6">
-            <GuideEquipment eq={equipmentMap[fishKey]} />
-          </div>
-        )}
 
         {/* გაზიარებული ბმულით მოსული უავტორიზაციო ვიზიტორი */}
         {sharedVisit && !authLoading && !isRealUser && (
