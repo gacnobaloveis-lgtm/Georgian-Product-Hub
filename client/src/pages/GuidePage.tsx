@@ -5,6 +5,7 @@ import { ArrowLeft, Compass, Share2, Hourglass, Fish as FishIcon, Clock, Bug, Dr
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
+import GuideEquipment, { guideEquipmentHasData, type GuideEquipmentMap } from "@/components/GuideEquipment";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const PAGE_BG_STYLE: React.CSSProperties = {
@@ -139,6 +140,10 @@ export default function GuidePage() {
   const { data: fbConfig } = useQuery<{ appId: string }>({
     queryKey: ["/api/facebook/app-id"],
     staleTime: Infinity,
+  });
+  const { data: equipmentMap } = useQuery<GuideEquipmentMap>({
+    queryKey: ["/api/guide/equipment"],
+    staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -400,6 +405,13 @@ export default function GuidePage() {
           </Button>
           {error && <p className="mt-3 text-sm font-medium text-red-300">{error}</p>}
         </div>
+
+        {/* არჩეული თევზის სპინინგის კომპლექტი (ადმინის შევსებული) */}
+        {fishKey && equipmentMap && guideEquipmentHasData(equipmentMap[fishKey]) && (
+          <div className="mt-6">
+            <GuideEquipment eq={equipmentMap[fishKey]} />
+          </div>
+        )}
 
         {/* გაზიარებული ბმულით მოსული უავტორიზაციო ვიზიტორი */}
         {sharedVisit && !authLoading && !isRealUser && (
