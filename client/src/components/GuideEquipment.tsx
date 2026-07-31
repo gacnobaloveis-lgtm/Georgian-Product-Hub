@@ -212,8 +212,9 @@ function CardProducts({
         }`;
         // ამოწურული ან ფერის/ზომის ასარჩევი → პროდუქტის გვერდზე; სხვები → პირდაპირ კალათაში
         if (soldOut || needsOptions(p)) {
+          const back = encodeURIComponent(window.location.pathname + window.location.search);
           return (
-            <Link key={p.id} href={`/product/${p.id}`} className={tileCls} data-testid={`${testId}-product-${p.id}`}>
+            <Link key={p.id} href={`/product/${p.id}?back=${back}`} className={tileCls} data-testid={`${testId}-product-${p.id}`}>
               {inner}
             </Link>
           );
@@ -309,9 +310,11 @@ export default function GuideEquipment({ eq }: { eq: FishEquipment }) {
               <Row label="ტყორცნის წონა" value={eq.rod?.casting} />
             </div>
             {(eq.rod?.lengths?.length ?? 0) > 0 && (
-              <p className="mt-3 text-xs font-semibold text-slate-400">სიგრძე</p>
+              <div className="mt-2 flex items-center justify-between text-sm">
+                <span className="text-slate-400">სიგრძე</span>
+                <b className="text-white">{eq.rod!.lengths!.join(", ")}</b>
+              </div>
             )}
-            <Badges items={eq.rod?.lengths} cls="border-green-500/40 bg-green-500/10 text-green-300" />
             <CardProducts ids={eq.rod?.productIds} products={products} testId="rod" />
           </EqCard>
         )}
@@ -322,9 +325,11 @@ export default function GuideEquipment({ eq }: { eq: FishEquipment }) {
               <Row label="მუხრუჭი" value={eq.reel?.brake} />
             </div>
             {(eq.reel?.sizes?.length ?? 0) > 0 && (
-              <p className="mt-3 text-xs font-semibold text-slate-400">ზომა</p>
+              <div className="mt-2 flex items-center justify-between text-sm">
+                <span className="text-slate-400">ზომა</span>
+                <b className="text-white">{eq.reel!.sizes!.join(", ")}</b>
+              </div>
             )}
-            <Badges items={eq.reel?.sizes} cls="border-sky-500/40 bg-sky-500/10 text-sky-300" />
             <CardProducts ids={eq.reel?.productIds} products={products} testId="reel" />
           </EqCard>
         )}
