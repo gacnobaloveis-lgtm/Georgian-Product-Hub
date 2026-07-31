@@ -1293,6 +1293,20 @@ export default function HomePage() {
                 <span className="block text-xs text-emerald-100/80">თევზის აქტივობის პროგნოზი — სად და როდის წამოეგება</span>
               </div>
             </button>
+            <button
+              type="button"
+              onClick={() => { setGuideOpen(false); setLocation("/guide/equipment"); }}
+              className="flex w-full items-center gap-3 rounded-xl border border-sky-400/40 bg-sky-500/15 backdrop-blur-md p-4 text-left hover:bg-sky-500/25 transition-colors"
+              data-testid="button-guide-equipment"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500/30">
+                <span className="text-base">🎣</span>
+              </div>
+              <div>
+                <span className="block text-sm font-bold text-white">როგორ შევარჩიო სპინინგის კომპლექტი</span>
+                <span className="block text-xs text-sky-100/80">ჩაწერე თევზი და ნახე სრული კომპლექტი — ჯოხი, კოჭა, სატყუარები</span>
+              </div>
+            </button>
             <div className="rounded-xl border border-white/15 bg-white/5 backdrop-blur-md overflow-hidden">
               <button
                 type="button"
