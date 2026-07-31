@@ -124,6 +124,10 @@ function CardProducts({
   if (linked.length === 0) return null;
   return (
     <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
+      <p className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+        <Star className="h-3.5 w-3.5 animate-pulse fill-amber-300 text-amber-300" />
+        ეხლავე შეძენა
+      </p>
       {linked.map((p) => {
         const price = p.discountPrice ?? p.originalPrice;
         const soldOut = isProductOutOfStock(p);
@@ -227,6 +231,9 @@ export default function GuideEquipment({ eq }: { eq: FishEquipment }) {
               <Row label="Power" value={eq.rod?.power} />
               <Row label="ტყორცნის წონა" value={eq.rod?.casting} />
             </div>
+            {(eq.rod?.lengths?.length ?? 0) > 0 && (
+              <p className="mt-3 text-xs font-semibold text-slate-400">სიგრძე</p>
+            )}
             <Badges items={eq.rod?.lengths} cls="border-green-500/40 bg-green-500/10 text-green-300" />
             <CardProducts ids={eq.rod?.productIds} products={products} testId="rod" />
           </EqCard>
@@ -237,6 +244,9 @@ export default function GuideEquipment({ eq }: { eq: FishEquipment }) {
               <Row label="Gear Ratio" value={eq.reel?.gearRatio} />
               <Row label="მუხრუჭი" value={eq.reel?.brake} />
             </div>
+            {(eq.reel?.sizes?.length ?? 0) > 0 && (
+              <p className="mt-3 text-xs font-semibold text-slate-400">ზომა</p>
+            )}
             <Badges items={eq.reel?.sizes} cls="border-sky-500/40 bg-sky-500/10 text-sky-300" />
             <CardProducts ids={eq.reel?.productIds} products={products} testId="reel" />
           </EqCard>
