@@ -1,1 +1,1 @@
-deploy v68 - merged: shop product links on equipment cards + sold-out badges - 2026-07-31
+deploy v69 - separate equipment room /guide/equipment with fish search - 2026-07-31
