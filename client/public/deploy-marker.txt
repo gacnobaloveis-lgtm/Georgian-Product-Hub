@@ -1,1 +1,1 @@
-deploy v66 - guide equipment cards (admin-editable per fish) - 2026-07-31
+deploy v67 - weekly fish activity chart in guide - 2026-07-31
