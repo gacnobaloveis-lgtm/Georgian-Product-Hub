@@ -1,1 +1,1 @@
-deploy v77 - equipment room top button: მთავარზე გასვლა -> home - 2026-07-31
+deploy v78 - buy tiles always add to cart with photo-default color/variant - 2026-07-31
