@@ -277,7 +277,9 @@ export async function registerRoutes(
         }
         const result = await getGuideForecast(fish, water, Number(days) || 0);
         if (!result) return res.status(404).json({ error: "წყალი ვერ მოიძებნა" });
-        if (habitat.note) result.explanations = [...result.explanations, habitat.note];
+        // Don't mutate — the forecast result is cached; mutation would stack
+        // the note on every repeated request.
+        if (habitat.note) return res.json({ ...result, explanations: [...result.explanations, habitat.note] });
         return res.json(result);
       }
       // უცნობი (გეოკოდირებული) ადგილი — lat/lon-ით
@@ -299,7 +301,7 @@ export async function registerRoutes(
       }
       const result = await getGuideForecastForWater(fish, customWater, Number(days) || 0);
       if (!result) return res.status(404).json({ error: "პროგნოზი ვერ გამოითვალა" });
-      if (customHabitat.note) result.explanations = [...result.explanations, customHabitat.note];
+      if (customHabitat.note) return res.json({ ...result, explanations: [...result.explanations, customHabitat.note] });
       res.json(result);
     } catch (err) {
       console.error("[guide] forecast error:", err);
