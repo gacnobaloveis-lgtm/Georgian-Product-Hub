@@ -1527,20 +1527,6 @@ export default function HomePage() {
             <p className="text-xs sm:text-sm leading-snug sm:leading-relaxed text-white drop-shadow">
               თქვენ იმყოფებით ონლაინ მაღაზიის პლატფორმაზე <strong>spiningebi.ge</strong>. გთავაზობთ სპინინგით სათევზაო აღჭურვილობას. ჩვენთან შეძენილი პროდუქცია მიეწოდება საქართველოს მთელ ტერიტორიაზე საკურიერო მომსახურებით.
             </p>
-            <div className="mt-3 sm:mt-4 space-y-1.5 sm:space-y-2">
-              <div className="flex items-center justify-between rounded-lg bg-white/10 border border-white/15 px-3 py-2 sm:py-2.5">
-                <span className="text-xs sm:text-sm font-medium text-white">ქალაქები</span>
-                <span className="text-xs sm:text-sm font-bold text-emerald-300">10.50 ₾</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-white/10 border border-white/15 px-3 py-2 sm:py-2.5">
-                <span className="text-xs sm:text-sm font-medium text-white">რეგიონები და სოფლები</span>
-                <span className="text-xs sm:text-sm font-bold text-emerald-300">15.50 ₾</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg bg-white/15 border border-white/20 px-3 py-2 sm:py-2.5">
-                <span className="text-xs sm:text-sm font-medium text-white">ქუთაისის ტერიტორია</span>
-                <span className="text-xs sm:text-sm font-bold text-emerald-300">უფასო</span>
-              </div>
-            </div>
             <p className="mt-3 sm:mt-4 text-xs sm:text-sm leading-snug sm:leading-relaxed text-white drop-shadow">
               გაიარეთ მარტივი ავტორიზაცია და შეიძინეთ თქვენთვის სასურველი სასპინინგე ინვენტარი.
             </p>
