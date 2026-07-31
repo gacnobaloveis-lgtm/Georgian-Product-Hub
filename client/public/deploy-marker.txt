@@ -1,1 +1,1 @@
-deploy v65 - rivers chishura+chkhara added, kashapi on chkherimela - 2026-07-31
+deploy v66 - guide equipment cards (admin-editable per fish) - 2026-07-31
