@@ -1,1 +1,1 @@
-deploy v79 - FB share OG: fixed title + menu screenshot image; cart checkout error surfacing - 2026-07-31
+deploy v80 - exit-to-home button below FB share in equipment room - 2026-07-31
