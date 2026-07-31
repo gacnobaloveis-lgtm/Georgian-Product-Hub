@@ -2086,6 +2086,17 @@ export async function registerRoutes(
       if (equipment === null || Object.keys(equipment).length === 0) {
         delete map[fishKey];
       } else {
+        // productIds — მხოლოდ დადებითი მთელი რიცხვები (მაქს. 20 თითო ბარათზე)
+        for (const g of ["rod", "reel", "line", "lure", "fluoro"]) {
+          const grp = (equipment as Record<string, any>)[g];
+          if (grp && typeof grp === "object" && "productIds" in grp) {
+            const ids = Array.isArray(grp.productIds) ? grp.productIds : [];
+            grp.productIds = ids
+              .filter((n: unknown) => Number.isInteger(n) && (n as number) > 0)
+              .slice(0, 20);
+            if (grp.productIds.length === 0) delete grp.productIds;
+          }
+        }
         map[fishKey] = equipment;
       }
       const json = JSON.stringify(map);
