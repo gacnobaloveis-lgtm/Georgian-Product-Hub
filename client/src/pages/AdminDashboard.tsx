@@ -20,6 +20,8 @@ import { useAdminUsers, useUpdateUser, useDeleteUser } from "@/hooks/use-users";
 import type { Product } from "@shared/schema";
 import type { User, Order } from "@shared/models/auth";
 import { VisualSection } from "@/components/VisualSection";
+import { GuideEquipmentSection } from "@/components/GuideEquipmentSection";
+import { Compass } from "lucide-react";
 import RichTextEditor from "@/components/RichTextEditor";
 import RichTextDisplay from "@/components/RichTextDisplay";
 import { ImageEditor } from "@/components/ImageEditor";
@@ -3385,7 +3387,7 @@ function TermsSectionsManager() {
 }
 
 
-type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms" | "ads" | "tutorials" | "interests" | "stock";
+type AdminSection = null | "products" | "site" | "users" | "orders" | "autodrava" | "statuses" | "visual" | "analytics" | "terms" | "ads" | "tutorials" | "interests" | "stock" | "guideEquip";
 
 export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState<AdminSection>(null);
@@ -3513,6 +3515,29 @@ export default function AdminDashboard() {
               </div>
             </div>
             <OrdersSection />
+          </AnimatedShell>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeSection === "guideEquip") {
+    return (
+      <div className="min-h-screen bg-mesh">
+        <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+          <AnimatedShell className="space-y-6">
+            <div className="flex items-center justify-between">
+              <TopBar title="ადმინ პანელი" subtitle="გზამკვლევის აღჭურვილობა" />
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setActiveSection(null)} data-testid="button-back">
+                  უკან
+                </Button>
+                <Link href="/">
+                  <Button variant="ghost" size="sm" data-testid="link-homepage">მთავარი</Button>
+                </Link>
+              </div>
+            </div>
+            <GuideEquipmentSection />
           </AnimatedShell>
         </div>
       </div>
@@ -3857,6 +3882,22 @@ export default function AdminDashboard() {
                   </div>
                   <h3 className="text-lg font-semibold">ავტო-ძრავა</h3>
                   <p className="text-sm text-muted-foreground">გაყიდული ნივთების ავტომატური აღრიცხვა და რედაქტირება</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {isFullAdmin && (
+              <Card
+                className="cursor-pointer border-card-border bg-card transition-all hover:shadow-lg hover:border-primary/40"
+                onClick={() => setActiveSection("guideEquip")}
+                data-testid="card-section-guide-equip"
+              >
+                <CardContent className="flex flex-col items-center gap-3 p-8 text-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <Compass className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold">გზამკვლევის აღჭურვილობა</h3>
+                  <p className="text-sm text-muted-foreground">სპინინგის კომპლექტები თითო თევზისთვის</p>
                 </CardContent>
               </Card>
             )}
