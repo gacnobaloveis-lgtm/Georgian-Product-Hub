@@ -1,1 +1,1 @@
-deploy v71 - equipment card labels (სიგრძე/ზომა) + blinking 'ეხლავე შეძენა' heading - 2026-07-31
+deploy v72 - equipment room entry in homepage guide dialog - 2026-07-31
