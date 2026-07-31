@@ -1,1 +1,1 @@
-deploy v72 - equipment room entry in homepage guide dialog - 2026-07-31
+deploy v73 - card order (fluoro before lure), FB share button, ?fish= shared link on equipment room - 2026-07-31
