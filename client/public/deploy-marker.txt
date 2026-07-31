@@ -1,1 +1,1 @@
-deploy v69 - separate equipment room /guide/equipment with fish search - 2026-07-31
+deploy v70 - hide courier prices from welcome dialog - 2026-07-31
