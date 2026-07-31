@@ -12,6 +12,8 @@ import {
   Share2,
 } from "lucide-react";
 import type { Product } from "@shared/schema";
+import { useCart } from "@/hooks/use-cart";
+import { useToast } from "@/hooks/use-toast";
 
 // თითო თევზის აღჭურვილობის კომპლექტი — ადმინი ავსებს ადმინ პანელიდან
 export interface FishEquipment {
@@ -118,11 +120,49 @@ function CardProducts({
   products?: Product[];
   testId: string;
 }) {
+  const { addItem } = useCart();
+  const { toast } = useToast();
   if (!ids || ids.length === 0 || !products) return null;
   const linked = ids
     .map((id) => products.find((p) => p.id === id))
     .filter((p): p is Product => Boolean(p));
   if (linked.length === 0) return null;
+
+  // ფერის/ვარიანტის არჩევა სჭირდება? → პროდუქტის გვერდზე გადავიდეს
+  function needsOptions(p: Product): boolean {
+    let colorStock: Record<string, number> = {};
+    try {
+      colorStock = JSON.parse(p.colorStock || "{}");
+    } catch {}
+    if (Object.keys(colorStock).length > 0) return true;
+    try {
+      if ((JSON.parse(p.lengthOptions || "[]") as string[]).length > 0) return true;
+    } catch {}
+    try {
+      if ((JSON.parse(p.weightOptions || "[]") as string[]).length > 0) return true;
+    } catch {}
+    try {
+      if ((JSON.parse(p.variantOptions || "[]") as string[]).length > 0) return true;
+    } catch {}
+    return false;
+  }
+
+  function handleAdd(p: Product) {
+    const price = Number(p.discountPrice ?? p.originalPrice);
+    const stock = p.stock ?? 0;
+    // შესყიდვის ლიმიტიც გავითვალისწინოთ, როგორც პროდუქტის გვერდზეა
+    const cap = p.purchaseLimit && p.purchaseLimit > 0 ? Math.min(stock, p.purchaseLimit) : stock;
+    addItem({
+      productId: p.id,
+      name: p.name,
+      price,
+      imageUrl: p.imageUrl || "",
+      quantity: 1,
+      selectedColor: null,
+      maxStock: cap,
+    });
+    toast({ title: "კალათაში დაემატა ✓", description: p.name });
+  }
   return (
     <div className="mt-3 space-y-2 border-t border-white/10 pt-3">
       <p className="flex items-center gap-1.5 text-xs font-bold text-amber-300">
@@ -132,17 +172,8 @@ function CardProducts({
       {linked.map((p) => {
         const price = p.discountPrice ?? p.originalPrice;
         const soldOut = isProductOutOfStock(p);
-        return (
-          <Link
-            key={p.id}
-            href={`/product/${p.id}`}
-            className={`flex items-center gap-2.5 rounded-xl border border-white/10 bg-slate-800/60 p-2 transition-colors ${
-              soldOut
-                ? "opacity-60 hover:border-white/20"
-                : "hover:border-emerald-400/40 hover:bg-slate-800"
-            }`}
-            data-testid={`${testId}-product-${p.id}`}
-          >
+        const inner = (
+          <>
             {p.imageUrl ? (
               <img
                 src={p.imageUrl}
@@ -155,7 +186,7 @@ function CardProducts({
                 <ShoppingCart className="h-5 w-5 text-slate-400" />
               </div>
             )}
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 text-left">
               <p className="truncate text-xs font-semibold text-white">{p.name}</p>
               <p className="text-xs font-bold text-emerald-300">
                 ₾{Number(price).toFixed(2)}
@@ -174,7 +205,29 @@ function CardProducts({
                 ყიდვა
               </span>
             )}
-          </Link>
+          </>
+        );
+        const tileCls = `flex w-full items-center gap-2.5 rounded-xl border border-white/10 bg-slate-800/60 p-2 transition-colors ${
+          soldOut ? "opacity-60 hover:border-white/20" : "hover:border-emerald-400/40 hover:bg-slate-800"
+        }`;
+        // ამოწურული ან ფერის/ზომის ასარჩევი → პროდუქტის გვერდზე; სხვები → პირდაპირ კალათაში
+        if (soldOut || needsOptions(p)) {
+          return (
+            <Link key={p.id} href={`/product/${p.id}`} className={tileCls} data-testid={`${testId}-product-${p.id}`}>
+              {inner}
+            </Link>
+          );
+        }
+        return (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => handleAdd(p)}
+            className={tileCls}
+            data-testid={`${testId}-product-${p.id}`}
+          >
+            {inner}
+          </button>
         );
       })}
     </div>
