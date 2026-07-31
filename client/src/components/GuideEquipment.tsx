@@ -413,6 +413,13 @@ export default function GuideEquipment({ eq }: { eq: FishEquipment }) {
         <Share2 className="h-4 w-4" />
         გააზიარე ფეისბუქზე
       </button>
+      <Link
+        href="/"
+        className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-bold text-white shadow-lg backdrop-blur transition hover:bg-white/20 active:scale-[0.98]"
+        data-testid="link-equipment-exit-home"
+      >
+        ← მთავარზე გასვლა
+      </Link>
     </div>
   );
 }
