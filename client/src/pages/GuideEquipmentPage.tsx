@@ -95,10 +95,10 @@ export default function GuideEquipmentPage() {
             variant="ghost"
             size="sm"
             className="text-white hover:bg-white/20"
-            onClick={() => navigate("/guide")}
+            onClick={() => navigate("/")}
             data-testid="button-back-to-guide"
           >
-            <ArrowLeft className="mr-1 h-4 w-4" /> გზამკვლევი
+            <ArrowLeft className="mr-1 h-4 w-4" /> მთავარზე გასვლა
           </Button>
         </div>
 
