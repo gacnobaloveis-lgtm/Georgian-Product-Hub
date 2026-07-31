@@ -469,6 +469,55 @@ export async function registerRoutes(
     }
   });
 
+  // Bot prerendering for shared guide equipment pages (Facebook share)
+  app.get("/guide/equipment", async (req, res, next) => {
+    const ua = req.headers["user-agent"] || "";
+    if (!SOCIAL_BOTS.test(ua)) return next(); // regular browser → SPA
+
+    try {
+      const fishKey = String(req.query.fish || "");
+      const siteUrl = (process.env.SITE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+      const fish = guideFish[fishKey];
+
+      const title = "🎣 როგორ ავაწყოთ სპინინგის კომპლექტი | spiningebi.ge";
+      let desc = "ჩაწერე თევზის სახელი და ნახე სრული კომპლექტი — ჯოხი, კოჭა, წნული, სატყუარები. მეთევზის გზამკვლევი, spiningebi.ge";
+      const image = `${siteUrl}/guide-share.jpg`;
+
+      if (fish) {
+        desc = `${fish.name} — სრული კომპლექტი: ჯოხი, კოჭა, წნული, სატყუარები. მეთევზის გზამკვლევი, spiningebi.ge`;
+      }
+
+      const pageUrl = escHtml(`${siteUrl}${req.originalUrl}`);
+      const safeTitle = escHtml(title);
+      const safeDesc = escHtml(desc);
+      const safeImage = escHtml(image);
+
+      return res.status(200).set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8"/>
+  <title>${safeTitle}</title>
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="spiningebi.ge"/>
+  <meta property="og:title" content="${safeTitle}"/>
+  <meta property="og:description" content="${safeDesc}"/>
+  <meta property="og:image" content="${safeImage}"/>
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+  <meta property="og:url" content="${pageUrl}"/>
+  <meta property="og:locale" content="ka_GE"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:image" content="${safeImage}"/>
+  <meta name="twitter:title" content="${safeTitle}"/>
+  <meta name="twitter:description" content="${safeDesc}"/>
+</head>
+<body><a href="${pageUrl}">${safeTitle}</a></body>
+</html>`);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // Bot prerendering for product detail pages
   app.get("/products/:id", async (req, res, next) => {
     const ua = req.headers["user-agent"] || "";
