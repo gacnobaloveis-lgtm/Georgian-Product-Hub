@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { ArrowLeft, Search, Fish as FishIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import GuideEquipment, { guideEquipmentHasData, type GuideEquipmentMap } from "@/components/GuideEquipment";
@@ -34,7 +34,26 @@ export default function GuideEquipmentPage() {
   const { data: guideData } = useQuery<GuideData>({ queryKey: ["/api/guide/data"] });
   const { data: equipmentMap } = useQuery<GuideEquipmentMap>({ queryKey: ["/api/guide/equipment"] });
 
+  const search = useSearch();
+
   const fishEntries = guideData ? Object.entries(guideData.fish) : [];
+
+  // გაზიარებული ბმულით მოსვლა: /guide/equipment?fish=kashapi
+  useEffect(() => {
+    if (!guideData) return;
+    const param = new URLSearchParams(search).get("fish");
+    if (param && guideData.fish[param] && !selectedKey) {
+      setSelectedKey(param);
+      setQuery(guideData.fish[param].name);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guideData]);
+
+  function selectFish(key: string) {
+    setSelectedKey(key);
+    setNotFound(false);
+    window.history.replaceState(null, "", `/guide/equipment?fish=${key}`);
+  }
 
   function doSearch(q?: string) {
     const text = (q ?? query).trim().toLowerCase();
@@ -43,8 +62,7 @@ export default function GuideEquipmentPage() {
       ([key, f]) => f.name.toLowerCase().includes(text) || key.toLowerCase() === text
     );
     if (hit) {
-      setSelectedKey(hit[0]);
-      setNotFound(false);
+      selectFish(hit[0]);
       setQuery(hit[1].name);
     } else {
       setSelectedKey(null);
@@ -112,8 +130,7 @@ export default function GuideEquipmentPage() {
                   key={key}
                   onClick={() => {
                     setQuery(f.name);
-                    setSelectedKey(key);
-                    setNotFound(false);
+                    selectFish(key);
                   }}
                   className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition ${
                     selectedKey === key
