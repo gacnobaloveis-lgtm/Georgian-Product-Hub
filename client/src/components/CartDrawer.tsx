@@ -266,8 +266,12 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
     setPaySubmitting(true);
     const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
     const itemsToOrder = confirmedItemsRef.current;
-    const totalAmount = itemsToOrder.reduce((sum, i) => sum + i.price * i.quantity, 0);
     const createdOrderIds: number[] = [];
+    // მხოლოდ წარმატებით შექმნილი შეკვეთების ნივთები — თანხაც და კალათის
+    // გასუფთავებაც მხოლოდ მათზე; ჩავარდნილი (მაგ. ლიმიტი ამოწურული) რჩება
+    // კალათაში და მომხმარებელი ხედავს სერვერის მიზეზს.
+    const orderedItems: CartItem[] = [];
+    let failMessage: string | null = null;
 
     try {
       for (const item of itemsToOrder) {
@@ -288,21 +292,33 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
         });
         if (res.ok) {
           const order = await res.json();
-          if (order?.id) createdOrderIds.push(order.id);
+          if (order?.id) {
+            createdOrderIds.push(order.id);
+            orderedItems.push(item);
+          }
+        } else if (!failMessage) {
+          const data = await res.json().catch(() => null);
+          failMessage = `${item.name}: ${data?.message || "შეკვეთა ვერ შეიქმნა"}`;
         }
       }
 
       if (createdOrderIds.length === 0) {
-        toast({ variant: "destructive", title: "შეცდომა", description: "შეკვეთა ვერ შეიქმნა" });
+        toast({ variant: "destructive", title: "შეცდომა", description: failMessage || "შეკვეთა ვერ შეიქმნა" });
         setPaySubmitting(false);
         return;
       }
+      if (failMessage) {
+        // ნაწილი ჩავარდა — გადახდა გრძელდება მხოლოდ შექმნილ შეკვეთებზე,
+        // ჩავარდნილი ნივთი კალათაში რჩება.
+        toast({ variant: "destructive", title: "ზოგი ნივთი ვერ შეუკვეთა", description: failMessage });
+      }
 
-      const description = itemsToOrder.length === 1
-        ? `spiningebi.ge — ${itemsToOrder[0].name} (${itemsToOrder[0].quantity} ც.)`
-        : `spiningebi.ge — ${itemsToOrder.length} ნივთი`;
+      const totalAmount = orderedItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+      const description = orderedItems.length === 1
+        ? `spiningebi.ge — ${orderedItems[0].name} (${orderedItems[0].quantity} ც.)`
+        : `spiningebi.ge — ${orderedItems.length} ნივთი`;
 
-      clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor, selectedVariant: i.selectedVariant })));
+      clearItems(orderedItems.map(i => ({ productId: i.productId, selectedColor: i.selectedColor, selectedVariant: i.selectedVariant })));
       setSelected(new Set());
       setFlittPay({ orderId: createdOrderIds[0], orderIds: createdOrderIds, amount: totalAmount, description });
       setPaySubmitting(false);
@@ -318,7 +334,8 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
     setCreditSubmitting(true);
     const fullName = [profile.firstName, profile.lastName].filter(Boolean).join(" ");
     const itemsToOrder = confirmedItemsRef.current;
-    let successCount = 0;
+    const orderedItems: CartItem[] = [];
+    let failMessage: string | null = null;
     try {
       for (const item of itemsToOrder) {
         const res = await fetch("/api/orders/credit", {
@@ -336,13 +353,22 @@ export function CartDrawer({ open, onOpenChange }: { open: boolean; onOpenChange
             phone: profile.phone!.trim(),
           }),
         });
-        if (res.ok) successCount++;
+        if (res.ok) {
+          orderedItems.push(item);
+        } else if (!failMessage) {
+          const data = await res.json().catch(() => null);
+          failMessage = `${item.name}: ${data?.message || "შეკვეთა ვერ შეიქმნა"}`;
+        }
       }
-      if (successCount === 0) {
-        toast({ variant: "destructive", title: "შეცდომა", description: "შეკვეთა ვერ შეიქმნა" });
+      if (orderedItems.length === 0) {
+        toast({ variant: "destructive", title: "შეცდომა", description: failMessage || "შეკვეთა ვერ შეიქმნა" });
       } else {
-        toast({ title: "შეკვეთა მიღებულია!", description: `${successCount} ნივთი კრედიტით შეძენილია.` });
-        clearItems(itemsToOrder.map(i => ({ productId: i.productId, selectedColor: i.selectedColor, selectedVariant: i.selectedVariant })));
+        if (failMessage) {
+          toast({ variant: "destructive", title: "ზოგი ნივთი ვერ შეუკვეთა", description: failMessage });
+        }
+        toast({ title: "შეკვეთა მიღებულია!", description: `${orderedItems.length} ნივთი კრედიტით შეძენილია.` });
+        // მხოლოდ წარმატებული ნივთები იშლება — ჩავარდნილი კალათაში რჩება.
+        clearItems(orderedItems.map(i => ({ productId: i.productId, selectedColor: i.selectedColor, selectedVariant: i.selectedVariant })));
         setSelected(new Set());
         queryClient.invalidateQueries({ queryKey: ["/api/profile"] });
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
