@@ -47,6 +47,7 @@ interface WeekDay {
   temp_min: number;
   wind_max: number;
   precip_prob: number;
+  activity?: number;
 }
 
 function weatherEmoji(code: number): string {
@@ -527,6 +528,56 @@ export default function GuidePage() {
                 <p className="text-sm font-bold text-white leading-tight">{result.water_clarity.status}</p>
               </div>
             </div>
+
+            {result.week && result.week.filter((w) => typeof w.activity === "number").length >= 2 && (
+              <div className={cardCls} data-testid="card-activity-week">
+                <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
+                  📈 აქტიურობა კვირის განმავლობაში
+                </p>
+                {(() => {
+                  const days = result.week!.filter((w) => typeof w.activity === "number");
+                  const W = 700, H = 190, padX = 34, padT = 30, padB = 34;
+                  const innerW = W - padX * 2, innerH = H - padT - padB;
+                  const x = (i: number) => padX + (days.length === 1 ? innerW / 2 : (i * innerW) / (days.length - 1));
+                  const y = (p: number) => padT + innerH * (1 - p / 100);
+                  const pts = days.map((w, i) => ({ px: x(i), py: y(w.activity as number), w }));
+                  const line = pts.map((p) => `${p.px},${p.py}`).join(" ");
+                  const area = `${padX},${padT + innerH} ${line} ${padX + innerW},${padT + innerH}`;
+                  return (
+                    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" data-testid="chart-activity-week">
+                      <defs>
+                        <linearGradient id="actFill" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#34d399" stopOpacity="0.45" />
+                          <stop offset="100%" stopColor="#34d399" stopOpacity="0.02" />
+                        </linearGradient>
+                      </defs>
+                      {[0, 50, 100].map((g) => (
+                        <g key={g}>
+                          <line x1={padX} x2={padX + innerW} y1={y(g)} y2={y(g)} stroke="rgba(255,255,255,0.12)" strokeDasharray="3 4" />
+                          <text x={padX - 6} y={y(g) + 3} textAnchor="end" fontSize="9" fill="rgba(255,255,255,0.5)">{g}%</text>
+                        </g>
+                      ))}
+                      <polygon points={area} fill="url(#actFill)" />
+                      <polyline points={line} fill="none" stroke="#34d399" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+                      {pts.map((p, i) => {
+                        const active = p.w.date === result.date;
+                        return (
+                          <g key={p.w.date}>
+                            <circle cx={p.px} cy={p.py} r={active ? 5 : 3.5} fill={active ? "#22d3ee" : "#34d399"} stroke="#0f172a" strokeWidth="1.5" />
+                            <text x={p.px} y={p.py - 9} textAnchor="middle" fontSize="11" fontWeight="bold" fill={active ? "#67e8f9" : "#d1fae5"}>
+                              {p.w.activity}%
+                            </text>
+                            <text x={p.px} y={H - 8} textAnchor="middle" fontSize="10" fill={active ? "#67e8f9" : "rgba(255,255,255,0.65)"} fontWeight={active ? "bold" : "normal"}>
+                              {p.w.day.split(",")[0]}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </svg>
+                  );
+                })()}
+              </div>
+            )}
 
             {result.week && result.week.length > 0 && (
               <div className={cardCls}>
