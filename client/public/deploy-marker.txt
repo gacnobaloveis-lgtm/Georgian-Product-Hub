@@ -1,1 +1,1 @@
-deploy v75 - inline white length/size values + return to cart after color pick - 2026-07-31
+deploy v76 - per-lure-type weight fields (admin) + display next to each type - 2026-07-31
