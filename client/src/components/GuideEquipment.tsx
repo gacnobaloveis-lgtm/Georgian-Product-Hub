@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Star,
   ShoppingCart,
+  Share2,
 } from "lucide-react";
 import type { Product } from "@shared/schema";
 
@@ -208,6 +209,29 @@ export default function GuideEquipment({ eq }: { eq: FishEquipment }) {
     queryKey: ["/api/products"],
     enabled: anyProducts,
   });
+  const { data: fbConfig } = useQuery<{ appId: string }>({
+    queryKey: ["/api/facebook/app-id"],
+    staleTime: Infinity,
+  });
+
+  async function shareOnFacebook() {
+    const url = window.location.href;
+    // მობილურზე — სისტემური გაზიარება (FB app-ში პირდაპირ)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: "სპინინგის კომპლექტი | spiningebi.ge", url });
+      } catch {
+        // მომხმარებელმა გააუქმა
+      }
+      return;
+    }
+    const appId = fbConfig?.appId;
+    const fbUrl = appId
+      ? `https://www.facebook.com/dialog/share?app_id=${appId}&display=popup&href=${encodeURIComponent(url)}&redirect_uri=${encodeURIComponent(url)}`
+      : `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    const popup = window.open(fbUrl, "_blank", "width=626,height=600,noopener=no");
+    if (!popup) window.location.href = fbUrl;
+  }
 
   if (!hasAny(eq)) return null;
   const showRod = eq.rod && (eq.rod.lengths?.length || eq.rod.action || eq.rod.power || eq.rod.casting || eq.rod.productIds?.length);
@@ -261,6 +285,16 @@ export default function GuideEquipment({ eq }: { eq: FishEquipment }) {
             <CardProducts ids={eq.line?.productIds} products={products} testId="line" />
           </EqCard>
         )}
+        {showFluoro && (
+          <EqCard title="ფლუორო" color="#facc15" icon={<Ruler className="h-5 w-5 text-yellow-400" />} testId="card-eq-fluoro">
+            <div className="space-y-2">
+              <Row label="მინ." value={eq.fluoro?.min} />
+              <Row label="საუკეთესო" value={eq.fluoro?.best} />
+              <Row label="მაქს." value={eq.fluoro?.max} />
+            </div>
+            <CardProducts ids={eq.fluoro?.productIds} products={products} testId="fluoro" />
+          </EqCard>
+        )}
         {showLure && (
           <EqCard title="სატყუარა" color="#f97316" icon={<Fish className="h-5 w-5 text-orange-400" />} testId="card-eq-lure">
             <ul className="space-y-1.5 text-sm text-white">
@@ -276,16 +310,6 @@ export default function GuideEquipment({ eq }: { eq: FishEquipment }) {
             <CardProducts ids={eq.lure?.productIds} products={products} testId="lure" />
           </EqCard>
         )}
-        {showFluoro && (
-          <EqCard title="ფლუორო" color="#facc15" icon={<Ruler className="h-5 w-5 text-yellow-400" />} testId="card-eq-fluoro">
-            <div className="space-y-2">
-              <Row label="მინ." value={eq.fluoro?.min} />
-              <Row label="საუკეთესო" value={eq.fluoro?.best} />
-              <Row label="მაქს." value={eq.fluoro?.max} />
-            </div>
-            <CardProducts ids={eq.fluoro?.productIds} products={products} testId="fluoro" />
-          </EqCard>
-        )}
         {showRecs && (
           <EqCard title="რეკომენდაცია" color="#06b6d4" icon={<CheckCircle2 className="h-5 w-5 text-cyan-400" />} testId="card-eq-recs">
             <ul className="space-y-1.5 text-sm text-white">
@@ -299,6 +323,15 @@ export default function GuideEquipment({ eq }: { eq: FishEquipment }) {
           </EqCard>
         )}
       </div>
+      <button
+        type="button"
+        onClick={shareOnFacebook}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-4 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-[#166FE5] active:scale-[0.98]"
+        data-testid="button-equipment-share-fb"
+      >
+        <Share2 className="h-4 w-4" />
+        გააზიარე ფეისბუქზე
+      </button>
     </div>
   );
 }
