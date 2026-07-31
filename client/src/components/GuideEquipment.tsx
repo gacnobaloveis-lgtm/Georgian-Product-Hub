@@ -31,7 +31,7 @@ export interface FishEquipment {
     productIds?: number[];
   };
   line?: { min?: string; best?: string; max?: string; productIds?: number[] }; // PE
-  lure?: { types?: string[]; weight?: string; productIds?: number[] };
+  lure?: { types?: string[]; weight?: string; typeWeights?: Record<string, string>; productIds?: number[] };
   fluoro?: { min?: string; best?: string; max?: string; productIds?: number[] };
   recs?: string[];
 }
@@ -357,7 +357,12 @@ export default function GuideEquipment({ eq }: { eq: FishEquipment }) {
           <EqCard title="სატყუარა" color="#f97316" icon={<Fish className="h-5 w-5 text-orange-400" />} testId="card-eq-lure">
             <ul className="space-y-1.5 text-sm text-white">
               {(eq.lure?.types || []).map((t) => (
-                <li key={t}>🎣 {t}</li>
+                <li key={t} className="flex items-center justify-between gap-2">
+                  <span>🎣 {t}</span>
+                  {eq.lure?.typeWeights?.[t] && (
+                    <b className="text-white">{eq.lure.typeWeights[t]}</b>
+                  )}
+                </li>
               ))}
             </ul>
             {eq.lure?.weight && (
