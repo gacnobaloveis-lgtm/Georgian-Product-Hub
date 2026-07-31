@@ -32,7 +32,7 @@ function normalize(eq?: FishEquipment): FishEquipment {
     rod: { lengths: eq?.rod?.lengths || [], action: eq?.rod?.action || "", power: eq?.rod?.power || "", casting: eq?.rod?.casting || "", productIds: cleanIds(eq?.rod?.productIds) },
     reel: { sizes: eq?.reel?.sizes || [], gearRatio: eq?.reel?.gearRatio || "", brake: eq?.reel?.brake || "", productIds: cleanIds(eq?.reel?.productIds) },
     line: { min: eq?.line?.min || "", best: eq?.line?.best || "", max: eq?.line?.max || "", productIds: cleanIds(eq?.line?.productIds) },
-    lure: { types: eq?.lure?.types || [], weight: eq?.lure?.weight || "", productIds: cleanIds(eq?.lure?.productIds) },
+    lure: { types: eq?.lure?.types || [], weight: eq?.lure?.weight || "", typeWeights: eq?.lure?.typeWeights || {}, productIds: cleanIds(eq?.lure?.productIds) },
     fluoro: { min: eq?.fluoro?.min || "", best: eq?.fluoro?.best || "", max: eq?.fluoro?.max || "", productIds: cleanIds(eq?.fluoro?.productIds) },
     recs: eq?.recs || [],
   };
@@ -58,8 +58,14 @@ function compact(eq: FishEquipment): FishEquipment | undefined {
   if (reel.sizes.length || reel.gearRatio || reel.brake || reel.productIds.length) out.reel = reel;
   const line = { min: eq.line?.min?.trim() || "", best: eq.line?.best?.trim() || "", max: eq.line?.max?.trim() || "", productIds: cleanIds(eq.line?.productIds) };
   if (line.min || line.best || line.max || line.productIds.length) out.line = line;
-  const lure = { types: (eq.lure?.types || []).map((s) => s.trim()).filter(Boolean), weight: eq.lure?.weight?.trim() || "", productIds: cleanIds(eq.lure?.productIds) };
-  if (lure.types.length || lure.weight || lure.productIds.length) out.lure = lure;
+  const lureTypes = (eq.lure?.types || []).map((s) => s.trim()).filter(Boolean);
+  const typeWeights: Record<string, string> = {};
+  for (const t of lureTypes) {
+    const w = eq.lure?.typeWeights?.[t]?.trim();
+    if (w) typeWeights[t] = w;
+  }
+  const lure = { types: lureTypes, weight: eq.lure?.weight?.trim() || "", typeWeights, productIds: cleanIds(eq.lure?.productIds) };
+  if (lure.types.length || lure.weight || Object.keys(typeWeights).length || lure.productIds.length) out.lure = lure;
   const fluoro = { min: eq.fluoro?.min?.trim() || "", best: eq.fluoro?.best?.trim() || "", max: eq.fluoro?.max?.trim() || "", productIds: cleanIds(eq.fluoro?.productIds) };
   if (fluoro.min || fluoro.best || fluoro.max || fluoro.productIds.length) out.fluoro = fluoro;
   const recs = (eq.recs || []).map((s) => s.trim()).filter(Boolean);
@@ -293,8 +299,29 @@ export function GuideEquipmentSection() {
           <div className="rounded-lg border p-4 space-y-3">
             <h3 className="font-semibold text-orange-600">🪝 სატყუარა</h3>
             <ListEditor label="ტიპები" items={eq.lure?.types || []} onChange={(v) => setEq({ ...eq, lure: { ...eq.lure, types: v } })} placeholder="მაგ. ვობლერი" testId="lure-type" />
+            {(eq.lure?.types || []).filter((t) => t.trim()).length > 0 && (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium">წონა თითო ტიპზე (გრამებში)</label>
+                {(eq.lure?.types || []).filter((t) => t.trim()).map((t) => (
+                  <div key={t} className="flex items-center gap-2">
+                    <span className="w-28 flex-shrink-0 truncate text-sm">{t}</span>
+                    <Input
+                      value={eq.lure?.typeWeights?.[t] || ""}
+                      placeholder="მაგ. 3 – 6 გ"
+                      onChange={(e) =>
+                        setEq({
+                          ...eq,
+                          lure: { ...eq.lure, typeWeights: { ...(eq.lure?.typeWeights || {}), [t]: e.target.value } },
+                        })
+                      }
+                      data-testid={`input-lure-weight-${t}`}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
             <div>
-              <label className="mb-1 block text-sm font-medium">წონა</label>
+              <label className="mb-1 block text-sm font-medium">საერთო წონა (არასავალდებულო)</label>
               <Input value={eq.lure?.weight || ""} placeholder="2 – 4.5 გ" onChange={(e) => setEq({ ...eq, lure: { ...eq.lure, weight: e.target.value } })} data-testid="input-lure-weight" />
             </div>
             <ProductPicker ids={eq.lure?.productIds || []} onChange={(v) => setEq({ ...eq, lure: { ...eq.lure, productIds: v } })} products={products} testId="lure" />
