@@ -1,1 +1,1 @@
-deploy v73 - card order (fluoro before lure), FB share button, ?fish= shared link on equipment room - 2026-07-31
+deploy v74 - guide buy tiles add to cart + floating cart with total on equipment room - 2026-07-31
