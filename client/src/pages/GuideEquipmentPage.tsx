@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useSearch } from "wouter";
-import { ArrowLeft, Search, Fish as FishIcon } from "lucide-react";
+import { ArrowLeft, Search, Fish as FishIcon, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import GuideEquipment, { guideEquipmentHasData, type GuideEquipmentMap } from "@/components/GuideEquipment";
+import { CartDrawer } from "@/components/CartDrawer";
+import { useCart } from "@/hooks/use-cart";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const PAGE_BG_STYLE: React.CSSProperties = {
@@ -30,6 +32,9 @@ export default function GuideEquipmentPage() {
   const [query, setQuery] = useState("");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
+  const { items, totalCount } = useCart();
+  const cartTotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   const { data: guideData } = useQuery<GuideData>({ queryKey: ["/api/guide/data"] });
   const { data: equipmentMap } = useQuery<GuideEquipmentMap>({ queryKey: ["/api/guide/equipment"] });
@@ -173,6 +178,26 @@ export default function GuideEquipmentPage() {
           </div>
         )}
       </div>
+
+      {/* მოტივტივე კალათა — რაოდენობა + ჯამური თანხა */}
+      {totalCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setCartOpen(true)}
+          className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 rounded-full bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-2xl ring-2 ring-white/30 transition hover:bg-emerald-700 active:scale-95"
+          data-testid="button-equipment-cart"
+        >
+          <span className="relative">
+            <ShoppingCart className="h-5 w-5" />
+            <span className="absolute -right-2.5 -top-2.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold" data-testid="text-equipment-cart-count">
+              {totalCount > 99 ? "99+" : totalCount}
+            </span>
+          </span>
+          <span className="ml-1">₾{cartTotal.toFixed(2)}</span>
+        </button>
+      )}
+
+      <CartDrawer open={cartOpen} onOpenChange={setCartOpen} />
     </div>
   );
 }
