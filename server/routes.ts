@@ -545,6 +545,31 @@ export async function registerRoutes(
 
       console.log(`[og-bot] serving OG HTML for product ${productId} to: ${ua.slice(0, 60)}`);
 
+      // მარაგის სტატუსი schema.org-სთვის (stock ან colorStock)
+      let inStock = (product.stock ?? 0) > 0;
+      try {
+        const cs = JSON.parse(product.colorStock || "{}");
+        if (Object.keys(cs).length > 0) {
+          inStock = Object.values(cs).some((v) => Number(v) > 0);
+        }
+      } catch {}
+      const productLd = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: product.name,
+        image: imageUrl,
+        description: (product.description ?? "").slice(0, 300),
+        offers: {
+          "@type": "Offer",
+          url: `${siteUrl}/products/${productId}`,
+          priceCurrency: "GEL",
+          price: Number(rawPrice).toFixed(2),
+          availability: inStock
+            ? "https://schema.org/InStock"
+            : "https://schema.org/OutOfStock",
+        },
+      }).replace(/</g, "\\u003c");
+
       return res.status(200).set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
 <html lang="ka">
 <head>
@@ -562,6 +587,7 @@ export async function registerRoutes(
   <meta name="twitter:title" content="${title}"/>
   <meta name="twitter:description" content="${desc}"/>
   <meta name="twitter:image" content="${safeImage}"/>
+  <script type="application/ld+json">${productLd}</script>
   <meta http-equiv="refresh" content="0;url=${pageUrl}"/>
 </head>
 <body><a href="${pageUrl}">${title}</a></body>
