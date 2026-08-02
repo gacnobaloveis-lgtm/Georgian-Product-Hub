@@ -1,1 +1,1 @@
-deploy v81 - fish presence: Abasha + all western rivers added (kashapi, kariklapi) - 2026-08-02
+deploy v82 - Product JSON-LD structured data on product pages for Google - 2026-08-02
