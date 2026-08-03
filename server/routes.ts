@@ -2286,6 +2286,51 @@ export async function registerRoutes(
     res.json(blog);
   });
 
+  // ბლოგის ნახვები და ლაიქები (cookie-ს გუარდით — ერთი ვიზიტორი = ერთხელ)
+  const parseIdCookie = (raw: unknown): number[] =>
+    typeof raw === "string"
+      ? raw.split(",").map((x) => parseInt(x, 10)).filter((n) => Number.isFinite(n))
+      : [];
+  const COOKIE_OPTS = { maxAge: 365 * 24 * 3600 * 1000, httpOnly: true, sameSite: "lax" as const, path: "/" };
+
+  app.post("/api/blogs/:id/view", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
+      const blog = await storage.getBlog(id);
+      if (!blog) return res.status(404).json({ message: "ბლოგი ვერ მოიძებნა" });
+      const seen = parseIdCookie(req.cookies?.blog_views);
+      const liked = parseIdCookie(req.cookies?.blog_likes);
+      let views = blog.views;
+      if (!seen.includes(id)) {
+        views = await storage.incrementBlogViews(id);
+        res.cookie("blog_views", [...seen, id].slice(-200).join(","), COOKIE_OPTS);
+      }
+      res.json({ views, likes: blog.likes, liked: liked.includes(id) });
+    } catch (err) {
+      console.error("[blogs] view error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
+  app.post("/api/blogs/:id/like", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
+      const blog = await storage.getBlog(id);
+      if (!blog) return res.status(404).json({ message: "ბლოგი ვერ მოიძებნა" });
+      const likedIds = parseIdCookie(req.cookies?.blog_likes);
+      const already = likedIds.includes(id);
+      const likes = await storage.changeBlogLikes(id, already ? -1 : 1);
+      const next = already ? likedIds.filter((x) => x !== id) : [...likedIds, id].slice(-200);
+      res.cookie("blog_likes", next.join(","), COOKIE_OPTS);
+      res.json({ likes, liked: !already });
+    } catch (err) {
+      console.error("[blogs] like error:", err);
+      res.status(500).json({ message: "შეცდომა" });
+    }
+  });
+
   const sanitizeColor = (v: unknown): string | null =>
     typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v.trim()) ? v.trim() : null;
   const sanitizeFontSize = (v: unknown): number | null => {
