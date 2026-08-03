@@ -1307,6 +1307,20 @@ export default function HomePage() {
                 <span className="block text-xs text-sky-100/80">ჩაწერე თევზი და ნახე სრული კომპლექტი — ჯოხი, კოჭა, სატყუარები</span>
               </div>
             </button>
+            <button
+              type="button"
+              onClick={() => { setGuideOpen(false); setLocation("/guide/blog"); }}
+              className="flex w-full items-center gap-3 rounded-xl border border-amber-400/40 bg-amber-500/15 backdrop-blur-md p-4 text-left hover:bg-amber-500/25 transition-colors"
+              data-testid="button-guide-blog"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/30">
+                <span className="text-base">📖</span>
+              </div>
+              <div>
+                <span className="block text-sm font-bold text-white">ბლოგი</span>
+                <span className="block text-xs text-amber-100/80">საინტერესო სტატიები თევზაობაზე</span>
+              </div>
+            </button>
             <div className="rounded-xl border border-white/15 bg-white/5 backdrop-blur-md overflow-hidden">
               <button
                 type="button"
