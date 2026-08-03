@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, productInterests, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
+import { blogs, type Blog, type InsertBlog, products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, productInterests, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
 import { users, orders, referralLogs, purchaseCreditLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type PurchaseCreditLog, type InsertPageVisit } from "@shared/models/auth";
 import { eq, desc, sql, lt, asc, and, isNull, ne } from "drizzle-orm";
 
@@ -90,6 +90,29 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  async getBlogs(): Promise<Blog[]> {
+    return await db.select().from(blogs).orderBy(desc(blogs.createdAt));
+  }
+
+  async getBlog(id: number): Promise<Blog | undefined> {
+    const [blog] = await db.select().from(blogs).where(eq(blogs.id, id));
+    return blog;
+  }
+
+  async createBlog(blog: InsertBlog): Promise<Blog> {
+    const [created] = await db.insert(blogs).values(blog).returning();
+    return created;
+  }
+
+  async updateBlog(id: number, updates: Partial<InsertBlog>): Promise<Blog | undefined> {
+    const [updated] = await db.update(blogs).set(updates).where(eq(blogs.id, id)).returning();
+    return updated;
+  }
+
+  async deleteBlog(id: number): Promise<void> {
+    await db.delete(blogs).where(eq(blogs.id, id));
+  }
+
   async getProducts(): Promise<Product[]> {
     return await db.select().from(products).orderBy(desc(products.soldCount));
   }
