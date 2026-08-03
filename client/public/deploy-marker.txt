@@ -1,1 +1,1 @@
-deploy v95 2026-08-03T20:45:44Z blog mobile: small floats, chess style like desktop
+deploy v96 2026-08-03T20:51:02Z twemoji hq emojis in blog
