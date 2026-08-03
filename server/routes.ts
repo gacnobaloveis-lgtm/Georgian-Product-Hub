@@ -205,6 +205,10 @@ const REFERRAL_COOKIE_DAYS = 30;
 const SOCIAL_BOTS =
   /facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|TelegramBot|Slackbot|Discordbot|vkShare|Pinterest|Instagram|Googlebot/i;
 
+// AI ასისტენტების კრაულერები (ChatGPT, Gemini, Claude, Perplexity და სხვ.) — ბლოგი მათთვის ღიაა
+const AI_BOTS =
+  /GPTBot|ChatGPT-User|OAI-SearchBot|Google-Extended|GoogleOther|Gemini|ClaudeBot|Claude-Web|anthropic-ai|PerplexityBot|Perplexity-User|CCBot|Bytespider|meta-externalagent|Applebot|DuckAssistBot|YouBot|Amazonbot|cohere-ai|bingbot|YandexBot/i;
+
 function escHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -468,6 +472,82 @@ export async function registerRoutes(
       next(err);
     }
   });
+
+  // ბლოგის prerender — ღიაა ყველა ბოტისთვის (Google, ChatGPT, Gemini, Claude და სხვ.)
+  const blogBotHandler = async (req: Request, res: Response, next: NextFunction) => {
+    const ua = String(req.headers["user-agent"] || "");
+    if (!SOCIAL_BOTS.test(ua) && !AI_BOTS.test(ua)) return next(); // ჩვეულებრივი ბრაუზერი → SPA
+    try {
+      const siteUrl = (process.env.SITE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+      const idRaw = req.params.id;
+      if (idRaw) {
+        const id = parseInt(idRaw, 10);
+        const blog = isNaN(id) ? undefined : await storage.getBlog(id);
+        if (!blog) return next();
+        const img = blog.imageUrl
+          ? blog.imageUrl.startsWith("http") ? blog.imageUrl : `${siteUrl}${blog.imageUrl}`
+          : `${siteUrl}/guide-share.jpg`;
+        const pageUrl = escHtml(`${siteUrl}/guide/blog/${blog.id}`);
+        return res.status(200).set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8"/>
+  <title>${escHtml(blog.title)} | spiningebi.ge</title>
+  <meta name="description" content="${escHtml(blog.content.slice(0, 200))}"/>
+  <meta property="og:type" content="article"/>
+  <meta property="og:site_name" content="spiningebi.ge"/>
+  <meta property="og:title" content="${escHtml(blog.title)}"/>
+  <meta property="og:description" content="${escHtml(blog.content.slice(0, 200))}"/>
+  <meta property="og:image" content="${escHtml(img)}"/>
+  <meta property="og:url" content="${pageUrl}"/>
+  <meta property="og:locale" content="ka_GE"/>
+  <script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: blog.title,
+    articleBody: blog.content,
+    image: img,
+    datePublished: blog.createdAt,
+    publisher: { "@type": "Organization", name: "spiningebi.ge", url: siteUrl },
+  }).replace(/</g, "\\u003c")}</script>
+</head>
+<body>
+  <article>
+    <h1>${escHtml(blog.title)}</h1>
+    ${blog.imageUrl ? `<img src="${escHtml(img)}" alt="${escHtml(blog.title)}"/>` : ""}
+    ${blog.content.split(/\n+/).map((p) => `<p>${escHtml(p)}</p>`).join("\n    ")}
+  </article>
+  <p><a href="${pageUrl}">${escHtml(blog.title)} — spiningebi.ge</a></p>
+</body>
+</html>`);
+      }
+      // სია
+      const list = await storage.getBlogs();
+      const items = list
+        .map((b) => `<li><a href="${escHtml(`${siteUrl}/guide/blog/${b.id}`)}">${escHtml(b.title)}</a> — ${escHtml(b.content.slice(0, 160))}</li>`)
+        .join("\n    ");
+      return res.status(200).set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8"/>
+  <title>ბლოგი — მეთევზის გზამკვლევი | spiningebi.ge</title>
+  <meta name="description" content="საინტერესო სტატიები თევზაობაზე — spiningebi.ge-ს ბლოგი"/>
+  <meta property="og:title" content="ბლოგი — მეთევზის გზამკვლევი | spiningebi.ge"/>
+  <meta property="og:image" content="${escHtml(`${siteUrl}/guide-share.jpg`)}"/>
+</head>
+<body>
+  <h1>ბლოგი — spiningebi.ge</h1>
+  <ul>
+    ${items}
+  </ul>
+</body>
+</html>`);
+    } catch (err) {
+      next(err);
+    }
+  };
+  app.get("/guide/blog", blogBotHandler);
+  app.get("/guide/blog/:id", blogBotHandler);
 
   // Bot prerendering for shared guide equipment pages (Facebook share)
   app.get("/guide/equipment", async (req, res, next) => {
@@ -2144,6 +2224,75 @@ export async function registerRoutes(
   });
 
   // ერთი თევზის კომპლექტის შენახვა — სერვერზე ერწყმის არსებულს (პარალელური რედაქტირება არ შლის სხვა თევზებს)
+  // ── ბლოგი ─────────────────────────────────────────────
+  app.get("/api/blogs", async (_req, res) => {
+    try {
+      res.json(await storage.getBlogs());
+    } catch (err) {
+      console.error("[blogs] list error:", err);
+      res.status(500).json({ message: "ბლოგების წამოღება ვერ მოხერხდა" });
+    }
+  });
+
+  app.get("/api/blogs/:id", async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
+    const blog = await storage.getBlog(id);
+    if (!blog) return res.status(404).json({ message: "ბლოგი ვერ მოიძებნა" });
+    res.json(blog);
+  });
+
+  app.post("/api/admin/blogs", requireAdminOnly, async (req, res) => {
+    try {
+      const { title, content, imageUrl } = req.body || {};
+      if (typeof title !== "string" || !title.trim() || typeof content !== "string" || !content.trim()) {
+        return res.status(400).json({ message: "სათაური და ტექსტი სავალდებულოა" });
+      }
+      const blog = await storage.createBlog({
+        title: title.trim(),
+        content: content.trim(),
+        imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
+      });
+      res.json(blog);
+    } catch (err) {
+      console.error("[blogs] create error:", err);
+      res.status(500).json({ message: "ბლოგის შენახვა ვერ მოხერხდა" });
+    }
+  });
+
+  app.put("/api/admin/blogs/:id", requireAdminOnly, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
+      const { title, content, imageUrl } = req.body || {};
+      if (typeof title !== "string" || !title.trim() || typeof content !== "string" || !content.trim()) {
+        return res.status(400).json({ message: "სათაური და ტექსტი სავალდებულოა" });
+      }
+      const blog = await storage.updateBlog(id, {
+        title: title.trim(),
+        content: content.trim(),
+        imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
+      });
+      if (!blog) return res.status(404).json({ message: "ბლოგი ვერ მოიძებნა" });
+      res.json(blog);
+    } catch (err) {
+      console.error("[blogs] update error:", err);
+      res.status(500).json({ message: "ბლოგის განახლება ვერ მოხერხდა" });
+    }
+  });
+
+  app.delete("/api/admin/blogs/:id", requireAdminOnly, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
+      await storage.deleteBlog(id);
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("[blogs] delete error:", err);
+      res.status(500).json({ message: "ბლოგის წაშლა ვერ მოხერხდა" });
+    }
+  });
+
   app.put("/api/admin/guide-equipment", requireAdminOnly, async (req, res) => {
     try {
       const { fishKey, equipment } = req.body || {};
