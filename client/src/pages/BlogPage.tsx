@@ -24,6 +24,9 @@ interface Blog {
   title: string;
   content: string;
   imageUrl: string | null;
+  titleColor: string | null;
+  textColor: string | null;
+  fontSize: number | null;
   createdAt: string;
 }
 
@@ -91,7 +94,17 @@ function InlineProductCard({ product, side }: { product: ProductLite; side: "lef
 }
 
 // კონტენტის დარენდერება: ტექსტი + [პროდუქტი:ID] ბარათები მონაცვლეობით მარჯვნივ/მარცხნივ
-function BlogContent({ content, products }: { content: string; products: ProductLite[] }) {
+function BlogContent({
+  content,
+  products,
+  textColor,
+  fontSize,
+}: {
+  content: string;
+  products: ProductLite[];
+  textColor?: string | null;
+  fontSize?: number | null;
+}) {
   const parts = useMemo(() => {
     const out: Array<{ type: "text"; text: string } | { type: "product"; id: number }> = [];
     let last = 0;
@@ -120,7 +133,11 @@ function BlogContent({ content, products }: { content: string; products: Product
           .split(/\n+/)
           .filter((t) => t.trim())
           .map((t, j) => (
-            <p key={`${i}-${j}`} className={`mb-3 text-sm leading-relaxed text-white ${shadowTxt}`}>
+            <p
+              key={`${i}-${j}`}
+              className={`mb-3 leading-relaxed ${shadowTxt}`}
+              style={{ color: textColor || "#ffffff", fontSize: `${fontSize || 14}px` }}
+            >
               {t}
             </p>
           ));
@@ -143,6 +160,9 @@ function BlogEditor({
   const [title, setTitle] = useState(initial?.title ?? "");
   const [content, setContent] = useState(initial?.content ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
+  const [titleColor, setTitleColor] = useState(initial?.titleColor ?? "#ffffff");
+  const [textColor, setTextColor] = useState(initial?.textColor ?? "#ffffff");
+  const [fontSize, setFontSize] = useState(initial?.fontSize ?? 14);
   const [pickProduct, setPickProduct] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const upload = useUploadMedia();
@@ -155,7 +175,7 @@ function BlogEditor({
         method: initial ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ title, content, imageUrl }),
+        body: JSON.stringify({ title, content, imageUrl, titleColor, textColor, fontSize }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || "შენახვა ვერ მოხერხდა");
       return res.json();
@@ -204,6 +224,7 @@ function BlogEditor({
         placeholder="სათაური"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        style={{ color: titleColor }}
         data-testid="input-blog-title"
       />
       <textarea
@@ -212,8 +233,52 @@ function BlogEditor({
         placeholder="ტექსტი…"
         value={content}
         onChange={(e) => setContent(e.target.value)}
+        style={{ color: textColor, fontSize: `${fontSize}px` }}
         data-testid="input-blog-content"
       />
+      {/* ფერები და შრიფტის ზომა */}
+      <div className="flex flex-wrap items-center gap-4 rounded-lg border border-white/15 bg-slate-900/40 p-3">
+        <label className="flex items-center gap-2 text-xs text-white/80">
+          სათაურის ფერი
+          <input
+            type="color"
+            value={titleColor}
+            onChange={(e) => setTitleColor(e.target.value)}
+            className="h-8 w-10 cursor-pointer rounded border border-white/30 bg-transparent"
+            data-testid="input-title-color"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-xs text-white/80">
+          ტექსტის ფერი
+          <input
+            type="color"
+            value={textColor}
+            onChange={(e) => setTextColor(e.target.value)}
+            className="h-8 w-10 cursor-pointer rounded border border-white/30 bg-transparent"
+            data-testid="input-text-color"
+          />
+        </label>
+        <div className="flex items-center gap-2 text-xs text-white/80">
+          შრიფტი
+          <button
+            type="button"
+            onClick={() => setFontSize((s) => Math.max(12, s - 1))}
+            className="h-8 w-8 rounded-lg bg-white/10 text-base font-bold text-white hover:bg-white/20"
+            data-testid="button-font-smaller"
+          >
+            −
+          </button>
+          <span className="w-10 text-center font-bold text-white">{fontSize}px</span>
+          <button
+            type="button"
+            onClick={() => setFontSize((s) => Math.min(24, s + 1))}
+            className="h-8 w-8 rounded-lg bg-white/10 text-base font-bold text-white hover:bg-white/20"
+            data-testid="button-font-bigger"
+          >
+            +
+          </button>
+        </div>
+      </div>
       {/* პროდუქტის ბარათის ჩასმა ტექსტში */}
       <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/15 bg-slate-900/40 p-2">
         <ShoppingBag className="h-4 w-4 shrink-0 text-emerald-300" />
@@ -527,7 +592,11 @@ export default function BlogPage() {
             <BlogEditor initial={editing} products={products} onClose={() => setEditing(null)} />
           ) : (
             <article className={cardCls}>
-              <h2 className={`text-xl font-bold text-white ${shadowTxt}`} data-testid="text-blog-title">
+              <h2
+                className={`text-xl font-bold ${shadowTxt}`}
+                style={{ color: single.titleColor || "#ffffff" }}
+                data-testid="text-blog-title"
+              >
                 {single.title}
               </h2>
               <p className="mt-1 text-xs text-emerald-100/70">{formatDate(single.createdAt)}</p>
@@ -538,7 +607,12 @@ export default function BlogPage() {
                   className="mt-4 w-full rounded-xl border border-white/20"
                 />
               )}
-              <BlogContent content={single.content} products={products} />
+              <BlogContent
+                content={single.content}
+                products={products}
+                textColor={single.textColor}
+                fontSize={single.fontSize}
+              />
               <button
                 type="button"
                 onClick={() => shareOnFacebook(single.title)}
