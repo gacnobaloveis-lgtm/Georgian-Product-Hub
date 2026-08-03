@@ -1,1 +1,1 @@
-deploy v89 - blog: views counter + likes - 2026-08-03
+deploy v90 - blog list: cover photo back (inline photos too), title/text colors on list, uncropped thumbs - 2026-08-03
