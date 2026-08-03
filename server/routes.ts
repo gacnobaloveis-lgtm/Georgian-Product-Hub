@@ -481,18 +481,33 @@ export async function registerRoutes(
       const siteUrl = (process.env.SITE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
       const PRODUCT_TOKEN = /\[(?:product|პროდუქტი):(\d+)\]/g;
       const stripTokens = (s: string) => s.replace(PRODUCT_TOKEN, "").replace(/\n{3,}/g, "\n\n").trim();
-      const renderTokensAsLinks = async (s: string): Promise<string> => {
+      // ტოკენები → ნამდვილი <a> ბმულები (ტექსტი escape-დება, ბმული უსაფრთხოდ იწყობა)
+      const renderBodyHtml = async (s: string): Promise<string> => {
         const ids = [...s.matchAll(PRODUCT_TOKEN)].map((m) => parseInt(m[1], 10));
         const map = new Map<number, string>();
         for (const pid of Array.from(new Set(ids))) {
           const p = await storage.getProduct(pid).catch(() => undefined);
           if (p) map.set(pid, p.name);
         }
-        return s.replace(PRODUCT_TOKEN, (_, idStr) => {
-          const pid = parseInt(idStr, 10);
-          const name = map.get(pid);
-          return name ? `➤ პროდუქტი: ${name} — ${siteUrl}/products/${pid}` : "";
-        });
+        const html = s
+          .split(PRODUCT_TOKEN)
+          .map((piece, i) => {
+            if (i % 2 === 1) {
+              // token capture group — პროდუქტის ID
+              const pid = parseInt(piece, 10);
+              const name = map.get(pid);
+              return name
+                ? `<p>➤ პროდუქტი: <a href="${escHtml(`${siteUrl}/products/${pid}`)}">${escHtml(name)}</a></p>`
+                : "";
+            }
+            return piece
+              .split(/\n+/)
+              .filter((t) => t.trim())
+              .map((t) => `<p>${escHtml(t)}</p>`)
+              .join("\n    ");
+          })
+          .join("\n    ");
+        return html;
       };
       const idRaw = req.params.id;
       if (idRaw) {
@@ -530,7 +545,7 @@ export async function registerRoutes(
   <article>
     <h1>${escHtml(blog.title)}</h1>
     ${blog.imageUrl ? `<img src="${escHtml(img)}" alt="${escHtml(blog.title)}"/>` : ""}
-    ${(await renderTokensAsLinks(blog.content)).split(/\n+/).map((p) => `<p>${escHtml(p)}</p>`).join("\n    ")}
+    ${await renderBodyHtml(blog.content)}
   </article>
   <p><a href="${pageUrl}">${escHtml(blog.title)} — spiningebi.ge</a></p>
 </body>
