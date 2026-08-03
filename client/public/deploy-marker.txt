@@ -1,1 +1,1 @@
-deploy v88 - blog: inline photos in text, smaller images - 2026-08-03
+deploy v89 - blog: views counter + likes - 2026-08-03
