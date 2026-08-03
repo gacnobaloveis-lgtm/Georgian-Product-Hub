@@ -538,6 +538,7 @@ export async function registerRoutes(
     articleBody: stripTokens(blog.content),
     image: img,
     datePublished: blog.createdAt,
+    ...(blog.authorName ? { author: { "@type": "Person", name: blog.authorName } } : {}),
     publisher: { "@type": "Organization", name: "spiningebi.ge", url: siteUrl },
   }).replace(/</g, "\\u003c")}</script>
 </head>
@@ -2281,11 +2282,12 @@ export async function registerRoutes(
 
   app.post("/api/admin/blogs", requireAdminOnly, async (req, res) => {
     try {
-      const { title, content, imageUrl, titleColor, textColor, fontSize } = req.body || {};
+      const { title, content, imageUrl, titleColor, textColor, fontSize, authorName } = req.body || {};
       if (typeof title !== "string" || !title.trim() || typeof content !== "string" || !content.trim()) {
         return res.status(400).json({ message: "სათაური და ტექსტი სავალდებულოა" });
       }
       const blog = await storage.createBlog({
+        authorName: typeof authorName === "string" && authorName.trim() ? authorName.trim().slice(0, 60) : null,
         title: title.trim(),
         content: content.trim(),
         imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
@@ -2304,11 +2306,12 @@ export async function registerRoutes(
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
-      const { title, content, imageUrl, titleColor, textColor, fontSize } = req.body || {};
+      const { title, content, imageUrl, titleColor, textColor, fontSize, authorName } = req.body || {};
       if (typeof title !== "string" || !title.trim() || typeof content !== "string" || !content.trim()) {
         return res.status(400).json({ message: "სათაური და ტექსტი სავალდებულოა" });
       }
       const blog = await storage.updateBlog(id, {
+        authorName: typeof authorName === "string" && authorName.trim() ? authorName.trim().slice(0, 60) : null,
         title: title.trim(),
         content: content.trim(),
         imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
