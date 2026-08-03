@@ -480,8 +480,15 @@ export async function registerRoutes(
     try {
       const siteUrl = (process.env.SITE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
       const PRODUCT_TOKEN = /\[(?:product|პროდუქტი):(\d+)\]/g;
-      const stripTokens = (s: string) => s.replace(PRODUCT_TOKEN, "").replace(/\n{3,}/g, "\n\n").trim();
-      // ტოკენები → ნამდვილი <a> ბმულები (ტექსტი escape-დება, ბმული უსაფრთხოდ იწყობა)
+      const IMAGE_TOKEN = /\[ფოტო:([^\]\s]+)\]/g;
+      const ANY_TOKEN = /\[(?:product|პროდუქტი):(\d+)\]|\[ფოტო:([^\]\s]+)\]/g;
+      const stripTokens = (s: string) =>
+        s.replace(ANY_TOKEN, "").replace(/\n{3,}/g, "\n\n").trim();
+      const firstInlineImage = (s: string): string | null => {
+        const m = [...s.matchAll(IMAGE_TOKEN)][0];
+        return m ? m[1] : null;
+      };
+      // ტოკენები → ნამდვილი <a>/<img> ელემენტები (ტექსტი escape-დება)
       const renderBodyHtml = async (s: string): Promise<string> => {
         const ids = [...s.matchAll(PRODUCT_TOKEN)].map((m) => parseInt(m[1], 10));
         const map = new Map<number, string>();
@@ -489,33 +496,39 @@ export async function registerRoutes(
           const p = await storage.getProduct(pid).catch(() => undefined);
           if (p) map.set(pid, p.name);
         }
-        const html = s
-          .split(PRODUCT_TOKEN)
-          .map((piece, i) => {
-            if (i % 2 === 1) {
-              // token capture group — პროდუქტის ID
-              const pid = parseInt(piece, 10);
-              const name = map.get(pid);
-              return name
-                ? `<p>➤ პროდუქტი: <a href="${escHtml(`${siteUrl}/products/${pid}`)}">${escHtml(name)}</a></p>`
-                : "";
-            }
-            return piece
-              .split(/\n+/)
-              .filter((t) => t.trim())
-              .map((t) => `<p>${escHtml(t)}</p>`)
-              .join("\n    ");
-          })
-          .join("\n    ");
-        return html;
+        const textHtml = (piece: string) =>
+          piece
+            .split(/\n+/)
+            .filter((t) => t.trim())
+            .map((t) => `<p>${escHtml(t)}</p>`)
+            .join("\n    ");
+        const out: string[] = [];
+        let last = 0;
+        for (const m of s.matchAll(ANY_TOKEN)) {
+          const idx = m.index ?? 0;
+          if (idx > last) out.push(textHtml(s.slice(last, idx)));
+          if (m[1]) {
+            const pid = parseInt(m[1], 10);
+            const name = map.get(pid);
+            if (name)
+              out.push(`<p>➤ პროდუქტი: <a href="${escHtml(`${siteUrl}/products/${pid}`)}">${escHtml(name)}</a></p>`);
+          } else if (m[2]) {
+            const src = m[2].startsWith("http") ? m[2] : `${siteUrl}${m[2]}`;
+            out.push(`<img src="${escHtml(src)}" alt=""/>`);
+          }
+          last = idx + m[0].length;
+        }
+        if (last < s.length) out.push(textHtml(s.slice(last)));
+        return out.filter(Boolean).join("\n    ");
       };
       const idRaw = req.params.id;
       if (idRaw) {
         const id = parseInt(idRaw, 10);
         const blog = isNaN(id) ? undefined : await storage.getBlog(id);
         if (!blog) return next();
-        const img = blog.imageUrl
-          ? blog.imageUrl.startsWith("http") ? blog.imageUrl : `${siteUrl}${blog.imageUrl}`
+        const rawImg = blog.imageUrl || firstInlineImage(blog.content);
+        const img = rawImg
+          ? rawImg.startsWith("http") ? rawImg : `${siteUrl}${rawImg}`
           : `${siteUrl}/guide-share.jpg`;
         const pageUrl = escHtml(`${siteUrl}/guide/blog/${blog.id}`);
         return res.status(200).set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
