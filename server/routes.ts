@@ -479,6 +479,21 @@ export async function registerRoutes(
     if (!SOCIAL_BOTS.test(ua) && !AI_BOTS.test(ua)) return next(); // ჩვეულებრივი ბრაუზერი → SPA
     try {
       const siteUrl = (process.env.SITE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+      const PRODUCT_TOKEN = /\[(?:product|პროდუქტი):(\d+)\]/g;
+      const stripTokens = (s: string) => s.replace(PRODUCT_TOKEN, "").replace(/\n{3,}/g, "\n\n").trim();
+      const renderTokensAsLinks = async (s: string): Promise<string> => {
+        const ids = [...s.matchAll(PRODUCT_TOKEN)].map((m) => parseInt(m[1], 10));
+        const map = new Map<number, string>();
+        for (const pid of Array.from(new Set(ids))) {
+          const p = await storage.getProduct(pid).catch(() => undefined);
+          if (p) map.set(pid, p.name);
+        }
+        return s.replace(PRODUCT_TOKEN, (_, idStr) => {
+          const pid = parseInt(idStr, 10);
+          const name = map.get(pid);
+          return name ? `➤ პროდუქტი: ${name} — ${siteUrl}/products/${pid}` : "";
+        });
+      };
       const idRaw = req.params.id;
       if (idRaw) {
         const id = parseInt(idRaw, 10);
@@ -493,11 +508,11 @@ export async function registerRoutes(
 <head>
   <meta charset="utf-8"/>
   <title>${escHtml(blog.title)} | spiningebi.ge</title>
-  <meta name="description" content="${escHtml(blog.content.slice(0, 200))}"/>
+  <meta name="description" content="${escHtml(stripTokens(blog.content).slice(0, 200))}"/>
   <meta property="og:type" content="article"/>
   <meta property="og:site_name" content="spiningebi.ge"/>
   <meta property="og:title" content="${escHtml(blog.title)}"/>
-  <meta property="og:description" content="${escHtml(blog.content.slice(0, 200))}"/>
+  <meta property="og:description" content="${escHtml(stripTokens(blog.content).slice(0, 200))}"/>
   <meta property="og:image" content="${escHtml(img)}"/>
   <meta property="og:url" content="${pageUrl}"/>
   <meta property="og:locale" content="ka_GE"/>
@@ -505,7 +520,7 @@ export async function registerRoutes(
     "@context": "https://schema.org",
     "@type": "Article",
     headline: blog.title,
-    articleBody: blog.content,
+    articleBody: stripTokens(blog.content),
     image: img,
     datePublished: blog.createdAt,
     publisher: { "@type": "Organization", name: "spiningebi.ge", url: siteUrl },
@@ -515,7 +530,7 @@ export async function registerRoutes(
   <article>
     <h1>${escHtml(blog.title)}</h1>
     ${blog.imageUrl ? `<img src="${escHtml(img)}" alt="${escHtml(blog.title)}"/>` : ""}
-    ${blog.content.split(/\n+/).map((p) => `<p>${escHtml(p)}</p>`).join("\n    ")}
+    ${(await renderTokensAsLinks(blog.content)).split(/\n+/).map((p) => `<p>${escHtml(p)}</p>`).join("\n    ")}
   </article>
   <p><a href="${pageUrl}">${escHtml(blog.title)} — spiningebi.ge</a></p>
 </body>
@@ -524,7 +539,7 @@ export async function registerRoutes(
       // სია
       const list = await storage.getBlogs();
       const items = list
-        .map((b) => `<li><a href="${escHtml(`${siteUrl}/guide/blog/${b.id}`)}">${escHtml(b.title)}</a> — ${escHtml(b.content.slice(0, 160))}</li>`)
+        .map((b) => `<li><a href="${escHtml(`${siteUrl}/guide/blog/${b.id}`)}">${escHtml(b.title)}</a> — ${escHtml(stripTokens(b.content).slice(0, 160))}</li>`)
         .join("\n    ");
       return res.status(200).set("Content-Type", "text/html; charset=utf-8").send(`<!DOCTYPE html>
 <html lang="ka">
@@ -2281,6 +2296,62 @@ export async function registerRoutes(
     }
   });
 
+  // ბლოგის კომენტარები — კითხვა ღიაა, წერა მხოლოდ ავტორიზებულებს
+  app.get("/api/blogs/:id/comments", async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
+    try {
+      res.json(await storage.getBlogComments(id));
+    } catch (err) {
+      console.error("[blogs] comments list error:", err);
+      res.status(500).json({ message: "კომენტარების წამოღება ვერ მოხერხდა" });
+    }
+  });
+
+  app.post("/api/blogs/:id/comments", async (req, res) => {
+    try {
+      const userId = (req as any).user?.claims?.sub;
+      if (!userId) return res.status(401).json({ message: "კომენტარისთვის გაიარეთ ავტორიზაცია" });
+      const blogId = parseInt(req.params.id, 10);
+      if (isNaN(blogId)) return res.status(400).json({ message: "არასწორი ID" });
+      const blog = await storage.getBlog(blogId);
+      if (!blog) return res.status(404).json({ message: "ბლოგი ვერ მოიძებნა" });
+      const { content, parentId } = req.body || {};
+      if (typeof content !== "string" || !content.trim() || content.length > 2000) {
+        return res.status(400).json({ message: "კომენტარი ცარიელია ან ძალიან გრძელია" });
+      }
+      let parent: number | null = null;
+      if (parentId != null) {
+        const p = await storage.getBlogComment(Number(parentId));
+        if (!p || p.blogId !== blogId) return res.status(400).json({ message: "არასწორი პასუხის მისამართი" });
+        parent = p.parentId ? p.parentId : p.id; // მხოლოდ ერთი დონის ჩაშენება
+      }
+      const user = await storage.getUser(userId);
+      const userName =
+        [user?.firstName, user?.lastName].filter(Boolean).join(" ").trim() ||
+        user?.email?.split("@")[0] ||
+        "მომხმარებელი";
+      const comment = await storage.createBlogComment({
+        blogId,
+        parentId: parent,
+        userId,
+        userName,
+        content: content.trim(),
+      });
+      res.json(comment);
+    } catch (err) {
+      console.error("[blogs] comment create error:", err);
+      res.status(500).json({ message: "კომენტარის დამატება ვერ მოხერხდა" });
+    }
+  });
+
+  app.delete("/api/admin/blog-comments/:id", requireAdminOnly, async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
+    await storage.deleteBlogComment(id);
+    res.json({ ok: true });
+  });
+
   app.delete("/api/admin/blogs/:id", requireAdminOnly, async (req, res) => {
     try {
       const id = parseInt(req.params.id, 10);
@@ -3490,6 +3561,17 @@ ${productList}`;
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>`;
+
+      const staticPages = ["/guide", "/guide/equipment", "/about", "/terms"];
+      for (const page of staticPages) {
+        xml += `
+  <url>
+    <loc>${baseUrl}${page}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>`;
+      }
 
       for (const p of allProducts) {
         xml += `
