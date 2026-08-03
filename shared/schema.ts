@@ -127,6 +127,20 @@ export const blogs = pgTable("blogs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const blogComments = pgTable("blog_comments", {
+  id: serial("id").primaryKey(),
+  blogId: integer("blog_id").notNull(),
+  parentId: integer("parent_id"),
+  userId: varchar("user_id").notNull(),
+  userName: text("user_name").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBlogCommentSchema = createInsertSchema(blogComments).omit({ id: true, createdAt: true });
+export type InsertBlogComment = z.infer<typeof insertBlogCommentSchema>;
+export type BlogComment = typeof blogComments.$inferSelect;
+
 export const insertBlogSchema = createInsertSchema(blogs).omit({ id: true, createdAt: true });
 export type InsertBlog = z.infer<typeof insertBlogSchema>;
 export type Blog = typeof blogs.$inferSelect;
