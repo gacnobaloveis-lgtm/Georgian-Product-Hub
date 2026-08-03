@@ -1,1 +1,1 @@
-deploy v86 - blog: title/text colors, font size - 2026-08-03
+deploy v87 - blog: author name field - 2026-08-03
