@@ -1,1 +1,1 @@
-deploy v94 2026-08-03T20:40:29Z blog editor emoji picker
+deploy v95 2026-08-03T20:45:44Z blog mobile: small floats, chess style like desktop
