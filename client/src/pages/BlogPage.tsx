@@ -141,12 +141,15 @@ function BlogContent({
     <div className="mt-4">
       {parts.map((part, i) => {
         if (part.type === "image") {
+          // ფოტოც მონაცვლეობით მარჯვნივ/მარცხნივ ჯდება და ტექსტი გარს უვლის
+          const side = cardIndex % 2 === 0 ? "right" : "left";
+          cardIndex++;
           return (
             <img
               key={i}
               src={part.src}
               alt=""
-              className="clear-both mx-auto my-4 block max-h-64 w-auto max-w-full rounded-xl border border-white/20 shadow-lg"
+              className={`${side === "right" ? "float-right ml-4" : "float-left mr-4"} mb-2 mt-1 block w-40 rounded-xl border border-white/20 shadow-lg sm:w-52`}
             />
           );
         }
