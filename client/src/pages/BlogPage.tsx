@@ -54,6 +54,7 @@ const inputCls =
   "w-full rounded-lg border border-white/30 bg-slate-900/70 px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-400 placeholder:text-white/40";
 const shadowTxt = "[text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]";
 const PRODUCT_TOKEN = /\[(?:product|პროდუქტი):(\d+)\]/g;
+const ANY_TOKEN = /\[(?:product|პროდუქტი):(\d+)\]|\[ფოტო:([^\]\s]+)\]/g;
 
 const KA_MONTHS = [
   "იანვარი", "თებერვალი", "მარტი", "აპრილი", "მაისი", "ივნისი",
@@ -107,12 +108,17 @@ function BlogContent({
   fontSize?: number | null;
 }) {
   const parts = useMemo(() => {
-    const out: Array<{ type: "text"; text: string } | { type: "product"; id: number }> = [];
+    const out: Array<
+      | { type: "text"; text: string }
+      | { type: "product"; id: number }
+      | { type: "image"; src: string }
+    > = [];
     let last = 0;
-    for (const m of content.matchAll(PRODUCT_TOKEN)) {
+    for (const m of content.matchAll(ANY_TOKEN)) {
       const idx = m.index ?? 0;
       if (idx > last) out.push({ type: "text", text: content.slice(last, idx) });
-      out.push({ type: "product", id: parseInt(m[1], 10) });
+      if (m[1]) out.push({ type: "product", id: parseInt(m[1], 10) });
+      else if (m[2]) out.push({ type: "image", src: m[2] });
       last = idx + m[0].length;
     }
     if (last < content.length) out.push({ type: "text", text: content.slice(last) });
@@ -123,6 +129,16 @@ function BlogContent({
   return (
     <div className="mt-4">
       {parts.map((part, i) => {
+        if (part.type === "image") {
+          return (
+            <img
+              key={i}
+              src={part.src}
+              alt=""
+              className="clear-both mx-auto my-4 block max-h-64 w-auto max-w-full rounded-xl border border-white/20 shadow-lg"
+            />
+          );
+        }
         if (part.type === "product") {
           const p = products.find((x) => x.id === part.id);
           if (!p) return null;
@@ -195,7 +211,17 @@ function BlogEditor({
     if (!file) return;
     try {
       const media = await upload.mutateAsync([file]);
-      if (media[0]?.path) setImageUrl(media[0].path);
+      if (media[0]?.path) {
+        // ფოტო ჩაჯდება ტექსტში, სადაც კურსორია
+        const token = `\n[ფოტო:${media[0].path}]\n`;
+        const ta = textareaRef.current;
+        if (ta) {
+          const pos = ta.selectionStart ?? content.length;
+          setContent(content.slice(0, pos) + token + content.slice(pos));
+        } else {
+          setContent(content + token);
+        }
+      }
     } catch (err: any) {
       toast({ title: "ფოტოს ატვირთვა ვერ მოხერხდა", description: err?.message, variant: "destructive" });
     }
@@ -308,25 +334,28 @@ function BlogEditor({
         </button>
         <p className="w-full text-[10px] text-white/50">ბარათი ჩაჯდება იქ, სადაც კურსორია — ტექსტი გარს შემოუვლის</p>
       </div>
-      {imageUrl ? (
-        <div className="relative inline-block">
-          <img src={imageUrl} alt="" className="max-h-48 rounded-lg border border-white/20" />
-          <button
-            type="button"
-            onClick={() => setImageUrl(null)}
-            className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white"
-            data-testid="button-blog-remove-image"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ) : (
+      <div className="space-y-2">
         <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-white/30 bg-slate-900/50 px-3 py-2 text-sm text-white transition hover:bg-slate-900/70">
           <ImagePlus className="h-4 w-4 text-emerald-300" />
-          {upload.isPending ? "იტვირთება…" : "ფოტოს დამატება"}
+          {upload.isPending ? "იტვირთება…" : "ფოტოს ჩასმა ტექსტში"}
           <input type="file" accept="image/*" className="hidden" onChange={handleImage} disabled={upload.isPending} />
         </label>
-      )}
+        <p className="text-[10px] text-white/50">ფოტო ჩაჯდება იქ, სადაც კურსორია — შეგიძლია რამდენიმეც ჩასვა</p>
+        {imageUrl && (
+          <div className="relative inline-block">
+            <img src={imageUrl} alt="" className="max-h-32 rounded-lg border border-white/20" />
+            <button
+              type="button"
+              onClick={() => setImageUrl(null)}
+              className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white"
+              title="სათაურის ფოტოს წაშლა"
+              data-testid="button-blog-remove-image"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
       <input
         className={`${inputCls} max-w-xs`}
         placeholder="ავტორის სახელი / ნიკნეიმი"
@@ -617,7 +646,7 @@ export default function BlogPage() {
                 <img
                   src={single.imageUrl}
                   alt={single.title}
-                  className="mt-4 w-full rounded-xl border border-white/20"
+                  className="mx-auto mt-4 block max-h-64 w-auto max-w-full rounded-xl border border-white/20"
                 />
               )}
               <BlogContent
@@ -706,7 +735,7 @@ export default function BlogPage() {
                           {b.authorName && <span className="font-semibold"> · ✍️ {b.authorName}</span>}
                         </p>
                         <p className={`mt-1 line-clamp-2 text-sm text-white/80 ${shadowTxt}`}>
-                          {b.content.replace(PRODUCT_TOKEN, "")}
+                          {b.content.replace(ANY_TOKEN, "")}
                         </p>
                       </div>
                     </div>
