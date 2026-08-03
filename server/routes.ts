@@ -2272,9 +2272,16 @@ export async function registerRoutes(
     res.json(blog);
   });
 
+  const sanitizeColor = (v: unknown): string | null =>
+    typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v.trim()) ? v.trim() : null;
+  const sanitizeFontSize = (v: unknown): number | null => {
+    const n = typeof v === "number" ? v : parseInt(String(v), 10);
+    return Number.isFinite(n) && n >= 12 && n <= 24 ? n : null;
+  };
+
   app.post("/api/admin/blogs", requireAdminOnly, async (req, res) => {
     try {
-      const { title, content, imageUrl } = req.body || {};
+      const { title, content, imageUrl, titleColor, textColor, fontSize } = req.body || {};
       if (typeof title !== "string" || !title.trim() || typeof content !== "string" || !content.trim()) {
         return res.status(400).json({ message: "სათაური და ტექსტი სავალდებულოა" });
       }
@@ -2282,6 +2289,9 @@ export async function registerRoutes(
         title: title.trim(),
         content: content.trim(),
         imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
+        titleColor: sanitizeColor(titleColor),
+        textColor: sanitizeColor(textColor),
+        fontSize: sanitizeFontSize(fontSize),
       });
       res.json(blog);
     } catch (err) {
@@ -2294,7 +2304,7 @@ export async function registerRoutes(
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
-      const { title, content, imageUrl } = req.body || {};
+      const { title, content, imageUrl, titleColor, textColor, fontSize } = req.body || {};
       if (typeof title !== "string" || !title.trim() || typeof content !== "string" || !content.trim()) {
         return res.status(400).json({ message: "სათაური და ტექსტი სავალდებულოა" });
       }
@@ -2302,6 +2312,9 @@ export async function registerRoutes(
         title: title.trim(),
         content: content.trim(),
         imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
+        titleColor: sanitizeColor(titleColor),
+        textColor: sanitizeColor(textColor),
+        fontSize: sanitizeFontSize(fontSize),
       });
       if (!blog) return res.status(404).json({ message: "ბლოგი ვერ მოიძებნა" });
       res.json(blog);
