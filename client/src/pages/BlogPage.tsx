@@ -265,15 +265,11 @@ function BlogEditor({
     try {
       const media = await upload.mutateAsync([file]);
       if (media[0]?.path) {
-        // ფოტო ჩაჯდება ტექსტში, სადაც კურსორია
+        // ფოტო ჩაჯდება კურსორთან თუ კურსორი ტექსტშია, თორემ ბოლოში ემატება
         const token = `\n[ფოტო:${media[0].path}]\n`;
         const ta = textareaRef.current;
-        if (ta) {
-          const pos = ta.selectionStart ?? content.length;
-          setContent(content.slice(0, pos) + token + content.slice(pos));
-        } else {
-          setContent(content + token);
-        }
+        const pos = ta && ta.selectionStart != null && ta.selectionStart > 0 ? ta.selectionStart : content.length;
+        setContent(content.slice(0, pos) + token + content.slice(pos));
       }
     } catch (err: any) {
       toast({ title: "ფოტოს ატვირთვა ვერ მოხერხდა", description: err?.message, variant: "destructive" });
