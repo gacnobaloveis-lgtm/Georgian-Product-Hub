@@ -1,1 +1,1 @@
-deploy v87 - blog: author name field - 2026-08-03
+deploy v88 - blog: inline photos in text, smaller images - 2026-08-03
