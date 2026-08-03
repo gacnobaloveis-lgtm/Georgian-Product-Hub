@@ -1,1 +1,1 @@
-deploy v98 2026-08-03T21:43:51Z blog mobile: bigger gaps, compact product card
+deploy v99 2026-08-03T21:45:34Z blog editor: new photos append at end unless cursor placed
