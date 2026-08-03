@@ -58,6 +58,14 @@ const inputCls =
 const shadowTxt = "[text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]";
 const PRODUCT_TOKEN = /\[(?:product|პროდუქტი):(\d+)\]/g;
 const ANY_TOKEN = /\[(?:product|პროდუქტი):(\d+)\]|\[ფოტო:([^\]\s]+)\]/g;
+const IMAGE_TOKEN = /\[ფოტო:([^\]\s]+)\]/;
+
+// ბლოგის „ყდის" ფოტო სიისთვის — თავში ატვირთული ან ტექსტში ჩასმული პირველი ფოტო
+function coverImage(b: { imageUrl: string | null; content: string }): string | null {
+  if (b.imageUrl) return b.imageUrl;
+  const m = b.content.match(IMAGE_TOKEN);
+  return m ? m[1] : null;
+}
 
 const KA_MONTHS = [
   "იანვარი", "თებერვალი", "მარტი", "აპრილი", "მაისი", "ივნისი",
@@ -781,22 +789,32 @@ export default function BlogPage() {
                     data-testid={`card-blog-${b.id}`}
                   >
                     <div className="flex gap-4">
-                      {b.imageUrl && (
-                        <img
-                          src={b.imageUrl}
-                          alt=""
-                          className="h-20 w-20 shrink-0 rounded-lg border border-white/20 object-cover"
-                        />
+                      {coverImage(b) && (
+                        <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-slate-900/40">
+                          <img
+                            src={coverImage(b)!}
+                            alt=""
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
                       )}
                       <div className="min-w-0">
-                        <p className={`font-bold text-white ${shadowTxt}`}>{b.title}</p>
+                        <p
+                          className={`font-bold ${shadowTxt}`}
+                          style={{ color: b.titleColor || "#ffffff" }}
+                        >
+                          {b.title}
+                        </p>
                         <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-emerald-100/70">
                           {formatDate(b.createdAt)}
                           {b.authorName && <span className="font-semibold">· ✍️ {b.authorName}</span>}
                           <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {b.views}</span>
                           <span className="flex items-center gap-1"><Heart className="h-3 w-3" /> {b.likes}</span>
                         </p>
-                        <p className={`mt-1 line-clamp-2 text-sm text-white/80 ${shadowTxt}`}>
+                        <p
+                          className={`mt-1 line-clamp-2 text-sm ${shadowTxt}`}
+                          style={{ color: b.textColor || "rgba(255,255,255,0.8)" }}
+                        >
                           {b.content.replace(ANY_TOKEN, "")}
                         </p>
                       </div>
