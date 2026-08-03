@@ -1,4 +1,4 @@
-import { pgTable, text, serial, numeric, timestamp, integer, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, numeric, timestamp, integer, varchar, primaryKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -132,6 +132,16 @@ export const blogs = pgTable("blogs", {
   likes: integer("likes").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
+
+export const blogLikes = pgTable(
+  "blog_likes",
+  {
+    blogId: integer("blog_id").notNull(),
+    visitorId: text("visitor_id").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.blogId, t.visitorId] })],
+);
 
 export const blogComments = pgTable("blog_comments", {
   id: serial("id").primaryKey(),
