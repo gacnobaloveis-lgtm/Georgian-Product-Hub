@@ -1,10 +1,15 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, BookOpen, Pencil, Trash2, Plus, ImagePlus, X } from "lucide-react";
+import {
+  ArrowLeft, BookOpen, Pencil, Trash2, Plus, ImagePlus, X, Share2,
+  ShoppingBag, MessageCircle, Reply, Send,
+} from "lucide-react";
 import { useAdminStatus } from "@/hooks/use-admin";
 import { useUploadMedia } from "@/hooks/use-media";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
+import { AuthLoginDialog } from "@/components/AuthLoginDialog";
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const PAGE_BG_STYLE: React.CSSProperties = {
@@ -22,10 +27,29 @@ interface Blog {
   createdAt: string;
 }
 
+interface BlogComment {
+  id: number;
+  blogId: number;
+  parentId: number | null;
+  userId: string;
+  userName: string;
+  content: string;
+  createdAt: string;
+}
+
+interface ProductLite {
+  id: number;
+  name: string;
+  imageUrl: string | null;
+  originalPrice: string;
+  discountPrice: string | null;
+}
+
 const cardCls = "rounded-2xl border border-white/20 bg-white/25 p-5 shadow-xl backdrop-blur-md";
 const inputCls =
   "w-full rounded-lg border border-white/30 bg-slate-900/70 px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-400 placeholder:text-white/40";
 const shadowTxt = "[text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]";
+const PRODUCT_TOKEN = /\[(?:product|პროდუქტი):(\d+)\]/g;
 
 const KA_MONTHS = [
   "იანვარი", "თებერვალი", "მარტი", "აპრილი", "მაისი", "ივნისი",
@@ -41,16 +65,86 @@ function formatDate(iso: string) {
   }
 }
 
+// ── ჩაშენებული პროდუქტის ბარათი ─────────────────────────────
+function InlineProductCard({ product, side }: { product: ProductLite; side: "left" | "right" }) {
+  const [, setLocation] = useLocation();
+  const price = Number(product.discountPrice ?? product.originalPrice);
+  return (
+    <button
+      type="button"
+      onClick={() => setLocation(`/products/${product.id}`)}
+      className={`${side === "right" ? "float-right ml-4" : "float-left mr-4"} mb-2 block w-36 overflow-hidden rounded-xl border border-emerald-400/40 bg-slate-900/70 text-left shadow-lg backdrop-blur-md transition hover:border-emerald-300 sm:w-44`}
+      data-testid={`card-blog-product-${product.id}`}
+    >
+      {product.imageUrl && (
+        <img src={product.imageUrl} alt={product.name} className="h-28 w-full object-cover sm:h-32" />
+      )}
+      <div className="p-2">
+        <p className="line-clamp-2 text-xs font-semibold text-white">{product.name}</p>
+        <p className="mt-1 text-sm font-bold text-emerald-300">₾{price.toFixed(2)}</p>
+        <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-emerald-100/80">
+          <ShoppingBag className="h-3 w-3" /> ნახვა →
+        </p>
+      </div>
+    </button>
+  );
+}
+
+// კონტენტის დარენდერება: ტექსტი + [პროდუქტი:ID] ბარათები მონაცვლეობით მარჯვნივ/მარცხნივ
+function BlogContent({ content, products }: { content: string; products: ProductLite[] }) {
+  const parts = useMemo(() => {
+    const out: Array<{ type: "text"; text: string } | { type: "product"; id: number }> = [];
+    let last = 0;
+    for (const m of content.matchAll(PRODUCT_TOKEN)) {
+      const idx = m.index ?? 0;
+      if (idx > last) out.push({ type: "text", text: content.slice(last, idx) });
+      out.push({ type: "product", id: parseInt(m[1], 10) });
+      last = idx + m[0].length;
+    }
+    if (last < content.length) out.push({ type: "text", text: content.slice(last) });
+    return out;
+  }, [content]);
+
+  let cardIndex = 0;
+  return (
+    <div className="mt-4">
+      {parts.map((part, i) => {
+        if (part.type === "product") {
+          const p = products.find((x) => x.id === part.id);
+          if (!p) return null;
+          const side = cardIndex % 2 === 0 ? "right" : "left";
+          cardIndex++;
+          return <InlineProductCard key={i} product={p} side={side} />;
+        }
+        return part.text
+          .split(/\n+/)
+          .filter((t) => t.trim())
+          .map((t, j) => (
+            <p key={`${i}-${j}`} className={`mb-3 text-sm leading-relaxed text-white ${shadowTxt}`}>
+              {t}
+            </p>
+          ));
+      })}
+      <div className="clear-both" />
+    </div>
+  );
+}
+
+// ── რედაქტორი ────────────────────────────────────────────────
 function BlogEditor({
   initial,
+  products,
   onClose,
 }: {
   initial?: Blog;
+  products: ProductLite[];
   onClose: () => void;
 }) {
   const [title, setTitle] = useState(initial?.title ?? "");
   const [content, setContent] = useState(initial?.content ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
+  const [pickProduct, setPickProduct] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const upload = useUploadMedia();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -86,6 +180,20 @@ function BlogEditor({
     e.target.value = "";
   }
 
+  function insertProductToken() {
+    const id = parseInt(pickProduct, 10);
+    if (!id) return;
+    const token = `\n[პროდუქტი:${id}]\n`;
+    const ta = textareaRef.current;
+    if (ta) {
+      const pos = ta.selectionStart ?? content.length;
+      setContent(content.slice(0, pos) + token + content.slice(pos));
+    } else {
+      setContent(content + token);
+    }
+    setPickProduct("");
+  }
+
   return (
     <div className={`${cardCls} space-y-3`}>
       <p className={`text-sm font-bold text-white ${shadowTxt}`}>
@@ -99,12 +207,40 @@ function BlogEditor({
         data-testid="input-blog-title"
       />
       <textarea
+        ref={textareaRef}
         className={`${inputCls} min-h-[180px]`}
         placeholder="ტექსტი…"
         value={content}
         onChange={(e) => setContent(e.target.value)}
         data-testid="input-blog-content"
       />
+      {/* პროდუქტის ბარათის ჩასმა ტექსტში */}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-white/15 bg-slate-900/40 p-2">
+        <ShoppingBag className="h-4 w-4 shrink-0 text-emerald-300" />
+        <select
+          value={pickProduct}
+          onChange={(e) => setPickProduct(e.target.value)}
+          className="min-w-0 flex-1 rounded-lg border border-white/30 bg-slate-900/70 px-2 py-2 text-xs text-white outline-none focus:border-emerald-400"
+          data-testid="select-blog-product"
+        >
+          <option value="">— აირჩიე პროდუქტი ტექსტში ჩასასმელად —</option>
+          {products.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name} (₾{Number(p.discountPrice ?? p.originalPrice).toFixed(2)})
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={insertProductToken}
+          disabled={!pickProduct}
+          className="rounded-lg bg-emerald-500/80 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-500 disabled:opacity-40"
+          data-testid="button-blog-insert-product"
+        >
+          ჩასმა
+        </button>
+        <p className="w-full text-[10px] text-white/50">ბარათი ჩაჯდება იქ, სადაც კურსორია — ტექსტი გარს შემოუვლის</p>
+      </div>
       {imageUrl ? (
         <div className="relative inline-block">
           <img src={imageUrl} alt="" className="max-h-48 rounded-lg border border-white/20" />
@@ -146,6 +282,168 @@ function BlogEditor({
   );
 }
 
+// ── კომენტარები ──────────────────────────────────────────────
+function CommentForm({
+  blogId,
+  parentId,
+  onDone,
+  autoFocus,
+}: {
+  blogId: number;
+  parentId?: number;
+  onDone?: () => void;
+  autoFocus?: boolean;
+}) {
+  const [text, setText] = useState("");
+  const qc = useQueryClient();
+  const { toast } = useToast();
+
+  const post = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/blogs/${blogId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ content: text, parentId: parentId ?? null }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || "ვერ გაიგზავნა");
+      return res.json();
+    },
+    onSuccess: () => {
+      setText("");
+      qc.invalidateQueries({ queryKey: [`/api/blogs/${blogId}/comments`] });
+      onDone?.();
+    },
+    onError: (e: Error) => toast({ title: "შეცდომა", description: e.message, variant: "destructive" }),
+  });
+
+  return (
+    <div className="flex items-end gap-2">
+      <textarea
+        className={`${inputCls} min-h-[44px] flex-1`}
+        placeholder={parentId ? "პასუხი…" : "დაწერე კომენტარი…"}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        autoFocus={autoFocus}
+        data-testid={parentId ? `input-reply-${parentId}` : "input-comment"}
+      />
+      <button
+        type="button"
+        disabled={!text.trim() || post.isPending}
+        onClick={() => post.mutate()}
+        className="rounded-lg bg-emerald-500 p-2.5 text-white transition hover:bg-emerald-600 disabled:opacity-40"
+        data-testid={parentId ? `button-reply-send-${parentId}` : "button-comment-send"}
+      >
+        <Send className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+function CommentsSection({ blogId }: { blogId: number }) {
+  const { isRealUser } = useAuth();
+  const { data: adminData } = useAdminStatus();
+  const isAdmin = !!adminData?.isAdmin;
+  const [loginOpen, setLoginOpen] = useState(false);
+  const [replyTo, setReplyTo] = useState<number | null>(null);
+  const qc = useQueryClient();
+  const { toast } = useToast();
+
+  const { data: comments = [] } = useQuery<BlogComment[]>({
+    queryKey: [`/api/blogs/${blogId}/comments`],
+  });
+
+  const del = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/admin/blog-comments/${id}`, { method: "DELETE", credentials: "include" });
+      if (!res.ok) throw new Error("წაშლა ვერ მოხერხდა");
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: [`/api/blogs/${blogId}/comments`] }),
+    onError: (e: Error) => toast({ title: "შეცდომა", description: e.message, variant: "destructive" }),
+  });
+
+  const roots = comments.filter((c) => !c.parentId);
+  const replies = (id: number) => comments.filter((c) => c.parentId === id);
+
+  function CommentItem({ c, isReply }: { c: BlogComment; isReply?: boolean }) {
+    return (
+      <div className={`${isReply ? "ml-8 border-l-2 border-emerald-400/30 pl-3" : ""}`}>
+        <div className="rounded-xl bg-slate-900/50 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-bold text-emerald-300">{c.userName}</p>
+            <p className="text-[10px] text-white/50">{formatDate(c.createdAt)}</p>
+          </div>
+          <p className={`mt-1 whitespace-pre-wrap text-sm text-white ${shadowTxt}`}>{c.content}</p>
+          <div className="mt-1.5 flex items-center gap-3">
+            {!isReply && (
+              <button
+                onClick={() => {
+                  if (!isRealUser) return setLoginOpen(true);
+                  setReplyTo(replyTo === c.id ? null : c.id);
+                }}
+                className="flex items-center gap-1 text-[11px] font-semibold text-emerald-200/80 hover:text-white"
+                data-testid={`button-reply-${c.id}`}
+              >
+                <Reply className="h-3 w-3" /> პასუხი
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={() => del.mutate(c.id)}
+                className="flex items-center gap-1 text-[11px] font-semibold text-red-300/80 hover:text-red-200"
+                data-testid={`button-comment-delete-${c.id}`}
+              >
+                <Trash2 className="h-3 w-3" /> წაშლა
+              </button>
+            )}
+          </div>
+        </div>
+        {!isReply && replyTo === c.id && (
+          <div className="ml-8 mt-2">
+            <CommentForm blogId={blogId} parentId={c.id} autoFocus onDone={() => setReplyTo(null)} />
+          </div>
+        )}
+        {!isReply && (
+          <div className="mt-2 space-y-2">
+            {replies(c.id).map((r) => (
+              <CommentItem key={r.id} c={r} isReply />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-5 border-t border-white/10 pt-4">
+      <p className={`mb-3 flex items-center gap-2 text-sm font-bold text-white ${shadowTxt}`}>
+        <MessageCircle className="h-4 w-4 text-emerald-300" />
+        კომენტარები ({comments.length})
+      </p>
+      <div className="space-y-3">
+        {roots.map((c) => (
+          <CommentItem key={c.id} c={c} />
+        ))}
+      </div>
+      <div className="mt-4">
+        {isRealUser ? (
+          <CommentForm blogId={blogId} />
+        ) : (
+          <button
+            onClick={() => setLoginOpen(true)}
+            className="w-full rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-4 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/25"
+            data-testid="button-comment-login"
+          >
+            კომენტარის დასაწერად გაიარე ავტორიზაცია
+          </button>
+        )}
+      </div>
+      <AuthLoginDialog open={loginOpen} onOpenChange={setLoginOpen} />
+    </div>
+  );
+}
+
+// ── მთავარი გვერდი ───────────────────────────────────────────
 export default function BlogPage() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute("/guide/blog/:id");
@@ -158,6 +456,12 @@ export default function BlogPage() {
 
   const { data: blogs = [], isLoading } = useQuery<Blog[]>({
     queryKey: ["/api/blogs"],
+  });
+  const { data: products = [] } = useQuery<ProductLite[]>({
+    queryKey: ["/api/products"],
+  });
+  const { data: fbConfig } = useQuery<{ appId: string | null }>({
+    queryKey: ["/api/facebook/app-id"],
   });
 
   const del = useMutation({
@@ -172,6 +476,22 @@ export default function BlogPage() {
     },
     onError: (e: Error) => toast({ title: "შეცდომა", description: e.message, variant: "destructive" }),
   });
+
+  async function shareOnFacebook(title: string) {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `${title} | spiningebi.ge`, url });
+      } catch {}
+      return;
+    }
+    const appId = fbConfig?.appId;
+    const fbUrl = appId
+      ? `https://www.facebook.com/dialog/share?app_id=${appId}&display=popup&href=${encodeURIComponent(url)}&redirect_uri=${encodeURIComponent(url)}`
+      : `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    const popup = window.open(fbUrl, "_blank", "width=626,height=600,noopener=no");
+    if (!popup) window.location.href = fbUrl;
+  }
 
   const single = blogId ? blogs.find((b) => b.id === blogId) : null;
 
@@ -204,7 +524,7 @@ export default function BlogPage() {
           ) : !single ? (
             <p className={`text-white ${shadowTxt}`}>სტატია ვერ მოიძებნა</p>
           ) : editing && editing !== "new" ? (
-            <BlogEditor initial={editing} onClose={() => setEditing(null)} />
+            <BlogEditor initial={editing} products={products} onClose={() => setEditing(null)} />
           ) : (
             <article className={cardCls}>
               <h2 className={`text-xl font-bold text-white ${shadowTxt}`} data-testid="text-blog-title">
@@ -218,15 +538,18 @@ export default function BlogPage() {
                   className="mt-4 w-full rounded-xl border border-white/20"
                 />
               )}
-              <div className="mt-4 space-y-3">
-                {single.content.split(/\n+/).map((p, i) => (
-                  <p key={i} className={`text-sm leading-relaxed text-white ${shadowTxt}`}>
-                    {p}
-                  </p>
-                ))}
-              </div>
+              <BlogContent content={single.content} products={products} />
+              <button
+                type="button"
+                onClick={() => shareOnFacebook(single.title)}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#1877F2] px-4 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-[#166FE5] active:scale-[0.98]"
+                data-testid="button-blog-share-fb"
+              >
+                <Share2 className="h-4 w-4" />
+                გააზიარე ფეისბუქზე
+              </button>
               {isAdmin && (
-                <div className="mt-5 flex gap-2 border-t border-white/10 pt-4">
+                <div className="mt-4 flex gap-2 border-t border-white/10 pt-4">
                   <button
                     onClick={() => setEditing(single)}
                     className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-2 text-xs font-semibold text-white hover:bg-white/20"
@@ -245,6 +568,7 @@ export default function BlogPage() {
                   </button>
                 </div>
               )}
+              <CommentsSection blogId={single.id} />
             </article>
           )
         ) : (
@@ -253,7 +577,7 @@ export default function BlogPage() {
             {isAdmin &&
               (editing === "new" ? (
                 <div className="mb-4">
-                  <BlogEditor onClose={() => setEditing(null)} />
+                  <BlogEditor products={products} onClose={() => setEditing(null)} />
                 </div>
               ) : (
                 <button
@@ -291,7 +615,9 @@ export default function BlogPage() {
                       <div className="min-w-0">
                         <p className={`font-bold text-white ${shadowTxt}`}>{b.title}</p>
                         <p className="mt-0.5 text-xs text-emerald-100/70">{formatDate(b.createdAt)}</p>
-                        <p className={`mt-1 line-clamp-2 text-sm text-white/80 ${shadowTxt}`}>{b.content}</p>
+                        <p className={`mt-1 line-clamp-2 text-sm text-white/80 ${shadowTxt}`}>
+                          {b.content.replace(PRODUCT_TOKEN, "")}
+                        </p>
                       </div>
                     </div>
                   </button>
