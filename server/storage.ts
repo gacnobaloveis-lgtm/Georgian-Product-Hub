@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { blogs, type Blog, type InsertBlog, products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, productInterests, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
+import { blogs, type Blog, type InsertBlog, blogComments, type BlogComment, type InsertBlogComment, products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, productInterests, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
 import { users, orders, referralLogs, purchaseCreditLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type PurchaseCreditLog, type InsertPageVisit } from "@shared/models/auth";
 import { eq, desc, sql, lt, asc, and, isNull, ne } from "drizzle-orm";
 
@@ -110,7 +110,27 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteBlog(id: number): Promise<void> {
+    await db.delete(blogComments).where(eq(blogComments.blogId, id));
     await db.delete(blogs).where(eq(blogs.id, id));
+  }
+
+  async getBlogComments(blogId: number): Promise<BlogComment[]> {
+    return await db.select().from(blogComments).where(eq(blogComments.blogId, blogId)).orderBy(asc(blogComments.createdAt));
+  }
+
+  async getBlogComment(id: number): Promise<BlogComment | undefined> {
+    const [c] = await db.select().from(blogComments).where(eq(blogComments.id, id));
+    return c;
+  }
+
+  async createBlogComment(comment: InsertBlogComment): Promise<BlogComment> {
+    const [created] = await db.insert(blogComments).values(comment).returning();
+    return created;
+  }
+
+  async deleteBlogComment(id: number): Promise<void> {
+    await db.delete(blogComments).where(eq(blogComments.parentId, id));
+    await db.delete(blogComments).where(eq(blogComments.id, id));
   }
 
   async getProducts(): Promise<Product[]> {
