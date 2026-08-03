@@ -109,6 +109,24 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  async incrementBlogViews(id: number): Promise<number> {
+    const [updated] = await db
+      .update(blogs)
+      .set({ views: sql`${blogs.views} + 1` })
+      .where(eq(blogs.id, id))
+      .returning();
+    return updated?.views ?? 0;
+  }
+
+  async changeBlogLikes(id: number, delta: number): Promise<number> {
+    const [updated] = await db
+      .update(blogs)
+      .set({ likes: sql`GREATEST(${blogs.likes} + ${delta}, 0)` })
+      .where(eq(blogs.id, id))
+      .returning();
+    return updated?.likes ?? 0;
+  }
+
   async deleteBlog(id: number): Promise<void> {
     await db.delete(blogComments).where(eq(blogComments.blogId, id));
     await db.delete(blogs).where(eq(blogs.id, id));
