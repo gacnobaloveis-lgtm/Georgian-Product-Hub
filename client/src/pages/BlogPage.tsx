@@ -242,6 +242,20 @@ function BlogEditor({
     e.target.value = "";
   }
 
+  function insertEmoji(emoji: string) {
+    const ta = textareaRef.current;
+    if (ta) {
+      const pos = ta.selectionStart ?? content.length;
+      setContent(content.slice(0, pos) + emoji + content.slice(pos));
+      requestAnimationFrame(() => {
+        ta.focus();
+        ta.setSelectionRange(pos + emoji.length, pos + emoji.length);
+      });
+    } else {
+      setContent(content + emoji);
+    }
+  }
+
   function insertProductToken() {
     const id = parseInt(pickProduct, 10);
     if (!id) return;
@@ -319,6 +333,28 @@ function BlogEditor({
           >
             +
           </button>
+        </div>
+      </div>
+      {/* სმაილები და ხატულები */}
+      <div className="rounded-lg border border-white/15 bg-slate-900/40 p-2">
+        <p className="mb-1 text-[10px] text-white/50">დააჭირე სმაილს — ჩაჯდება იქ, სადაც კურსორია</p>
+        <div className="flex flex-wrap gap-1">
+          {[
+            "😀","😂","😉","😍","😎","🥳","😢","😡","🤔","👍","👎","👏","🙏","💪","🤝","✌️",
+            "⭐","🌟","✨","💫","🏆","🥇","🔥","💥","⚡","❤️","💚","💙","💯","✅","❌","❗","❓",
+            "🎣","🐟","🐠","🎏","🦈","🪝","🪱","🌊","🏞️","⛰️","🌅","☀️","🌧️","⛈️","🌈","🌙",
+            "🚤","🛶","🧭","📍","🗺️","⏰","📸","🎥","🎁","🎉","💰","🛒","📢","💡","📖","✍️",
+          ].map((em) => (
+            <button
+              key={em}
+              type="button"
+              onClick={() => insertEmoji(em)}
+              className="h-8 w-8 rounded-md text-lg leading-none hover:bg-white/15"
+              data-testid={`button-emoji-${em}`}
+            >
+              {em}
+            </button>
+          ))}
         </div>
       </div>
       {/* პროდუქტის ბარათის ჩასმა ტექსტში */}
