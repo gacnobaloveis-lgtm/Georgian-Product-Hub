@@ -1,1 +1,1 @@
-deploy v84 - blog: inline product cards, FB share, comments with replies - 2026-08-02
+deploy v85 - blog button moved to guide dialog (5th window) - 2026-08-03
