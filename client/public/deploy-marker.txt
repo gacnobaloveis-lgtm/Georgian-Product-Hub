@@ -1,1 +1,1 @@
-deploy v97 2026-08-03T21:07:07Z blog: left float pushed down on mobile
+deploy v98 2026-08-03T21:43:51Z blog mobile: bigger gaps, compact product card
