@@ -128,6 +128,8 @@ export const blogs = pgTable("blogs", {
   titleColor: text("title_color"),
   textColor: text("text_color"),
   fontSize: integer("font_size"),
+  views: integer("views").notNull().default(0),
+  likes: integer("likes").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
