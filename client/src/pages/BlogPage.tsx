@@ -123,16 +123,16 @@ function InlineProductCard({ product, side }: { product: ProductLite; side: "lef
     <button
       type="button"
       onClick={() => setLocation(`/products/${product.id}`)}
-      className={`${side === "right" ? "float-right ml-3 sm:ml-4" : "float-left mr-3 sm:mr-4 mt-8 sm:mt-2"} clear-both mb-2 block w-28 overflow-hidden rounded-xl border border-emerald-400/40 bg-slate-900/70 text-left shadow-lg backdrop-blur-md transition hover:border-emerald-300 sm:w-44`}
+      className={`${side === "right" ? "float-right ml-3 sm:ml-4" : "float-left mr-3 sm:mr-4 mt-12 sm:mt-2"} clear-both mb-4 sm:mb-2 block w-32 overflow-hidden rounded-xl border border-emerald-400/40 bg-slate-900/70 text-left shadow-lg backdrop-blur-md transition hover:border-emerald-300 sm:w-44`}
       data-testid={`card-blog-product-${product.id}`}
     >
       {product.imageUrl && (
-        <img src={product.imageUrl} alt={product.name} className="h-28 w-full object-cover sm:h-32" />
+        <img src={product.imageUrl} alt={product.name} className="h-20 w-full object-cover sm:h-32" />
       )}
       <div className="p-2">
         <p className="line-clamp-2 text-xs font-semibold text-white">{product.name}</p>
         <p className="mt-1 text-sm font-bold text-emerald-300">₾{price.toFixed(2)}</p>
-        <p className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-emerald-100/80">
+        <p className="mt-1 hidden items-center gap-1 text-[10px] font-semibold text-emerald-100/80 sm:flex">
           <ShoppingBag className="h-3 w-3" /> ნახვა →
         </p>
       </div>
@@ -186,7 +186,7 @@ function BlogContent({
               key={i}
               src={part.src}
               alt=""
-              className={`${side === "right" ? "float-right ml-3 sm:ml-4 mt-1" : "float-left mr-3 sm:mr-4 mt-8 sm:mt-1"} clear-both mb-2 block w-32 rounded-xl border border-white/20 shadow-lg sm:w-52`}
+              className={`${side === "right" ? "float-right ml-3 sm:ml-4 mt-1" : "float-left mr-3 sm:mr-4 mt-12 sm:mt-1"} clear-both mb-4 sm:mb-2 block w-32 rounded-xl border border-white/20 shadow-lg sm:w-52`}
             />
           );
         }
