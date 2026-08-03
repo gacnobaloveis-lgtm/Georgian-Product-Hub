@@ -1,1 +1,1 @@
-deploy v90 - blog list: cover photo back (inline photos too), title/text colors on list, uncropped thumbs - 2026-08-03
+deploy v91 - blog inline photos float right/left, text wraps - 2026-08-03
