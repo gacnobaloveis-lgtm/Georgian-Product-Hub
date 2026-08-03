@@ -1,1 +1,1 @@
-deploy v92 2026-08-03T20:04:20Z blog float clear-both chess layout
+deploy v93 2026-08-03T20:07:50Z blog mobile: no float, centered images
