@@ -16,6 +16,7 @@ import TermsPage from "@/pages/TermsPage";
 import AboutPage from "@/pages/AboutPage";
 import GuidePage from "@/pages/GuidePage";
 import GuideEquipmentPage from "@/pages/GuideEquipmentPage";
+import BlogPage from "@/pages/BlogPage";
 import LiveContactPage from "@/pages/LiveContactPage";
 import NotFound from "@/pages/not-found";
 import { CartContext, useCartProvider } from "@/hooks/use-cart";
@@ -66,6 +67,8 @@ function Router() {
       <Route path="/about" component={AboutPage} />
       <Route path="/guide" component={GuidePage} />
       <Route path="/guide/equipment" component={GuideEquipmentPage} />
+      <Route path="/guide/blog" component={BlogPage} />
+      <Route path="/guide/blog/:id" component={BlogPage} />
       <Route path="/live-contact" component={LiveContactPage} />
       <Route path="/admin-login" component={AdminLogin} />
       <Route path="/admin-dashboard">
