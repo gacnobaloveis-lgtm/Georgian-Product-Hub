@@ -304,6 +304,18 @@ export default function GuidePage() {
           <span className="text-emerald-200">→</span>
         </button>
 
+        {/* ცალკე ოთახი: ბლოგი */}
+        <button
+          onClick={() => setLocation("/guide/blog")}
+          className="mb-6 flex w-full items-center justify-between rounded-2xl border border-sky-400/40 bg-sky-500/20 px-5 py-4 text-left shadow-xl backdrop-blur-md transition hover:bg-sky-500/30"
+          data-testid="button-open-blog-room"
+        >
+          <span className="text-sm font-semibold text-white [text-shadow:_0_1px_3px_rgb(0_0_0_/_60%)]">
+            📖 ბლოგი — საინტერესო სტატიები თევზაობაზე
+          </span>
+          <span className="text-sky-200">→</span>
+        </button>
+
         {/* ფორმა */}
         <div className={cardCls}>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
