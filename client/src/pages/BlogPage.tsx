@@ -11,6 +11,40 @@ import { useUploadMedia } from "@/hooks/use-media";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthLoginDialog } from "@/components/AuthLoginDialog";
+
+// ── Twemoji: მაღალი ხარისხის SVG სმაილები ─────────────────────────────
+const TW_BASE = "https://cdn.jsdelivr.net/gh/jdecked/twemoji@15.1.0";
+let twemojiPromise: Promise<any> | null = null;
+function loadTwemoji(): Promise<any> {
+  const w = window as any;
+  if (w.twemoji) return Promise.resolve(w.twemoji);
+  if (!twemojiPromise) {
+    twemojiPromise = new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = `${TW_BASE}/dist/twemoji.min.js`;
+      s.onload = () => resolve((window as any).twemoji);
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+  return twemojiPromise;
+}
+function useTwemoji(ref: React.RefObject<HTMLElement | null>, deps: any[]) {
+  useEffect(() => {
+    let alive = true;
+    loadTwemoji()
+      .then((tw) => {
+        if (alive && ref.current) {
+          tw.parse(ref.current, { folder: "svg", ext: ".svg", base: `${TW_BASE}/assets/` });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+}
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
 const PAGE_BG_STYLE: React.CSSProperties = {
@@ -136,9 +170,12 @@ function BlogContent({
     return out;
   }, [content]);
 
+  const contentRef = useRef<HTMLDivElement>(null);
+  useTwemoji(contentRef, [content]);
+
   let cardIndex = 0;
   return (
-    <div className="mt-4">
+    <div className="mt-4" ref={contentRef}>
       {parts.map((part, i) => {
         if (part.type === "image") {
           // ფოტოც მონაცვლეობით მარჯვნივ/მარცხნივ ჯდება და ტექსტი გარს უვლის
@@ -197,6 +234,8 @@ function BlogEditor({
   const [fontSize, setFontSize] = useState(initial?.fontSize ?? 14);
   const [pickProduct, setPickProduct] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const emojiPanelRef = useRef<HTMLDivElement>(null);
+  useTwemoji(emojiPanelRef, []);
   const upload = useUploadMedia();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -336,7 +375,7 @@ function BlogEditor({
         </div>
       </div>
       {/* სმაილები და ხატულები */}
-      <div className="rounded-lg border border-white/15 bg-slate-900/40 p-2">
+      <div ref={emojiPanelRef} className="rounded-lg border border-white/15 bg-slate-900/40 p-2">
         <p className="mb-1 text-[10px] text-white/50">დააჭირე სმაილს — ჩაჯდება იქ, სადაც კურსორია</p>
         <div className="flex flex-wrap gap-1">
           {[
