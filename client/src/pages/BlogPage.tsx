@@ -24,6 +24,7 @@ interface Blog {
   title: string;
   content: string;
   imageUrl: string | null;
+  authorName: string | null;
   titleColor: string | null;
   textColor: string | null;
   fontSize: number | null;
@@ -160,6 +161,7 @@ function BlogEditor({
   const [title, setTitle] = useState(initial?.title ?? "");
   const [content, setContent] = useState(initial?.content ?? "");
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
+  const [authorName, setAuthorName] = useState(initial?.authorName ?? "");
   const [titleColor, setTitleColor] = useState(initial?.titleColor ?? "#ffffff");
   const [textColor, setTextColor] = useState(initial?.textColor ?? "#ffffff");
   const [fontSize, setFontSize] = useState(initial?.fontSize ?? 14);
@@ -175,7 +177,7 @@ function BlogEditor({
         method: initial ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ title, content, imageUrl, titleColor, textColor, fontSize }),
+        body: JSON.stringify({ title, content, imageUrl, titleColor, textColor, fontSize, authorName }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || "შენახვა ვერ მოხერხდა");
       return res.json();
@@ -325,6 +327,14 @@ function BlogEditor({
           <input type="file" accept="image/*" className="hidden" onChange={handleImage} disabled={upload.isPending} />
         </label>
       )}
+      <input
+        className={`${inputCls} max-w-xs`}
+        placeholder="ავტორის სახელი / ნიკნეიმი"
+        value={authorName}
+        onChange={(e) => setAuthorName(e.target.value)}
+        maxLength={60}
+        data-testid="input-blog-author"
+      />
       <div className="flex gap-2">
         <button
           type="button"
@@ -599,7 +609,10 @@ export default function BlogPage() {
               >
                 {single.title}
               </h2>
-              <p className="mt-1 text-xs text-emerald-100/70">{formatDate(single.createdAt)}</p>
+              <p className="mt-1 text-xs text-emerald-100/70">
+                {formatDate(single.createdAt)}
+                {single.authorName && <span className="font-semibold"> · ✍️ {single.authorName}</span>}
+              </p>
               {single.imageUrl && (
                 <img
                   src={single.imageUrl}
@@ -688,7 +701,10 @@ export default function BlogPage() {
                       )}
                       <div className="min-w-0">
                         <p className={`font-bold text-white ${shadowTxt}`}>{b.title}</p>
-                        <p className="mt-0.5 text-xs text-emerald-100/70">{formatDate(b.createdAt)}</p>
+                        <p className="mt-0.5 text-xs text-emerald-100/70">
+                          {formatDate(b.createdAt)}
+                          {b.authorName && <span className="font-semibold"> · ✍️ {b.authorName}</span>}
+                        </p>
                         <p className={`mt-1 line-clamp-2 text-sm text-white/80 ${shadowTxt}`}>
                           {b.content.replace(PRODUCT_TOKEN, "")}
                         </p>
