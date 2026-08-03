@@ -2286,12 +2286,23 @@ export async function registerRoutes(
     res.json(blog);
   });
 
-  // ბლოგის ნახვები და ლაიქები (cookie-ს გუარდით — ერთი ვიზიტორი = ერთხელ)
-  const parseIdCookie = (raw: unknown): number[] =>
-    typeof raw === "string"
-      ? raw.split(",").map((x) => parseInt(x, 10)).filter((n) => Number.isFinite(n))
-      : [];
+  // ბლოგის ნახვები და ლაიქები — ლაიქის მდგომარეობა DB-შია (blog_likes), ვიზიტორი bvid ქუქით
   const COOKIE_OPTS = { maxAge: 365 * 24 * 3600 * 1000, httpOnly: true, sameSite: "lax" as const, path: "/" };
+  const parseIdCookie = (raw: unknown): number[] =>
+    typeof raw === "string" && raw.length <= 2000
+      ? raw.split(",").slice(0, 200).map((x) => parseInt(x, 10)).filter((n) => Number.isFinite(n))
+      : [];
+  const getVisitorId = (req: Request, res: Response): string => {
+    // ავტორიზებულ მომხმარებელს user id ენიჭება, სხვას — შემთხვევითი bvid ქუქი
+    const uid = (req as any).user?.claims?.sub;
+    if (uid) return `u:${uid}`;
+    let bvid = req.cookies?.bvid;
+    if (typeof bvid !== "string" || !/^[a-f0-9-]{16,64}$/.test(bvid)) {
+      bvid = randomUUID();
+      res.cookie("bvid", bvid, COOKIE_OPTS);
+    }
+    return `v:${bvid}`;
+  };
 
   app.post("/api/blogs/:id/view", async (req, res) => {
     try {
@@ -2299,14 +2310,15 @@ export async function registerRoutes(
       if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
       const blog = await storage.getBlog(id);
       if (!blog) return res.status(404).json({ message: "ბლოგი ვერ მოიძებნა" });
+      const visitorId = getVisitorId(req, res);
       const seen = parseIdCookie(req.cookies?.blog_views);
-      const liked = parseIdCookie(req.cookies?.blog_likes);
       let views = blog.views;
       if (!seen.includes(id)) {
         views = await storage.incrementBlogViews(id);
         res.cookie("blog_views", [...seen, id].slice(-200).join(","), COOKIE_OPTS);
       }
-      res.json({ views, likes: blog.likes, liked: liked.includes(id) });
+      const liked = await storage.hasBlogLike(id, visitorId);
+      res.json({ views, likes: blog.likes, liked });
     } catch (err) {
       console.error("[blogs] view error:", err);
       res.status(500).json({ message: "შეცდომა" });
@@ -2319,12 +2331,9 @@ export async function registerRoutes(
       if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
       const blog = await storage.getBlog(id);
       if (!blog) return res.status(404).json({ message: "ბლოგი ვერ მოიძებნა" });
-      const likedIds = parseIdCookie(req.cookies?.blog_likes);
-      const already = likedIds.includes(id);
-      const likes = await storage.changeBlogLikes(id, already ? -1 : 1);
-      const next = already ? likedIds.filter((x) => x !== id) : [...likedIds, id].slice(-200);
-      res.cookie("blog_likes", next.join(","), COOKIE_OPTS);
-      res.json({ likes, liked: !already });
+      const visitorId = getVisitorId(req, res);
+      const result = await storage.toggleBlogLike(id, visitorId);
+      res.json(result);
     } catch (err) {
       console.error("[blogs] like error:", err);
       res.status(500).json({ message: "შეცდომა" });
