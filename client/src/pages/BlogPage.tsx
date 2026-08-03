@@ -123,7 +123,7 @@ function InlineProductCard({ product, side }: { product: ProductLite; side: "lef
     <button
       type="button"
       onClick={() => setLocation(`/products/${product.id}`)}
-      className={`${side === "right" ? "float-right ml-3 sm:ml-4" : "float-left mr-3 sm:mr-4"} clear-both mb-2 block w-28 overflow-hidden rounded-xl border border-emerald-400/40 bg-slate-900/70 text-left shadow-lg backdrop-blur-md transition hover:border-emerald-300 sm:w-44`}
+      className={`${side === "right" ? "float-right ml-3 sm:ml-4" : "float-left mr-3 sm:mr-4 mt-8 sm:mt-2"} clear-both mb-2 block w-28 overflow-hidden rounded-xl border border-emerald-400/40 bg-slate-900/70 text-left shadow-lg backdrop-blur-md transition hover:border-emerald-300 sm:w-44`}
       data-testid={`card-blog-product-${product.id}`}
     >
       {product.imageUrl && (
@@ -186,7 +186,7 @@ function BlogContent({
               key={i}
               src={part.src}
               alt=""
-              className={`${side === "right" ? "float-right ml-3 sm:ml-4" : "float-left mr-3 sm:mr-4"} clear-both mb-2 mt-1 block w-32 rounded-xl border border-white/20 shadow-lg sm:w-52`}
+              className={`${side === "right" ? "float-right ml-3 sm:ml-4 mt-1" : "float-left mr-3 sm:mr-4 mt-8 sm:mt-1"} clear-both mb-2 block w-32 rounded-xl border border-white/20 shadow-lg sm:w-52`}
             />
           );
         }
