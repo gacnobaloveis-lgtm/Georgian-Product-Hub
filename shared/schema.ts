@@ -119,6 +119,18 @@ export const productInterests = pgTable("product_interests", {
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
+export const blogs = pgTable("blogs", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  imageUrl: text("image_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBlogSchema = createInsertSchema(blogs).omit({ id: true, createdAt: true });
+export type InsertBlog = z.infer<typeof insertBlogSchema>;
+export type Blog = typeof blogs.$inferSelect;
+
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertMediaSchema = createInsertSchema(media).omit({ id: true, createdAt: true });
 export const insertProductInterestSchema = createInsertSchema(productInterests).omit({ id: true, createdAt: true });
