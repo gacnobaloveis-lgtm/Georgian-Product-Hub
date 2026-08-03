@@ -124,6 +124,9 @@ export const blogs = pgTable("blogs", {
   title: text("title").notNull(),
   content: text("content").notNull(),
   imageUrl: text("image_url"),
+  titleColor: text("title_color"),
+  textColor: text("text_color"),
+  fontSize: integer("font_size"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
