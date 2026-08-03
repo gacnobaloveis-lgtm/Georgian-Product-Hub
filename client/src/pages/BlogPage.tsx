@@ -3,8 +3,9 @@ import { useLocation, useRoute } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft, BookOpen, Pencil, Trash2, Plus, ImagePlus, X, Share2,
-  ShoppingBag, MessageCircle, Reply, Send,
+  ShoppingBag, MessageCircle, Reply, Send, Eye, Heart,
 } from "lucide-react";
+import { useEffect } from "react";
 import { useAdminStatus } from "@/hooks/use-admin";
 import { useUploadMedia } from "@/hooks/use-media";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,8 @@ interface Blog {
   titleColor: string | null;
   textColor: string | null;
   fontSize: number | null;
+  views: number;
+  likes: number;
   createdAt: string;
 }
 
@@ -386,6 +389,62 @@ function BlogEditor({
   );
 }
 
+// ── ნახვები და ლაიქი ─────────────────────────────────────────
+function BlogStats({ blogId }: { blogId: number }) {
+  const [stats, setStats] = useState<{ views: number; likes: number; liked: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/blogs/${blogId}/view`, { method: "POST", credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && d) setStats(d);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [blogId]);
+
+  async function toggleLike() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/blogs/${blogId}/like`, { method: "POST", credentials: "include" });
+      if (res.ok) {
+        const d = await res.json();
+        setStats((s) => (s ? { ...s, likes: d.likes, liked: d.liked } : s));
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!stats) return null;
+  return (
+    <div className="mt-3 flex items-center gap-4">
+      <span className="flex items-center gap-1.5 text-xs text-white/70" data-testid="text-blog-views">
+        <Eye className="h-4 w-4" /> {stats.views}
+      </span>
+      <button
+        type="button"
+        onClick={toggleLike}
+        disabled={busy}
+        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+          stats.liked
+            ? "bg-red-500/25 text-red-300"
+            : "bg-white/10 text-white/80 hover:bg-white/20"
+        }`}
+        data-testid="button-blog-like"
+      >
+        <Heart className={`h-4 w-4 ${stats.liked ? "fill-red-400 text-red-400" : ""}`} />
+        {stats.likes}
+      </button>
+    </div>
+  );
+}
+
 // ── კომენტარები ──────────────────────────────────────────────
 function CommentForm({
   blogId,
@@ -642,6 +701,7 @@ export default function BlogPage() {
                 {formatDate(single.createdAt)}
                 {single.authorName && <span className="font-semibold"> · ✍️ {single.authorName}</span>}
               </p>
+              <BlogStats blogId={single.id} />
               {single.imageUrl && (
                 <img
                   src={single.imageUrl}
@@ -730,9 +790,11 @@ export default function BlogPage() {
                       )}
                       <div className="min-w-0">
                         <p className={`font-bold text-white ${shadowTxt}`}>{b.title}</p>
-                        <p className="mt-0.5 text-xs text-emerald-100/70">
+                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-emerald-100/70">
                           {formatDate(b.createdAt)}
-                          {b.authorName && <span className="font-semibold"> · ✍️ {b.authorName}</span>}
+                          {b.authorName && <span className="font-semibold">· ✍️ {b.authorName}</span>}
+                          <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {b.views}</span>
+                          <span className="flex items-center gap-1"><Heart className="h-3 w-3" /> {b.likes}</span>
                         </p>
                         <p className={`mt-1 line-clamp-2 text-sm text-white/80 ${shadowTxt}`}>
                           {b.content.replace(ANY_TOKEN, "")}
