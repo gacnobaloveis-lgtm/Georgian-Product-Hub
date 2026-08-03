@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { blogs, type Blog, type InsertBlog, blogComments, type BlogComment, type InsertBlogComment, products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, productInterests, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
+import { blogs, type Blog, type InsertBlog, blogLikes, blogComments, type BlogComment, type InsertBlogComment, products, media, categories, termsSections, chatMessages, pushSubscriptions, broadcasts, broadcastReads, stockNotifications, productInterests, type InsertProduct, type Product, type InsertMedia, type Media, type InsertCategory, type Category, type InsertTermsSection, type TermsSection, type InsertChatMessage, type ChatMessage, type PushSubscription, type Broadcast, type StockNotification } from "@shared/schema";
 import { users, orders, referralLogs, purchaseCreditLogs, siteSettings, pageVisits, type User, type Order, type InsertOrder, type ReferralLog, type PurchaseCreditLog, type InsertPageVisit } from "@shared/models/auth";
 import { eq, desc, sql, lt, asc, and, isNull, ne } from "drizzle-orm";
 
@@ -118,16 +118,36 @@ export class DatabaseStorage implements IStorage {
     return updated?.views ?? 0;
   }
 
-  async changeBlogLikes(id: number, delta: number): Promise<number> {
-    const [updated] = await db
-      .update(blogs)
-      .set({ likes: sql`GREATEST(${blogs.likes} + ${delta}, 0)` })
-      .where(eq(blogs.id, id))
+  async hasBlogLike(blogId: number, visitorId: string): Promise<boolean> {
+    const [row] = await db
+      .select()
+      .from(blogLikes)
+      .where(and(eq(blogLikes.blogId, blogId), eq(blogLikes.visitorId, visitorId)));
+    return !!row;
+  }
+
+  // ლაიქის ჩართვა/გამორთვა — მდგომარეობა DB-შია, count-ი ცხრილიდან ითვლება (ატომურია)
+  async toggleBlogLike(blogId: number, visitorId: string): Promise<{ likes: number; liked: boolean }> {
+    const inserted = await db
+      .insert(blogLikes)
+      .values({ blogId, visitorId })
+      .onConflictDoNothing()
       .returning();
-    return updated?.likes ?? 0;
+    let liked = true;
+    if (inserted.length === 0) {
+      await db.delete(blogLikes).where(and(eq(blogLikes.blogId, blogId), eq(blogLikes.visitorId, visitorId)));
+      liked = false;
+    }
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(blogLikes)
+      .where(eq(blogLikes.blogId, blogId));
+    await db.update(blogs).set({ likes: count }).where(eq(blogs.id, blogId));
+    return { likes: count, liked };
   }
 
   async deleteBlog(id: number): Promise<void> {
+    await db.delete(blogLikes).where(eq(blogLikes.blogId, id));
     await db.delete(blogComments).where(eq(blogComments.blogId, id));
     await db.delete(blogs).where(eq(blogs.id, id));
   }
