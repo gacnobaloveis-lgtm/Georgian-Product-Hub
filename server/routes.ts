@@ -483,7 +483,7 @@ export async function registerRoutes(
       const IMAGE_TOKEN = /\[ფოტო:([^\]\s]+)\]/g;
       const ANY_TOKEN = /\[(?:product|პროდუქტი):(\d+)\]|\[ფოტო:([^\]\s]+)\]/g;
       const stripTokens = (s: string) =>
-        s.replace(ANY_TOKEN, "").replace(/\n{3,}/g, "\n\n").trim();
+        s.replace(ANY_TOKEN, "").replace(/^#{2,3} /gm, "").replace(/\n{3,}/g, "\n\n").trim();
       const firstInlineImage = (s: string): string | null => {
         const m = [...s.matchAll(IMAGE_TOKEN)][0];
         return m ? m[1] : null;
@@ -500,7 +500,11 @@ export async function registerRoutes(
           piece
             .split(/\n+/)
             .filter((t) => t.trim())
-            .map((t) => `<p>${escHtml(t)}</p>`)
+            .map((t) => {
+              if (t.startsWith("### ")) return `<h3>${escHtml(t.slice(4))}</h3>`;
+              if (t.startsWith("## ")) return `<h2>${escHtml(t.slice(3))}</h2>`;
+              return `<p>${escHtml(t)}</p>`;
+            })
             .join("\n    ");
         const out: string[] = [];
         let last = 0;
