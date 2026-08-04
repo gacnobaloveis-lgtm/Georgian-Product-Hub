@@ -204,24 +204,32 @@ function BlogContent({
         return part.text
           .split(/\n+/)
           .filter((t) => t.trim())
-          .map((t, j) =>
-            tw ? (
-              <p
+          .map((t, j) => {
+            // ## სათაური → H2, ### ქვესათაური → H3
+            const isH3 = t.startsWith("### ");
+            const isH2 = !isH3 && t.startsWith("## ");
+            const text = isH3 ? t.slice(4) : isH2 ? t.slice(3) : t;
+            const Tag = (isH2 ? "h2" : isH3 ? "h3" : "p") as "h2" | "h3" | "p";
+            const base = fontSize || 14;
+            const style: React.CSSProperties = {
+              color: textColor || "#ffffff",
+              fontSize: `${isH2 ? base + 7 : isH3 ? base + 4 : base}px`,
+              fontWeight: isH2 || isH3 ? 700 : undefined,
+            };
+            const cls = `${isH2 || isH3 ? "mb-2 mt-4" : "mb-3"} leading-relaxed ${shadowTxt}`;
+            return tw ? (
+              <Tag
                 key={`${i}-${j}`}
-                className={`mb-3 leading-relaxed ${shadowTxt}`}
-                style={{ color: textColor || "#ffffff", fontSize: `${fontSize || 14}px` }}
-                dangerouslySetInnerHTML={{ __html: twemojiHtml(tw, t) }}
+                className={cls}
+                style={style}
+                dangerouslySetInnerHTML={{ __html: twemojiHtml(tw, text) }}
               />
             ) : (
-              <p
-                key={`${i}-${j}`}
-                className={`mb-3 leading-relaxed ${shadowTxt}`}
-                style={{ color: textColor || "#ffffff", fontSize: `${fontSize || 14}px` }}
-              >
-                {t}
-              </p>
-            ),
-          );
+              <Tag key={`${i}-${j}`} className={cls} style={style}>
+                {text}
+              </Tag>
+            );
+          });
       })}
       <div className="clear-both" />
     </div>
@@ -357,6 +365,25 @@ function BlogEditor({
             data-testid="input-text-color"
           />
         </label>
+        <div className="flex items-center gap-2 text-xs text-white/80">
+          სათაურები
+          <button
+            type="button"
+            onClick={() => insertEmoji("\n## ")}
+            className="h-8 rounded-lg bg-white/10 px-2 text-xs font-bold text-white hover:bg-white/20"
+            data-testid="button-insert-h2"
+          >
+            H2
+          </button>
+          <button
+            type="button"
+            onClick={() => insertEmoji("\n### ")}
+            className="h-8 rounded-lg bg-white/10 px-2 text-xs font-bold text-white hover:bg-white/20"
+            data-testid="button-insert-h3"
+          >
+            H3
+          </button>
+        </div>
         <div className="flex items-center gap-2 text-xs text-white/80">
           შრიფტი
           <button
