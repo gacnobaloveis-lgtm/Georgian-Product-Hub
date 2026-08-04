@@ -1,1 +1,1 @@
-deploy v99 2026-08-03T21:45:34Z blog editor: new photos append at end unless cursor placed
+deploy v100 2026-08-04T02:42:13Z blog: token order preserved, tighter top gap
