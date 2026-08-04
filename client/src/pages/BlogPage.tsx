@@ -122,7 +122,7 @@ function InlineProductCard({ product, side }: { product: ProductLite; side: "lef
   return (
     <button
       type="button"
-      onClick={() => setLocation(`/products/${product.id}`)}
+      onClick={() => setLocation(`/product/${product.id}`)}
       className={`${side === "right" ? "float-right ml-3 sm:ml-4" : "float-left mr-3 sm:mr-4 mt-4 sm:mt-2"} clear-both mb-4 sm:mb-2 block w-32 overflow-hidden rounded-xl border border-emerald-400/40 bg-slate-900/70 text-left shadow-lg backdrop-blur-md transition hover:border-emerald-300 sm:w-44`}
       data-testid={`card-blog-product-${product.id}`}
     >
