@@ -2353,7 +2353,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/blogs", requireAdminOnly, async (req, res) => {
     try {
-      const { title, content, imageUrl, titleColor, textColor, fontSize, authorName } = req.body || {};
+      const { title, content, imageUrl, titleColor, headingColor, textColor, fontSize, authorName } = req.body || {};
       if (typeof title !== "string" || !title.trim() || typeof content !== "string" || !content.trim()) {
         return res.status(400).json({ message: "სათაური და ტექსტი სავალდებულოა" });
       }
@@ -2363,6 +2363,7 @@ export async function registerRoutes(
         content: content.trim(),
         imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
         titleColor: sanitizeColor(titleColor),
+        headingColor: sanitizeColor(headingColor),
         textColor: sanitizeColor(textColor),
         fontSize: sanitizeFontSize(fontSize),
       });
@@ -2377,7 +2378,7 @@ export async function registerRoutes(
     try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) return res.status(400).json({ message: "არასწორი ID" });
-      const { title, content, imageUrl, titleColor, textColor, fontSize, authorName } = req.body || {};
+      const { title, content, imageUrl, titleColor, headingColor, textColor, fontSize, authorName } = req.body || {};
       if (typeof title !== "string" || !title.trim() || typeof content !== "string" || !content.trim()) {
         return res.status(400).json({ message: "სათაური და ტექსტი სავალდებულოა" });
       }
@@ -2387,6 +2388,7 @@ export async function registerRoutes(
         content: content.trim(),
         imageUrl: typeof imageUrl === "string" && imageUrl.trim() ? imageUrl.trim() : null,
         titleColor: sanitizeColor(titleColor),
+        headingColor: sanitizeColor(headingColor),
         textColor: sanitizeColor(textColor),
         fontSize: sanitizeFontSize(fontSize),
       });
