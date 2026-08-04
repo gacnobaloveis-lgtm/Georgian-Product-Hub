@@ -29,21 +29,26 @@ function loadTwemoji(): Promise<any> {
   }
   return twemojiPromise;
 }
-function useTwemoji(ref: React.RefObject<HTMLElement | null>, deps: any[]) {
+// ჰუკი: აბრუნებს twemoji ბიბლიოთეკას ჩატვირთვის შემდეგ
+function useTwemojiLib() {
+  const [tw, setTw] = useState<any>((window as any).twemoji || null);
   useEffect(() => {
     let alive = true;
     loadTwemoji()
-      .then((tw) => {
-        if (alive && ref.current) {
-          tw.parse(ref.current, { folder: "svg", ext: ".svg", base: `${TW_BASE}/assets/` });
-        }
-      })
+      .then((t) => alive && setTw(t))
       .catch(() => {});
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, []);
+  return tw;
+}
+function escapeHtml(s: string) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+// ტექსტი → HTML twemoji სურათებით (React-ისთვის უსაფრთხო, DOM-ს არ ცვლის)
+function twemojiHtml(tw: any, text: string) {
+  return tw.parse(escapeHtml(text), { folder: "svg", ext: ".svg", base: `${TW_BASE}/assets/` });
 }
 import mountainSceneBg from "@assets/mountain-scene-bg.webp";
 
@@ -170,12 +175,11 @@ function BlogContent({
     return out;
   }, [content]);
 
-  const contentRef = useRef<HTMLDivElement>(null);
-  useTwemoji(contentRef, [content]);
+  const tw = useTwemojiLib();
 
   let cardIndex = 0;
   return (
-    <div className="mt-4" ref={contentRef}>
+    <div className="mt-4">
       {parts.map((part, i) => {
         if (part.type === "image") {
           // ფოტოც მონაცვლეობით მარჯვნივ/მარცხნივ ჯდება და ტექსტი გარს უვლის
@@ -200,15 +204,24 @@ function BlogContent({
         return part.text
           .split(/\n+/)
           .filter((t) => t.trim())
-          .map((t, j) => (
-            <p
-              key={`${i}-${j}`}
-              className={`mb-3 leading-relaxed ${shadowTxt}`}
-              style={{ color: textColor || "#ffffff", fontSize: `${fontSize || 14}px` }}
-            >
-              {t}
-            </p>
-          ));
+          .map((t, j) =>
+            tw ? (
+              <p
+                key={`${i}-${j}`}
+                className={`mb-3 leading-relaxed ${shadowTxt}`}
+                style={{ color: textColor || "#ffffff", fontSize: `${fontSize || 14}px` }}
+                dangerouslySetInnerHTML={{ __html: twemojiHtml(tw, t) }}
+              />
+            ) : (
+              <p
+                key={`${i}-${j}`}
+                className={`mb-3 leading-relaxed ${shadowTxt}`}
+                style={{ color: textColor || "#ffffff", fontSize: `${fontSize || 14}px` }}
+              >
+                {t}
+              </p>
+            ),
+          );
       })}
       <div className="clear-both" />
     </div>
@@ -234,8 +247,7 @@ function BlogEditor({
   const [fontSize, setFontSize] = useState(initial?.fontSize ?? 14);
   const [pickProduct, setPickProduct] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const emojiPanelRef = useRef<HTMLDivElement>(null);
-  useTwemoji(emojiPanelRef, []);
+  const tw = useTwemojiLib();
   const upload = useUploadMedia();
   const qc = useQueryClient();
   const { toast } = useToast();
@@ -367,7 +379,7 @@ function BlogEditor({
         </div>
       </div>
       {/* სმაილები და ხატულები */}
-      <div ref={emojiPanelRef} className="rounded-lg border border-white/15 bg-slate-900/40 p-2">
+      <div className="rounded-lg border border-white/15 bg-slate-900/40 p-2">
         <p className="mb-1 text-[10px] text-white/50">დააჭირე სმაილს — ჩაჯდება იქ, სადაც კურსორია</p>
         <div className="flex flex-wrap gap-1">
           {[
@@ -382,9 +394,10 @@ function BlogEditor({
               onClick={() => insertEmoji(em)}
               className="h-8 w-8 rounded-md text-lg leading-none hover:bg-white/15"
               data-testid={`button-emoji-${em}`}
-            >
-              {em}
-            </button>
+              {...(tw
+                ? { dangerouslySetInnerHTML: { __html: twemojiHtml(tw, em) } }
+                : { children: em })}
+            />
           ))}
         </div>
       </div>
