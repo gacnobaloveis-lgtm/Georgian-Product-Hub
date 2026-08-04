@@ -66,6 +66,7 @@ interface Blog {
   imageUrl: string | null;
   authorName: string | null;
   titleColor: string | null;
+  headingColor: string | null;
   textColor: string | null;
   fontSize: number | null;
   views: number;
@@ -150,11 +151,13 @@ function BlogContent({
   content,
   products,
   textColor,
+  headingColor,
   fontSize,
 }: {
   content: string;
   products: ProductLite[];
   textColor?: string | null;
+  headingColor?: string | null;
   fontSize?: number | null;
 }) {
   const parts = useMemo(() => {
@@ -212,7 +215,7 @@ function BlogContent({
             const Tag = (isH2 ? "h2" : isH3 ? "h3" : "p") as "h2" | "h3" | "p";
             const base = fontSize || 14;
             const style: React.CSSProperties = {
-              color: textColor || "#ffffff",
+              color: isH2 || isH3 ? headingColor || textColor || "#ffffff" : textColor || "#ffffff",
               fontSize: `${isH2 ? base + 7 : isH3 ? base + 4 : base}px`,
               fontWeight: isH2 || isH3 ? 700 : undefined,
             };
@@ -251,6 +254,7 @@ function BlogEditor({
   const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
   const [authorName, setAuthorName] = useState(initial?.authorName ?? "");
   const [titleColor, setTitleColor] = useState(initial?.titleColor ?? "#ffffff");
+  const [headingColor, setHeadingColor] = useState(initial?.headingColor ?? "#ffffff");
   const [textColor, setTextColor] = useState(initial?.textColor ?? "#ffffff");
   const [fontSize, setFontSize] = useState(initial?.fontSize ?? 14);
   const [pickProduct, setPickProduct] = useState("");
@@ -266,7 +270,7 @@ function BlogEditor({
         method: initial ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ title, content, imageUrl, titleColor, textColor, fontSize, authorName }),
+        body: JSON.stringify({ title, content, imageUrl, titleColor, headingColor, textColor, fontSize, authorName }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).message || "შენახვა ვერ მოხერხდა");
       return res.json();
@@ -353,6 +357,16 @@ function BlogEditor({
             onChange={(e) => setTitleColor(e.target.value)}
             className="h-8 w-10 cursor-pointer rounded border border-white/30 bg-transparent"
             data-testid="input-title-color"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-xs text-white/80">
+          H2/H3 ფერი
+          <input
+            type="color"
+            value={headingColor}
+            onChange={(e) => setHeadingColor(e.target.value)}
+            className="h-8 w-10 cursor-pointer rounded border border-white/30 bg-transparent"
+            data-testid="input-heading-color"
           />
         </label>
         <label className="flex items-center gap-2 text-xs text-white/80">
@@ -831,6 +845,7 @@ export default function BlogPage() {
                 content={single.content}
                 products={products}
                 textColor={single.textColor}
+                headingColor={single.headingColor}
                 fontSize={single.fontSize}
               />
               <button
