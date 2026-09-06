@@ -8,6 +8,17 @@ import { setupAuth, registerAuthRoutes } from "./replit_integrations/auth";
 
 const app = express();
 const httpServer = createServer(app);
+app.set("trust proxy", 1);
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const host = req.headers.host;
+  
+  if (host && host.startsWith("www.")) {
+    const newHost = host.slice(4);
+    return res.redirect(301, `${req.protocol}://${newHost}${req.url}`);
+  }
+  next();
+});
 
 declare module "http" {
   interface IncomingMessage {
