@@ -1,0 +1,42 @@
+# ------------------------------------------------------------------
+# NOTICE: This project is deployed on Railway, NOT Netlify.
+# ------------------------------------------------------------------
+# This file exists solely to satisfy the Netlify GitHub App, which
+# runs status checks on pull requests even though this repository is
+# not actually connected to a Netlify site build. Without a valid
+# netlify.toml, Netlify's parser fails and blocks PRs with a red
+# check that has nothing to do with this project's real deployment.
+#
+# This is a temporary workaround. The long-term fix is to fully
+# disconnect the Netlify GitHub App integration from this repository
+# in Netlify's dashboard / GitHub App settings.
+#
+# Do NOT treat this as the source of truth for deployment config.
+# See railway.json / railway.toml (if present) for actual deploy
+# configuration.
+# ------------------------------------------------------------------
+
+[build]
+  # No-op build command. There is nothing for Netlify to build here.
+  command = "echo 'Netlify is not used for this project. Deployment is handled by Railway.'"
+  publish = "."
+
+[functions]
+  # Directory declared only to keep the parser happy. No functions
+  # are defined or deployed here.
+  directory = "netlify/functions-unused"
+
+# Minimal, valid (no-op) redirects section so the config parses
+# cleanly. No actual redirects are needed since Netlify does not
+# serve this project.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
+# Minimal, valid (no-op) headers section for the same reason as above.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Deployed-With = "Railway"
